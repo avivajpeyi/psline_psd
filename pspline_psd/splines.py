@@ -10,8 +10,6 @@ def knot_locator(pdgrm: np.ndarray, k: int, degree: int, eqSpaced: bool = False)
     knots : np.ndarray of shape (k - degree + 1,)
     (The x-positions of the knots)
 
-    #TODO: ask if there is a simple way to test if this is correct.
-
     """
     if eqSpaced:
         knots = np.linspace(0, 1, num=k - degree + 1)
@@ -39,6 +37,12 @@ def knot_locator(pdgrm: np.ndarray, k: int, degree: int, eqSpaced: bool = False)
 def dbspline(x: np.ndarray, knots: np.ndarray, degree=3, normalize=True):
     """Generate a B-spline density basis of any degree
 
+    Parameters:
+    -----------
+    x : np.ndarray of shape (n,)
+    knots : np.ndarray of shape (k,)
+    degree : int
+
     Returns:
     --------
     B : np.ndarray of shape (len(x), len(knots) + degree -1 [I THINK])
@@ -49,7 +53,6 @@ def dbspline(x: np.ndarray, knots: np.ndarray, degree=3, normalize=True):
     n_knots = len(knots_with_boundary)  # number of knots (including the external knots)
     assert n_knots == degree * 2 + len(knots)
 
-    # TODO: the R version has degree + 1 here... why?
     B = BSpline.design_matrix(x, knots_with_boundary, degree)
 
     if normalize:
@@ -72,7 +75,10 @@ def get_penalty_matrix(basis: np.ndarray, Lfdobj: int) -> np.ndarray:
     -------
     penalty_matrix : np.ndarray of shape (k - degree - 1, k - degree - 1)
     """
-    raise NotImplementedError('Not implemented yet')
+
+    # comupute the
+
+    return np.dot(basis.T, basis)
 
 
 def _get_initial_spline_data(periodogram, k, degree, omega, diffMatrixOrder, eqSpacedKnots):
@@ -80,9 +86,11 @@ def _get_initial_spline_data(periodogram, k, degree, omega, diffMatrixOrder, eqS
     knots = knot_locator(periodogram, k, degree, eqSpacedKnots)
     db_list = dbspline(omega, knots, degree)
     if eqSpacedKnots:
+
         P = diff_matrix(k - 1, d=diffMatrixOrder)
         P = np.dot(P.T, P)
     else:
+
         P = get_penalty_matrix(db_list, diffMatrixOrder)
         P = P / np.linalg.norm(P)
     epsilon = 1e-6
@@ -92,7 +100,6 @@ def _get_initial_spline_data(periodogram, k, degree, omega, diffMatrixOrder, eqS
 
 def _generate_initial_weights(periodogram, k):
     scaled_periodogram = periodogram / np.sum(periodogram)
-    # TODO keep k equidistant points
     idx = np.linspace(0, len(scaled_periodogram) - 1, k)
     idx = np.round(idx).astype(int)
     w = scaled_periodogram[idx]

@@ -6,9 +6,6 @@ from .post_processing import generate_psd_quantiles
 from arviz import InferenceData
 
 
-
-
-
 def _plot_metadata(post_samples, counts, psd_quants, periodogram, db_list, knots, v, metadata_plotfn):
     fig = plt.figure(figsize=(5, 8), layout="constrained")
     gs = plt.GridSpec(5, 2, figure=fig)
@@ -32,16 +29,21 @@ def _plot_metadata(post_samples, counts, psd_quants, periodogram, db_list, knots
     ax.set_xlabel("Splines")
     ax = fig.add_subplot(gs[4, :])
 
-
     psd_up, psd_low = psd_quants[2, 1:], psd_quants[1, 1:]
-    psd_x = np.linspace(0,1, len(psd_up))
+    psd_x = np.linspace(0, 1, len(psd_up))
     ax.plot(psd_x, psd_quants[0, 1:], color='C4')
     ax.fill_between(psd_x, psd_low, psd_up, color='C4', alpha=0.2, label='Posterior (median, 90% CI)')
     ylims = ax.get_ylim()
+    xpts = np.linspace(0, 1, len(periodogram))
     ax.plot([], [], color='k', label='Periodogram', zorder=-10, alpha=0.5)
-    ax.plot(np.linspace(0,1, len(periodogram)), periodogram, color='k', zorder=-10, alpha=0.5)
-    # plot the knots vs V here as well
-    ax.plot(knots, v.flatten()[1:], 'x', color='C3', label='Knots', alpha=0.25)
+    ax.plot(xpts, periodogram, color='k', zorder=-10, alpha=0.5)
+    ax.plot([], [], color='tab:red', label=f'{len(knots)} Knots xpos')
+    ax.set_xlim(xpts[2], xpts[-2])
+    ax_twin = ax.twinx()
+    # turn axes off
+    ax_twin.set_yticks([])
+    ax_twin.set_ylim(0, 1)
+    ax_twin.vlines(knots, 0, 0.1, color='tab:red', alpha=0.5)
     ax.set_ylim(ylims)
     ax.legend(frameon=False, loc='upper right')
     ax.set_ylabel("PSD")
