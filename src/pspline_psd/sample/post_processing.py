@@ -1,14 +1,20 @@
-from tqdm.auto import trange
-from pspline_psd.bayesian_utilities.bayesian_functions import psd_model
-from scipy.stats import median_abs_deviation
 import numpy as np
+from scipy.stats import median_abs_deviation
+from tqdm.auto import trange
+
+from pspline_psd.bayesian_utilities.bayesian_functions import psd_model
 
 
-def generate_psd_posterior(freq, db_list, tau_samples, v_samples, ):
+def generate_psd_posterior(
+    freq,
+    db_list,
+    tau_samples,
+    v_samples,
+):
     n = len(tau_samples)
     psd = np.zeros((n, len(freq)))
     kwargs = dict(db_list=db_list, n=len(freq))
-    for i in trange(n, desc='Generating PSD posterior'):
+    for i in trange(n, desc="Generating PSD posterior"):
         psd[i, :] = psd_model(v=v_samples[i, :], **kwargs) * tau_samples[i]
     return psd
 
@@ -42,7 +48,7 @@ def generate_psd_quantiles(freq, db_list, tau_samples, v_samples, uniform_bands=
 
 
 def uniformmax(sample):
-    mad = median_abs_deviation(sample, nan_policy='omit', axis=0)
+    mad = median_abs_deviation(sample, nan_policy="omit", axis=0)
     # replace 0 with very small number
     mad[mad == 0] = 1e-10
     return np.max(np.abs(sample - np.median(sample, axis=0)) / mad, axis=0)

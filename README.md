@@ -9,8 +9,7 @@ https://github.com/pmat747/psplinePsd
 [![codecov](https://codecov.io/gh/avivajpeyi/pspline_psd/branch/main/graphs/badge.svg)](https://codecov.io/github/avivajpeyi/pspline_psd)
 
 
-
-p-spline PSD generator
+P-spline PSD generator
 
 
 * Documentation: <https://avivajpeyi.github.io/pspline_psd>

@@ -22,10 +22,14 @@ def knot_locator(pdgrm: np.ndarray, k: int, degree: int, eqSpaced: bool = False)
     dens = dens / np.sum(dens)
     cumf = np.cumsum(dens)
 
-    df = interp1d(np.linspace(0, 1, num=n), cumf, kind='linear', fill_value=(0, 1))
+    df = interp1d(np.linspace(0, 1, num=n), cumf, kind="linear", fill_value=(0, 1))
 
     invDf = interp1d(
-        df(np.linspace(0, 1, num=n)), np.linspace(0, 1, num=n), kind='linear', fill_value=(0, 1), bounds_error=False
+        df(np.linspace(0, 1, num=n)),
+        np.linspace(0, 1, num=n),
+        kind="linear",
+        fill_value=(0, 1),
+        bounds_error=False,
     )
 
     # knots based on periodogram peaks
@@ -57,7 +61,7 @@ def dbspline(x: np.ndarray, knots: np.ndarray, degree=3, normalize=True):
 
     if normalize:
         # normalize the basis functions
-        mid_to_end_knots = knots_with_boundary[degree + 1:]
+        mid_to_end_knots = knots_with_boundary[degree + 1 :]
         start_to_mid_knots = knots_with_boundary[: (n_knots - degree - 1)]
         bs_int = (mid_to_end_knots - start_to_mid_knots) / (degree + 1)
         bs_int[bs_int == 0] = np.inf
@@ -81,7 +85,9 @@ def get_penalty_matrix(basis: np.ndarray, Lfdobj: int) -> np.ndarray:
     return np.dot(basis.T, basis)
 
 
-def _get_initial_spline_data(periodogram, k, degree, omega, diffMatrixOrder, eqSpacedKnots):
+def _get_initial_spline_data(
+    periodogram, k, degree, omega, diffMatrixOrder, eqSpacedKnots
+):
     V = _generate_initial_weights(periodogram, k)
     knots = knot_locator(periodogram, k, degree, eqSpacedKnots)
     db_list = dbspline(omega, knots, degree)

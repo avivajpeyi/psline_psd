@@ -10,6 +10,7 @@ __pycache__/
 *.txt
 # C extensions
 *.so
+src/pspline_psd/pspline_psd_version.py
 
 # Distribution / packaging
 .Python

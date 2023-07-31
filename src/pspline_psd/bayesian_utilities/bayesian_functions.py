@@ -1,9 +1,9 @@
 import numpy as np
-from bilby.core.prior import Gamma, PriorDict
+from bilby.core.prior import Gamma
 from numpy import dot
 
 from .whittle_utilities import psd_model
-from ..logger import logger
+
 
 def _vPv(v, P):
     return dot(dot(v.T, P), v)
@@ -56,7 +56,7 @@ def inv_τ_prior(v, periodogram, db_list, τα, τβ):
 
     shape = τα + n / 2
     rate = τβ + np.sum(whtn_pdgm) / (2 * np.pi) / 2
-    return Gamma(k=shape, theta=1/rate)
+    return Gamma(k=shape, theta=1 / rate)
 
 
 def sample_φδτ(k, v, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, periodogram, db_list, P):
@@ -64,9 +64,6 @@ def sample_φδτ(k, v, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, periodog
     δ = δ_prior(φ, φα, φβ, δα, δβ).sample().flat[0]
     τ = 1 / inv_τ_prior(v, periodogram, db_list, τα, τβ).sample()
     return φ, δ, τ
-
-
-# devtools::install_github("pmat747/psplinePsd")
 
 
 def llike(v, τ, pdgrm, db_list):
@@ -89,9 +86,8 @@ def llike(v, τ, pdgrm, db_list):
 
     integrand = np.log(f) + pdgrm / (f * 2 * np.pi)
     lnlike = -np.sum(integrand) / 2
-    # assert np.isfinite(lnlike), f"lnlike is not finite: {lnlike}"
     if not np.isfinite(lnlike):
-        logger.warning(f"lnlike is not finite: {lnlike}")
+        raise ValueError(f"lnlike is not finite: {lnlike}")
     return lnlike
 
 
@@ -99,5 +95,9 @@ def lpost(k, v, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, pdgrm, db_list, 
     logprior = lprior(k, v, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, P)
     loglike = llike(v, τ, pdgrm, db_list)
     logpost = logprior + loglike
-    assert (np.isfinite(logpost), f"logpost is not finite: lnpri{logprior}, lnlike{loglike}, lnpost{logpost}")
+    if not np.isfinite(logpost):
+        raise ValueError(
+            f"logpost is not finite: lnpri{logprior}, lnlike{loglike}, lnpost{logpost}"
+        )
+
     return logpost

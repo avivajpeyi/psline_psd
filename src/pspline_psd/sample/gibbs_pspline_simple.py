@@ -1,12 +1,11 @@
 import time
+
 import numpy as np
 from tqdm.auto import trange
 
 from ..bayesian_utilities import lpost, sample_φδτ
 from ..splines import _get_initial_spline_data
-from .sampler_initialisation import _get_initial_values, _argument_preconditions
-
-
+from .sampler_initialisation import _argument_preconditions, _get_initial_values
 from .sampling_result import Result
 
 
@@ -35,9 +34,11 @@ def gibbs_pspline_simple(
     data_scale = np.std(data)
     raw_data = data.copy()
     data, k = _argument_preconditions(**kwargs)
-    kwargs.update({'data': data, 'k': k})
+    kwargs.update({"data": data, "k": k})
     τ0, δ0, φ0, fz, periodogram, omega = _get_initial_values(**kwargs)
-    V0, db_list, P, knots = _get_initial_spline_data(periodogram, k, degree, omega, diffMatrixOrder, eqSpacedKnots)
+    V0, db_list, P, knots = _get_initial_spline_data(
+        periodogram, k, degree, omega, diffMatrixOrder, eqSpacedKnots
+    )
 
     # Empty lists for the MCMC samples
     n_samples = round(Ntotal / thin)
@@ -55,7 +56,7 @@ def gibbs_pspline_simple(
     φ, τ, δ, V = φ0, τ0, δ0, V0
 
     ptime = time.process_time()
-    for j in trange(n_samples, desc='MCMC sampling'):
+    for j in trange(n_samples, desc="MCMC sampling"):
 
         adj = j * thin
         V_star = V.copy()
@@ -87,10 +88,15 @@ def gibbs_pspline_simple(
     lpost_trace = lpost_trace[burn:]
 
     sampling_result = Result.compile_idata_from_sampling_results(
-        posterior_samples=samples, v_samples=samples_V,
-        lpost_trace=lpost_trace, frac_accept=accep_frac_list,
-        db_list=db_list, knots=knots,
-        periodogram=periodogram, omega=omega, raw_data=raw_data
+        posterior_samples=samples,
+        v_samples=samples_V,
+        lpost_trace=lpost_trace,
+        frac_accept=accep_frac_list,
+        db_list=db_list,
+        knots=knots,
+        periodogram=periodogram,
+        omega=omega,
+        raw_data=raw_data,
     )
     if metadata_plotfn:
         sampling_result.make_summary_plot(metadata_plotfn)

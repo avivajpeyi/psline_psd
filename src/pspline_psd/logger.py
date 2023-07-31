@@ -9,10 +9,7 @@ TIME = "{time:DD/MM HH:mm:ss}"
 logger.remove(0)
 logger.add(
     sys.stderr,
-    format=(
-        f"|{NAME}|{TIME}|"
-        "{level}| <green>{message}</green>"
-    ),
+    format=(f"|{NAME}|{TIME}|" "{level}| <green>{message}</green>"),
     colorize=True,
     level="INFO",
 )

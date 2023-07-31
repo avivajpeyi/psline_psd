@@ -1,5 +1,5 @@
-# TODO: convert to cpp/cython
 import numpy as np
+from scipy.interpolate import interp1d
 
 
 def psd_model(v: np.ndarray, db_list: np.ndarray, n: int):
@@ -61,8 +61,6 @@ def density_mixture(weights: np.ndarray, densities: np.ndarray) -> np.ndarray:
     return res
 
 
-from scipy.interpolate import interp1d
-
 def unroll_psd(qPsd, n):
     """unroll PSD from qPsd to psd of length n"""
     # q = np.zeros(n)
@@ -75,10 +73,11 @@ def unroll_psd(qPsd, n):
     #     q[j + 1] = qPsd[i]
     #
     # q[-1] = qPsd[-1]
+    # TODO: is this necessary?
 
     newx = np.linspace(0, 1, n)
     oldx = np.linspace(0, 1, len(qPsd))
-    f = interp1d(oldx, qPsd, kind='nearest')
+    f = interp1d(oldx, qPsd, kind="nearest")
     q = f(newx)
     assert np.all(q >= 0), f"q must be positive, but got {q}"
     return q
