@@ -1,9 +1,5 @@
 import numpy as np
-from scipy.fft import fft
 import matplotlib.pyplot as plt
-from .post_processing import generate_psd_quantiles
-
-from arviz import InferenceData
 
 
 def _plot_metadata(post_samples, counts, psd_quants, periodogram, db_list, knots, v, metadata_plotfn):
@@ -29,6 +25,7 @@ def _plot_metadata(post_samples, counts, psd_quants, periodogram, db_list, knots
     ax.set_xlabel("Splines")
     ax = fig.add_subplot(gs[4, :])
 
+    # plot the periodogram and the posterior median and 90% CI
     psd_up, psd_low = psd_quants[2, 1:], psd_quants[1, 1:]
     psd_x = np.linspace(0, 1, len(psd_up))
     ax.plot(psd_x, psd_quants[0, 1:], color='C4')
@@ -43,6 +40,7 @@ def _plot_metadata(post_samples, counts, psd_quants, periodogram, db_list, knots
     # turn axes off
     ax_twin.set_yticks([])
     ax_twin.set_ylim(0, 1)
+    # plot knots locations
     ax_twin.vlines(knots, 0, 0.1, color='tab:red', alpha=0.5)
     ax.set_ylim(ylims)
     ax.legend(frameon=False, loc='upper right')

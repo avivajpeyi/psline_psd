@@ -24,7 +24,7 @@ def get_r_penalty_matrix(k, degree, diffMatrixOrder):
     robjects.r('nknots <- length(knots)')
     robjects.r(
         'basisobj <- fda::create.bspline.basis(c(0, knots[nknots-1]), norder = degree + 1, nbasis = k - 1, breaks = knots[-nknots])')
-    robjects.r("plot(basisobj, knots=FALSE, las=1, lwd=2, main=sprintf('Num basis = %d' ,basisobj$nbasis))")
+    robjects.r("plot(basisobj, knots=TRUE, las=1, lwd=2, main=sprintf('Num basis = %d' ,basisobj$nbasis))")
     robjects.r("savePlot('r_basisobj.png', type='png')")
     robjects.r('P <- fda::bsplinepen(basisobj, Lfdobj = 1)')
     p = robjects.r['P']
