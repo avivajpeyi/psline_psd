@@ -1,4 +1,5 @@
 format: jb-book
 root: index
 chapters:
-  - file: examples/*.ipynbs
+  - file: api/api
+  - glob: examples/*

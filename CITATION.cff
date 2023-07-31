@@ -5,6 +5,9 @@ message: >-
   metadata from this file.
 type: software
 authors:
+  - given-names: Patricio
+    family-names: Maturana-Russel
+    email: p.maturana.russel@aut.ac.nz
   - given-names: Avi
     family-names: Vajpeyi
     email: avi.vajpeyi@auckland.ac.nz
@@ -14,8 +17,8 @@ authors:
     orcid: 'https://orcid.org/0000-0002-4146-1132'
 identifiers:
   - type: url
-    value: 'http://catalog.tess-atlas.cloud.edu.au/'
-    description: The online catalog from this work.
+    value: 'https://link.springer.com/article/10.1007/s00180-021-01066-7'
+    description: The paper describing the method behind this work.
 repository-code: 'https://github.com/avivajpeyi/pspline_psd'
 url: 'http://avivajpeyi.github.io/pspline_psd/'
 repository-artifact: 'https://pypi.org/project/tess-atlas/'
