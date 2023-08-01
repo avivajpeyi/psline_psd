@@ -6,7 +6,7 @@ from scipy.fft import fft
 from pspline_psd.bayesian_utilities.bayesian_functions import llike
 from pspline_psd.sample.gibbs_pspline_simple import gibbs_pspline_simple
 from pspline_psd.sample.post_processing import generate_psd_quantiles
-from pspline_psd.splines.generator import get_unormalised_spline_model
+from pspline_psd.splines.generator import get_unscaled_spline
 from pspline_psd.splines.initialisation import (
     _generate_initial_weights,
     dbspline,
@@ -190,7 +190,7 @@ def __collect_py_pspline_data(data, k, degree, omega):
     v = _generate_initial_weights(pdgrm, k)
     knots = knot_locator(pdgrm=pdgrm, k=k, degree=degree, eqSpaced=True)
     dblist = dbspline(x=omega, knots=knots, degree=degree)
-    psd = get_unormalised_spline_model(v, dblist)
+    psd = get_unscaled_spline(v, dblist)
 
     tau_vals = np.geomspace(0.01, 1, 100)
     lnl = np.zeros(len(tau_vals))

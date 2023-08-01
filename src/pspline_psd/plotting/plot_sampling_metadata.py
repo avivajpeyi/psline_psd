@@ -1,6 +1,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+LATEX_LABELS = dict(
+    φ=r"$\phi$",
+    δ=r"$\delta$",
+    τ=r"$\tau$",
+)
 
 def plot_metadata(
     post_samples, counts, psd_quants, periodogram, db_list, knots, v, metadata_plotfn
@@ -10,11 +15,11 @@ def plot_metadata(
     for i, p in enumerate(["φ", "δ", "τ"]):
         ax = fig.add_subplot(gs[i, 0])
         ax.plot(post_samples[:, i], color=f"C{i}")
-        ax.set_ylabel(p)
+        ax.set_ylabel(LATEX_LABELS[p])
         ax.set_xlabel("Iteration")
         ax = fig.add_subplot(gs[i, 1])
         ax.hist(post_samples[:, i], bins=50, color=f"C{i}")
-        ax.set_xlabel(p)
+        ax.set_xlabel(LATEX_LABELS[p])
     ax = fig.add_subplot(gs[3, 0])
     ax.plot(counts, color="C3")
     ax.set_ylabel("Frac accepted")
