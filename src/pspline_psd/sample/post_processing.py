@@ -2,7 +2,7 @@ import numpy as np
 from scipy.stats import median_abs_deviation
 from tqdm.auto import trange
 
-from pspline_psd.bayesian_utilities.bayesian_functions import psd_model
+from ..splines import build_spline_model
 
 
 def generate_psd_posterior(
@@ -15,7 +15,7 @@ def generate_psd_posterior(
     psd = np.zeros((n, len(freq)))
     kwargs = dict(db_list=db_list, n=len(freq))
     for i in trange(n, desc="Generating PSD posterior"):
-        psd[i, :] = psd_model(v=v_samples[i, :], **kwargs) * tau_samples[i]
+        psd[i, :] = build_spline_model(v=v_samples[i, :], **kwargs) * tau_samples[i]
     return psd
 
 

@@ -1,7 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from pspline_psd.splines import BSpline, knot_locator, dbspline
+
 from pspline_psd.sample.gibbs_pspline_simple import _get_initial_values
+from pspline_psd.splines.initialisation import BSpline, dbspline, knot_locator
 
 MAKE_PLOTS = True
 
@@ -26,15 +27,15 @@ def test_spline_basis_normalised(helpers):
 
     if MAKE_PLOTS:
         for i in range(len(basis.T)):
-            plt.plot(x, basis[:, i].ravel(), label=f'basis {i}', color=f"C{i}")
+            plt.plot(x, basis[:, i].ravel(), label=f"basis {i}", color=f"C{i}")
 
         # sum all basis functions
-        plt.plot(x, np.sum(basis, axis=1), label='sum of basis functions')
+        plt.plot(x, np.sum(basis, axis=1), label="sum of basis functions")
         # plot knots
-        plt.plot(np.array([-5, 0, 5]), np.zeros(3), 'x', color='k', label='knots')
+        plt.plot(np.array([-5, 0, 5]), np.zeros(3), "x", color="k", label="knots")
 
-        plt.legend(loc='upper left')
-        plt.savefig(f'{helpers.OUTDIR}/test_b_spline_matrix.png')
+        plt.legend(loc="upper left")
+        plt.savefig(f"{helpers.OUTDIR}/test_b_spline_matrix.png")
 
 
 def test_basis_same_as_r_package_basis(helpers):
@@ -54,11 +55,11 @@ def test_basis_same_as_r_package_basis(helpers):
     if MAKE_PLOTS:
         for i in range(k):
             if i == 0:
-                plt.plot(true_db_list[i], color='gray', label="True")
-                plt.plot(db_list[i], color='red', ls='--', label="Estimated")
+                plt.plot(true_db_list[i], color="gray", label="True")
+                plt.plot(db_list[i], color="red", ls="--", label="Estimated")
             else:
-                plt.plot(true_db_list[i], color='gray')
-                plt.plot(db_list[i], color='red', ls='--')
+                plt.plot(true_db_list[i], color="gray")
+                plt.plot(db_list[i], color="red", ls="--")
         plt.xticks([])
         plt.yticks([])
         plt.title("Basis functions")
@@ -66,5 +67,7 @@ def test_basis_same_as_r_package_basis(helpers):
         plt.tight_layout()
         plt.savefig(f"{helpers.OUTDIR}/basis_comparison.png")
 
-    residuals = np.sum(np.array([np.sum(np.abs(true_db_list[i] - db_list[i])) for i in range(k)]))
+    residuals = np.sum(
+        np.array([np.sum(np.abs(true_db_list[i] - db_list[i])) for i in range(k)])
+    )
     assert residuals < 1e-5

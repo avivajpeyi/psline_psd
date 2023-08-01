@@ -29,6 +29,7 @@ def gibbs_pspline_simple(
 ) -> Result:
     """
     Gibbs sampler for the Whittle likelihood with a P-spline prior on the log spectrum.
+    # TODO: switch to using bilby?
     """
     kwargs = locals()
     data_scale = np.std(data)
@@ -57,7 +58,6 @@ def gibbs_pspline_simple(
 
     ptime = time.process_time()
     for j in trange(n_samples, desc="MCMC sampling"):
-
         adj = j * thin
         V_star = V.copy()
         aux = np.arange(0, k - 1)
@@ -117,7 +117,6 @@ def _tune_proposal_distribution(aux, accept_frac, sigma, V, V_star, f_store, arg
 
     # Update "V_store" (weights)
     for g in range(k_1):
-
         Z = np.random.normal()
         U = np.log(np.random.uniform())
 

@@ -1,3 +1,4 @@
+"""Initialisation functions for the penalised B-splines."""
 import numpy as np
 from scipy.interpolate import BSpline, interp1d
 
@@ -38,7 +39,7 @@ def knot_locator(pdgrm: np.ndarray, k: int, degree: int, eqSpaced: bool = False)
     return knots
 
 
-def dbspline(x: np.ndarray, knots: np.ndarray, degree=3, normalize=True):
+def dbspline(x: np.ndarray, knots: np.ndarray, degree=3, normalize=True) -> np.ndarray:
     """Generate a B-spline density basis of any degree
 
     Parameters:
@@ -80,7 +81,7 @@ def get_penalty_matrix(basis: np.ndarray, Lfdobj: int) -> np.ndarray:
     penalty_matrix : np.ndarray of shape (k - degree - 1, k - degree - 1)
     """
 
-    # comupute the
+    raise NotImplementedError("This function is not yet implemented")
 
     return np.dot(basis.T, basis)
 
@@ -92,11 +93,9 @@ def _get_initial_spline_data(
     knots = knot_locator(periodogram, k, degree, eqSpacedKnots)
     db_list = dbspline(omega, knots, degree)
     if eqSpacedKnots:
-
         P = diff_matrix(k - 1, d=diffMatrixOrder)
         P = np.dot(P.T, P)
     else:
-
         P = get_penalty_matrix(db_list, diffMatrixOrder)
         P = P / np.linalg.norm(P)
     epsilon = 1e-6

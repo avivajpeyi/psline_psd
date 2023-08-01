@@ -62,7 +62,7 @@ def _argument_preconditions(
         k = min(round(n / 4), 40)
 
     if abs(np.mean(data)) > 1e-4:
-        logger.exception("data must be mean-centered before fitting")
+        raise ValueError("data must be mean-centered before fitting")
 
     assert k >= degree + 2, "k must be at least degree + 2"
     assert (

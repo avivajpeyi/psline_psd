@@ -2,7 +2,7 @@ import numpy as np
 from bilby.core.prior import Gamma
 from numpy import dot
 
-from .whittle_utilities import psd_model
+from ..splines import build_spline_model
 
 
 def _vPv(v, P):
@@ -45,7 +45,7 @@ def inv_τ_prior(v, periodogram, db_list, τα, τβ):
     # TODO: ask about the even/odd difference, and what 'bFreq' is
 
     n = len(periodogram)
-    psd = psd_model(v, db_list, n=n)
+    psd = build_spline_model(v, db_list, n=n)
     is_even = n % 2 == 0
     if is_even:
         whtn_pdgm = periodogram[1:-1] / psd[1:-1]
@@ -69,11 +69,12 @@ def sample_φδτ(k, v, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, periodog
 def llike(v, τ, pdgrm, db_list):
     """Whittle log likelihood"""
     # TODO: Move to using bilby likelihood
-    # TODO: the parameters to this function should be the sampling parameters, not the matrix itself!
+    # TODO: the parameters to this function should
+    #  be the sampling parameters, not the matrix itself!
     # todo: V should be computed in here
 
     n = len(pdgrm)
-    psd = psd_model(v, db_list, n=n)
+    psd = build_spline_model(v, db_list, n=n)
     f = τ * psd
 
     is_even = n % 2 == 0
