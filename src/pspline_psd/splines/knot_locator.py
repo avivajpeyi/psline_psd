@@ -9,7 +9,12 @@ class KnotLocatorType(enum.Enum):
     data_peak = 3
 
 
-def get_knot_locator(knot_locator_type):
+def get_knots(knot_locator_type, knots_kwargs):
+    """Returns the knots for the given knot locator type and kwargs"""
+    return __get_knot_locator(knot_locator_type)(**knots_kwargs)
+
+
+def __get_knot_locator(knot_locator_type):
     if knot_locator_type == KnotLocatorType.linear:
         return linearly_spaced_knots
     elif knot_locator_type == KnotLocatorType.log:
