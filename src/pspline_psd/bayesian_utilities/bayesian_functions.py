@@ -39,13 +39,13 @@ def δ_prior(φ, φα, φβ, δα, δβ):
     return Gamma(k=shape, theta=1 / rate)
 
 
-def inv_τ_prior(v, periodogram, db_list, τα, τβ):
+def inv_τ_prior(v, periodogram, spline_model, τα, τβ):
     """Inverse(?) prior for tau -- tau = 1/inv_tau_sample"""
 
     # TODO: ask about the even/odd difference, and what 'bFreq' is
 
     n = len(periodogram)
-    psd = build_spline_model(v, db_list, n=n)
+    psd = spline_model(weights=v, n=n)
     is_even = n % 2 == 0
     if is_even:
         whtn_pdgm = periodogram[1:-1] / psd[1:-1]
@@ -59,14 +59,14 @@ def inv_τ_prior(v, periodogram, db_list, τα, τβ):
     return Gamma(k=shape, theta=1 / rate)
 
 
-def sample_φδτ(k, v, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, periodogram, db_list, P):
+def sample_φδτ(k, v, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, periodogram, spline_model):
     φ = φ_prior(k, v, P, φα, φβ, δ).sample().flat[0]
     δ = δ_prior(φ, φα, φβ, δα, δβ).sample().flat[0]
-    τ = 1 / inv_τ_prior(v, periodogram, db_list, τα, τβ).sample()
+    τ = 1 / inv_τ_prior(v, periodogram, spline_model, τα, τβ).sample()
     return φ, δ, τ
 
 
-def llike(v, τ, pdgrm, db_list):
+def llike(v, τ, pdgrm, spline_model):
     """Whittle log likelihood"""
     # TODO: Move to using bilby likelihood
     # TODO: the parameters to this function should
@@ -74,8 +74,8 @@ def llike(v, τ, pdgrm, db_list):
     # todo: V should be computed in here
 
     n = len(pdgrm)
-    psd = build_spline_model(v, db_list, n=n)
-    f = τ * psd
+    spline_psd = spline_model(weights=v, n=n)
+    f = τ * spline_psd
 
     is_even = n % 2 == 0
     if is_even:
@@ -92,9 +92,9 @@ def llike(v, τ, pdgrm, db_list):
     return lnlike
 
 
-def lpost(k, v, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, pdgrm, db_list, P):
-    logprior = lprior(k, v, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, P)
-    loglike = llike(v, τ, pdgrm, db_list)
+def lpost(k, v, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, pdgrm, psline_model):
+    logprior = lprior(k, v, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, psline_model.penalty_matrix)
+    loglike = llike(v, τ, pdgrm, psline_model)
     logpost = logprior + loglike
     if not np.isfinite(logpost):
         raise ValueError(

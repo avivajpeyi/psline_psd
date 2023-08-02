@@ -37,8 +37,8 @@ def gibbs_pspline_simple(
     data, k = _argument_preconditions(**kwargs)
     kwargs.update({"data": data, "k": k})
     τ0, δ0, φ0, fz, periodogram, omega = _get_initial_values(**kwargs)
-    V0, db_list, P, knots = _get_initial_spline_data(
-        periodogram, k, degree, omega, diffMatrixOrder, eqSpacedKnots
+    V0, knots, pspline_model = _get_initial_spline_data(
+        periodogram, k, degree, diffMatrixOrder, eqSpacedKnots
     )
 
     # Empty lists for the MCMC samples
@@ -65,7 +65,7 @@ def gibbs_pspline_simple(
 
         for i in range(thin):
             itr = i + adj
-            args = [k, V, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, periodogram, db_list, P]
+            args = [k, V, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, periodogram, pspline_model]
             f_store = lpost(*args)
             # 1. explore the parameter space for new V
             V, V_star, accept_frac, sigma = _tune_proposal_distribution(
@@ -92,7 +92,7 @@ def gibbs_pspline_simple(
         v_samples=samples_V,
         lpost_trace=lpost_trace,
         frac_accept=accep_frac_list,
-        db_list=db_list,
+        basis=pspline_model.basis,
         knots=knots,
         periodogram=periodogram,
         omega=omega,

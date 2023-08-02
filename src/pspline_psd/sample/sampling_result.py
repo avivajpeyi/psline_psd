@@ -18,7 +18,7 @@ class Result:
         v_samples,
         lpost_trace,
         frac_accept,
-        db_list,
+        basis,
         knots,
         periodogram,
         omega,
@@ -61,10 +61,10 @@ class Result:
         )
 
         spline_data = az.dict_to_dataset(
-            dict(knots=knots, db_list=db_list),
+            dict(knots=knots, basis=basis),
             library=None,
             coords={},
-            dims={"knots": ["location"], "db_list": ["PSD", "basis"]},
+            dims={"knots": ["location"], "basis": ["PSD", "basis"]},
             default_dims=[],
             attrs={},
             index_origin=None,
@@ -94,8 +94,8 @@ class Result:
         return self.idata["coords"]["frequency"]
 
     @property
-    def db_list(self):
-        return self.idata["constant_data"]["db_list"]
+    def basis(self):
+        return self.idata["constant_data"]["basis"]
 
     @property
     def sample_stats(self):
@@ -122,7 +122,7 @@ class Result:
             accept_frac,
             psd_quants,
             periodogram,
-            self.db_list,
+            self.basis,
             self.knots,
             self.v[-1],
             fn,
@@ -134,7 +134,7 @@ class Result:
         # if attribute exists return
         if not hasattr(self, "_psd_quant"):
             self._psd_quant = generate_psd_quantiles(
-                self.omega, self.db_list, self.post_samples[:, 2], self.v
+                self.omega, self.basis, self.post_samples[:, 2], self.v
             )
         return self._psd_quant
 
@@ -142,6 +142,6 @@ class Result:
     def psd_posterior(self):
         if not hasattr(self, "_psds"):
             self._psds = generate_psd_posterior(
-                self.omega, self.db_list, self.post_samples[:, 2], self.v
+                self.omega, self.basis, self.post_samples[:, 2], self.v
             )
         return self._psds

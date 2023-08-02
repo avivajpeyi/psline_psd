@@ -5,6 +5,7 @@ from skfda.misc.regularization import L2Regularization
 import matplotlib.pyplot as plt
 from matplotlib.colors import TwoSlopeNorm
 from .utils import density_mixture
+from .generator import convert_v_to_weights, unroll_list_to_new_length
 
 
 class PSplines:
@@ -139,12 +140,30 @@ class PSplines:
 
     def __call__(
             self,
-            weights: np.ndarray,
+            weights: np.ndarray = [],
+            v: np.ndarray = [],
+            n: int = None,
     ) -> np.ndarray:
         """
         Generate a spline model from a vector of spline coefficients and a list of B-spline basis functions
         """
-        return density_mixture(weights, self.basis.T)
+        # check that weights or v is provided
+        if len(weights) == 0 and len(v) == 0:
+            raise ValueError("Either weights or v must be provided")
+        elif len(weights) > 0 and len(v) > 0:
+            raise ValueError("Only one of weights or v must be provided")
+        elif len(weights) == 0 and len(v) > 0:
+            weights = convert_v_to_weights(v)
+
+        spline = density_mixture(weights, self.basis.T)
+
+        if n is None:
+            n = self.n_grid_points
+
+        if len(spline) != n:
+            spline = unroll_list_to_new_length(spline, n)
+
+        return spline
 
     def plot_basis(
             self, ax=None, weights=None, basis_kwargs={}, spline_kwargs={}, knots_kwargs={}
@@ -175,7 +194,6 @@ class PSplines:
             kwg = basis_kwargs.copy()
             kwg['color'] = kwg.get('color', f'C{i}')
             ax.plot(self.grid_points, self.basis[:, i], **kwg)
-
 
         for i in range(self.n_knots):
             kwg = knots_kwargs.copy()
@@ -214,7 +232,6 @@ class PSplines:
         fig.colorbar(im, ax=ax, orientation="horizontal")
         ax.set_title("Penalty matrix")
         return fig, ax
-
 
     def plot(self, weights=None):
         """Plot the basis functions and the penalty matrix"""

@@ -1,6 +1,7 @@
 """Initialisation functions for the penalised B-splines."""
 import numpy as np
-from scipy.interpolate import BSpline, interp1d
+from scipy.interpolate import  interp1d
+from .p_splines import PSplines
 
 
 def knot_locator(pdgrm: np.ndarray, k: int, degree: int, eqSpaced: bool = False):
@@ -39,68 +40,17 @@ def knot_locator(pdgrm: np.ndarray, k: int, degree: int, eqSpaced: bool = False)
     return knots
 
 
-def dbspline(x: np.ndarray, knots: np.ndarray, degree=3, normalize=True) -> np.ndarray:
-    """Generate a B-spline density basis of any degree
 
-    Parameters:
-    -----------
-    x : np.ndarray of shape (n,)
-    knots : np.ndarray of shape (k,)
-    degree : int
-
-    Returns:
-    --------
-    B : np.ndarray of shape (len(x), len(knots) + degree -1 [I THINK])
-
-
-    """
-    knots_with_boundary = np.r_[[knots[0]] * degree, knots, [knots[-1]] * degree]
-    n_knots = len(knots_with_boundary)  # number of knots (including the external knots)
-    assert n_knots == degree * 2 + len(knots)
-
-    B = BSpline.design_matrix(x, knots_with_boundary, degree)
-
-    if normalize:
-        # normalize the basis functions
-        mid_to_end_knots = knots_with_boundary[degree + 1 :]
-        start_to_mid_knots = knots_with_boundary[: (n_knots - degree - 1)]
-        bs_int = (mid_to_end_knots - start_to_mid_knots) / (degree + 1)
-        bs_int[bs_int == 0] = np.inf
-        B = B / bs_int
-
-    assert B.shape == (len(x), len(knots) + degree - 1)
-    # assert np.allclose(np.sum(B, axis=1), 1), 'Basis functions do not sum to 1'
-    return B
-
-
-def get_penalty_matrix(basis: np.ndarray, Lfdobj: int) -> np.ndarray:
-    """Computes the penalty matrix for a B-spline basis of degree `degree` and `k` knots.
-
-    Returns
-    -------
-    penalty_matrix : np.ndarray of shape (k - degree - 1, k - degree - 1)
-    """
-
-    raise NotImplementedError("This function is not yet implemented")
-
-    return np.dot(basis.T, basis)
 
 
 def _get_initial_spline_data(
-    periodogram, k, degree, omega, diffMatrixOrder, eqSpacedKnots
+    periodogram, k, degree, diffMatrixOrder, eqSpacedKnots
 ):
     V = _generate_initial_weights(periodogram, k)
     knots = knot_locator(periodogram, k, degree, eqSpacedKnots)
-    db_list = dbspline(omega, knots, degree)
-    if eqSpacedKnots:
-        P = diff_matrix(k - 1, d=diffMatrixOrder)
-        P = np.dot(P.T, P)
-    else:
-        P = get_penalty_matrix(db_list, diffMatrixOrder)
-        P = P / np.linalg.norm(P)
-    epsilon = 1e-6
-    P = P + epsilon * np.eye(P.shape[1])  # P^(-1)=Sigma (Covariance matrix)
-    return V, db_list, P, knots
+    psplines = PSplines(knots=knots, degree=degree, diffMatrixOrder=diffMatrixOrder)
+    return V, knots, psplines
+
 
 
 def _generate_initial_weights(periodogram, k):
@@ -121,10 +71,3 @@ def _generate_initial_weights(periodogram, k):
     return v
 
 
-def diff_matrix(k, d=2):
-    assert d < k, "d must be lower than k"
-    assert np.all(np.array([d, k])) > 0, "d, k must be +ive ints"
-    out = np.eye(k)
-    for i in range(d):
-        out = np.diff(out)
-    return out.T
