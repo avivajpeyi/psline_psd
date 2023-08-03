@@ -24,10 +24,17 @@ class Result:
         omega,
         raw_data,
     ) -> "Result":
-        nsamp, k, _ = v_samples.shape
+        nsamp, n_basis_minus_1, _ = v_samples.shape
 
-        ndraws = np.arange(nsamp)
-        nknots = np.arange(k)
+        n_knots = len(knots)
+        n_gridpoints, n_basis = basis.shape
+
+        draw_idx = np.arange(nsamp)
+        knots_idx = np.arange(n_knots)
+        v_idx = np.arange(n_basis_minus_1)
+        basis_idx = np.arange(n_basis)
+        grid_point_idx = np.arange(n_gridpoints)
+
         posterior = az.dict_to_dataset(
             dict(
                 phi=posterior_samples[:, 0],
@@ -35,14 +42,14 @@ class Result:
                 tau=posterior_samples[:, 2],
                 v=v_samples,
             ),
-            coords=dict(knots=nknots, draws=ndraws),
+            coords=dict(v_idx=v_idx, draws=draw_idx),
             dims=dict(
                 phi=["draws"],
                 delta=[
                     "draws",
                 ],
                 tau=["draws"],
-                v=["draws", "knots"],
+                v=["draws", "v_idx"],
             ),
             default_dims=[],
             attrs={},
@@ -63,8 +70,12 @@ class Result:
         spline_data = az.dict_to_dataset(
             dict(knots=knots, basis=basis),
             library=None,
-            coords={},
-            dims={"knots": ["location"], "basis": ["PSD", "basis"]},
+            coords={
+                "location": knots_idx,
+                "grid_point": grid_point_idx,
+                "basis_idx": basis_idx,
+            },
+            dims={"knots": ["location"], "basis": ["grid_point", "basis_idx"]},
             default_dims=[],
             attrs={},
             index_origin=None,

@@ -45,7 +45,7 @@ def inv_τ_prior(v, periodogram, spline_model, τα, τβ):
     # TODO: ask about the even/odd difference, and what 'bFreq' is
 
     n = len(periodogram)
-    psd = spline_model(weights=v, n=n)
+    psd = spline_model(v=v, n=n)
     is_even = n % 2 == 0
     if is_even:
         whtn_pdgm = periodogram[1:-1] / psd[1:-1]
@@ -60,7 +60,7 @@ def inv_τ_prior(v, periodogram, spline_model, τα, τβ):
 
 
 def sample_φδτ(k, v, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, periodogram, spline_model):
-    φ = φ_prior(k, v, P, φα, φβ, δ).sample().flat[0]
+    φ = φ_prior(k, v, spline_model.penalty_matrix, φα, φβ, δ).sample().flat[0]
     δ = δ_prior(φ, φα, φβ, δα, δβ).sample().flat[0]
     τ = 1 / inv_τ_prior(v, periodogram, spline_model, τα, τβ).sample()
     return φ, δ, τ
@@ -74,7 +74,7 @@ def llike(v, τ, pdgrm, spline_model):
     # todo: V should be computed in here
 
     n = len(pdgrm)
-    spline_psd = spline_model(weights=v, n=n)
+    spline_psd = spline_model(v=v, n=n)
     f = τ * spline_psd
 
     is_even = n % 2 == 0

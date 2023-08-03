@@ -61,11 +61,12 @@ class PSplines:
     @property
     def n_knots(self):
         n = len(self.knots)
-        assert n >= self.degree + 2, "k must be at least degree + 2"
+        # assert n >= self.degree + 2, "k must be at least degree + 2"
         return n
 
     @property
     def n_basis(self) -> int:
+        """Number of basis elements"""
         return self.n_knots + self.degree - 1
 
     @property
@@ -78,8 +79,10 @@ class PSplines:
             self._grid_points = np.linspace(self.knots[0], self.knots[-1], self.n_grid_points)
         return self._grid_points
 
-    def __get_fda_bspline_basis(self):
-        return BSplineBasis(order=self.order, knots=self.knots, domain_range=(0, 1))
+    def __get_fda_bspline_basis(self, knots=None):
+        if knots is None:
+            knots = self.knots
+        return BSplineBasis(order=self.order, knots=knots)
 
     def __get_knots_with_boundary(self):
         """Add boundary knots to the knots array"""
@@ -133,7 +136,8 @@ class PSplines:
         --------
         penalty_matrix : np.ndarray of shape (n_basis_elements, n_basis_elements)
         """
-        basis = self.__get_fda_bspline_basis()
+        # exclude the last knot to avoid singular matrix
+        basis = self.__get_fda_bspline_basis(knots=self.knots[0:-1])
         regularization = L2Regularization(LinearDifferentialOperator(self.diffMatrixOrder))
         p = regularization.penalty_matrix(basis)
         return p / np.max(p)
@@ -154,6 +158,8 @@ class PSplines:
             raise ValueError("Only one of weights or v must be provided")
         elif len(weights) == 0 and len(v) > 0:
             weights = convert_v_to_weights(v)
+
+
 
         spline = density_mixture(weights, self.basis.T)
 

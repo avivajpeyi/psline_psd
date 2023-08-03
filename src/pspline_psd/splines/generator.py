@@ -9,7 +9,18 @@ def build_spline_model(v: np.ndarray, db_list: np.ndarray, n: int):
 
 
 def convert_v_to_weights(v: np.ndarray):
-    """Convert vector of spline coefficients to weights"""
+    """Convert vector of spline coefficients to weights
+
+    Parameters
+    ----------
+    v : np.ndarray
+        Vector of spline coefficients (length n_basis-1)
+
+    Returns
+    -------
+    weight : np.ndarray
+        Vector of weights (length n_basis)
+    """
     v = np.array(v)
     expV = np.exp(v)
 
@@ -25,6 +36,10 @@ def convert_v_to_weights(v: np.ndarray):
     s = 1 - np.sum(weight)
     # adding last element to weight
     weight = np.append(weight, 0 if s < 0 else s).ravel()
+
+    if len(weight) != len(v) + 1:
+        raise ValueError("Length of weight vector is not equal to length of v + 1")
+
     return weight
 
 
