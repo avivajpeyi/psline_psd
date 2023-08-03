@@ -129,7 +129,7 @@ class PSplines:
 
         return basis_matrix
 
-    def __generate_penalty_matrix(self) -> np.ndarray:
+    def __generate_penalty_matrix(self, epsilon = 1e-6) -> np.ndarray:
         """
         Generate a penalty matrix of any order
         Returns:
@@ -140,7 +140,9 @@ class PSplines:
         basis = self.__get_fda_bspline_basis(knots=self.knots[0:-1])
         regularization = L2Regularization(LinearDifferentialOperator(self.diffMatrixOrder))
         p = regularization.penalty_matrix(basis)
-        return p / np.max(p)
+        p / np.max(p)
+        p = p + epsilon * np.eye(p.shape[1])  # P^(-1)=Sigma (Covariance matrix)
+        return p
 
     def __call__(
             self,

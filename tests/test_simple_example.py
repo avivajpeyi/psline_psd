@@ -13,12 +13,12 @@ def test_simple_example(helpers):
     fn = f"{helpers.OUTDIR}/sample_metadata.png"
     gibbs_pspline_simple(
         data=data,
-        Ntotal=1000,
-        burnin=200,
+        Ntotal=3000,
+        burnin=1000,
         degree=3,
         eqSpacedKnots=True,
         compute_psds=True,
         metadata_plotfn=fn,
-        k=30
+        k=30,
     )
     assert os.path.exists(fn)
