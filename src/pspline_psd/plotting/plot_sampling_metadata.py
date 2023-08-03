@@ -35,20 +35,20 @@ def plot_metadata(
     # plot the periodogram and the posterior median and 90% CI
     psd_up, psd_low = psd_quants[2, 1:], psd_quants[1, 1:]
     psd_x = np.linspace(0, 1, len(psd_up))
-    ax.plot(psd_x, psd_quants[0, 1:], color="C4")
+    ax.plot(psd_x, psd_quants[0, 1:], color="tab:orange")
     ax.fill_between(
         psd_x,
         psd_low,
         psd_up,
-        color="C4",
+        color="tab:orange",
         alpha=0.2,
-        label="Posterior (median, 90% CI)",
+        label="Model",
     )
     ylims = ax.get_ylim()
     xpts = np.linspace(0, 1, len(periodogram))
-    ax.plot([], [], color="k", label="Periodogram", zorder=-10, alpha=0.5)
-    ax.plot(xpts, periodogram, color="k", zorder=-10, alpha=0.5)
-    ax.plot([], [], color="tab:red", label=f"{len(knots)} Knots xpos")
+    ax.scatter([], [], color="k", label="Data", zorder=-10,  s=0.5)
+    ax.scatter(xpts, periodogram, color="k", zorder=-10,  s=0.5)
+    ax.plot([], [], color="tab:red", label=f"{len(knots)} Knts")
     ax.set_xlim(xpts[2], xpts[-2])
     ax_twin = ax.twinx()
     # turn axes off
@@ -57,7 +57,7 @@ def plot_metadata(
     # plot knots locations
     ax_twin.vlines(knots, 0, 0.1, color="tab:red", alpha=0.5)
     ax.set_ylim(ylims)
-    ax.legend(frameon=False, loc="upper right")
+    ax.legend(frameon=False, loc="upper right", fontsize=8)
     ax.set_ylabel("PSD")
     fig.tight_layout()
     fig.savefig(metadata_plotfn)

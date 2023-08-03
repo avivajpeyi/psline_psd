@@ -16,7 +16,7 @@ def test_simple_example(helpers):
         Ntotal=3000,
         burnin=1000,
         degree=3,
-        eqSpacedKnots=True,
+        eqSpacedKnots=False,
         compute_psds=True,
         metadata_plotfn=fn,
         k=30,
