@@ -50,7 +50,7 @@ ytick.minor.pad:      3.4     # distance to the minor tick label in points
 font.family: sans-serif
 font.weight: normal
 font.size: 12
-font.serif: Computer Modern Roman
+font.serif: Computer Modern Sans Serif
 font.sans-serif: Computer Modern Sans Serif
 text.usetex: True
 
