@@ -17,7 +17,13 @@ CLASSIFIERS = [
     "Programming Language :: Python :: 3",
 ]
 
-INSTALL_REQUIRES = ["arviz", "scikit-fda", "matplotlib", "loguru"]
+INSTALL_REQUIRES = [
+    "arviz",
+    "scikit-fda",
+    "matplotlib",
+    "loguru",
+    "bilby"
+]
 EXTRA_REQUIRE = {
     "dev": [
         "pytest>=7.2.2",
@@ -28,7 +34,6 @@ EXTRA_REQUIRE = {
         "jupyter-book",
     ]
 }
-
 
 HERE = os.path.dirname(os.path.realpath(__file__))
 

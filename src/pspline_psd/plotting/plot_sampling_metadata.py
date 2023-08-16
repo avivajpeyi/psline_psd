@@ -60,5 +60,8 @@ def plot_metadata(
     ax.legend(frameon=False, loc="upper right", fontsize=8)
     ax.set_ylabel("PSD")
     fig.tight_layout()
-    fig.savefig(metadata_plotfn)
-    plt.close(fig)
+    if metadata_plotfn:
+        fig.savefig(metadata_plotfn)
+        plt.close(fig)
+    else:
+        return fig

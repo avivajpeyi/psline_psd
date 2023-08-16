@@ -174,7 +174,7 @@ class PSplines:
         return spline
 
     def plot_basis(
-            self, ax=None, weights=None, basis_kwargs={}, spline_kwargs={}, knots_kwargs={}
+            self, ax=None, weights=None, basis_kwargs={}, spline_kwargs={}, knots_kwargs={}, plot_weighted_basis=False
     ):
         """Plot the basis + knots.
 
@@ -198,10 +198,17 @@ class PSplines:
             _, ax = plt.subplots(1, 1, figsize=(5, 4))
         fig = ax.get_figure()
 
+        plot_weighted_basis = plot_weighted_basis and weights is not None
+
+
         for i in range(self.n_basis):
             kwg = basis_kwargs.copy()
             kwg['color'] = kwg.get('color', f'C{i}')
             ax.plot(self.grid_points, self.basis[:, i], **kwg)
+            if plot_weighted_basis:
+                kwg['ls'] = kwg.get('ls', '--')
+                weighted_b = self.basis[:, i] * weights[i]
+                ax.plot(self.grid_points, weighted_b, **kwg)
 
         for i in range(self.n_knots):
             kwg = knots_kwargs.copy()
@@ -237,15 +244,16 @@ class PSplines:
         ax.set_aspect("equal")
         ax.set_xlabel("Basis element")
         ax.set_ylabel("Basis element")
-        fig.colorbar(im, ax=ax, orientation="horizontal")
+        fig.colorbar(im, ax=ax, orientation="vertical", label="Penalty")
         ax.set_title("Penalty matrix")
         return fig, ax
 
     def plot(self, weights=None):
         """Plot the basis functions and the penalty matrix"""
         fig, ax = plt.subplots(1, 2, figsize=(8, 4))
-        self.plot_basis(ax=ax[0], weights=weights)
+        self.plot_basis(ax=ax[0], weights=weights, plot_weighted_basis=True)
         self.plot_penalty_matrix(ax=ax[1])
+        plt.tight_layout()
         return fig, ax
 
 

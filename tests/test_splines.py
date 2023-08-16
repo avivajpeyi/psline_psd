@@ -2,7 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from pspline_psd.sample.gibbs_pspline_simple import _get_initial_values
-from pspline_psd.splines.initialisation import BSpline, dbspline, knot_locator
+from pspline_psd.splines.initialisation import  knot_locator
+from pspline_psd.splines.p_splines import PSplines
 
 MAKE_PLOTS = True
 
@@ -11,9 +12,10 @@ def test_spline_creation():
     """Test that the splines can be generated"""
     degree = 2
     knots = np.array([0, 1, 2, 3, 4, 5, 6])
-    coeff = np.array([-1, 2, 0, -1])
-    bspline = BSpline(t=knots, c=coeff, k=degree)
-    assert bspline is not None
+    pspline = PSplines(knots=knots, degree=degree)
+    assert pspline is not None
+    fig, ax = pspline.plot(weights=np.random.randn(pspline.n_basis))
+    fig.show()
 
 
 def test_spline_basis_normalised(helpers):

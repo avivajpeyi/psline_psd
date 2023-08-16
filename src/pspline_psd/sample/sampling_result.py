@@ -116,7 +116,7 @@ class Result:
     def knots(self):
         return self.idata["constant_data"]["knots"]
 
-    def make_summary_plot(self, fn: str):
+    def make_summary_plot(self, fn: str=""):
         raw_data = self.idata["observed_data"]["raw_data"]
         data_scale = np.std(raw_data)
         raw_data = raw_data / data_scale
@@ -128,7 +128,7 @@ class Result:
         periodogram = np.abs(np.power(fft(raw_data), 2) / (2 * np.pi * n))[0:newn]
         periodogram = periodogram * np.power(data_scale, 2)
 
-        plot_metadata(
+        return plot_metadata(
             self.post_samples,
             accept_frac,
             psd_quants,
