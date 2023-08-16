@@ -153,7 +153,7 @@ const thebe_selector_output = ".output, .cell_output"
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../api/api.html">API</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Example: AR process</a></li>
-<li class="toctree-l1"><a class="reference internal" href="petra_data.html">Example: LISA White Dwarf background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wdb_gw_background.html">Example: LISA White Dwarf background</a></li>
 </ul>
 
     </div>
@@ -349,6 +349,8 @@ document.write(`
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-1-ar-3">Example 1: AR(3)</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-2-ar-4">Example 2: AR(4)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#equally-spaced-knots">Equally spaced knots</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#non-equally-spaced-knots">Non-equally spaced knots</a></li>
 </ul>
             </nav>
         </div>
@@ -364,12 +366,16 @@ document.write(`
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">matplotlib</span> inline
 <span class="o">%</span><span class="k">load_ext</span> autoreload
+<span class="o">!</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>git+https://github.com/avivajpeyi/pspline_psd.git<span class="w"> </span>-q
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>The autoreload extension is already loaded. To reload it, use:
-  %reload_ext autoreload
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>^C
+<span class=" -Color -Color-Red">ERROR: Operation cancelled by user</span>
+
+<span class=" -Color -Color-Bold">[</span><span class=" -Color -Color-Blue">notice</span><span class=" -Color -Color-Bold">]</span> A new release of pip is available: <span class=" -Color -Color-Red">23.0.1</span> -&gt; <span class=" -Color -Color-Green">23.2.1</span>
+<span class=" -Color -Color-Bold">[</span><span class=" -Color -Color-Blue">notice</span><span class=" -Color -Color-Bold">]</span> To update, run: <span class=" -Color -Color-Green">pip install --upgrade pip</span>
 </pre></div>
 </div>
 </div>
@@ -380,12 +386,45 @@ document.write(`
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.fft</span> <span class="kn">import</span> <span class="n">fft</span>
 <span class="kn">from</span> <span class="nn">pspline_psd.example_datasets.ar_data</span> <span class="kn">import</span> <span class="n">generate_ar_timeseries</span><span class="p">,</span> <span class="n">plot_ar_spectrogram_psd</span>
 <span class="kn">from</span> <span class="nn">pspline_psd.sample.gibbs_pspline_simple</span> <span class="kn">import</span> <span class="n">gibbs_pspline_simple</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">pspline_psd.plotting</span> <span class="kn">import</span> <span class="n">set_plotting_style</span><span class="p">,</span> <span class="n">plot_psd</span>
+<span class="kn">from</span> <span class="nn">pspline_psd.plotting</span> <span class="kn">import</span> <span class="n">set_plotting_style</span><span class="p">,</span> <span class="n">plot_metadata</span>
+
+
+<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 
 <span class="n">set_plotting_style</span><span class="p">()</span>
+
+
+
+<span class="k">def</span> <span class="nf">plot_psd</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">psd_quants</span><span class="p">,</span> <span class="n">separarte_y_axis</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="n">psd</span><span class="p">,</span> <span class="n">psd_p05</span><span class="p">,</span> <span class="n">psd_p95</span> <span class="o">=</span> <span class="n">psd_quants</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:],</span> <span class="n">psd_quants</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">:],</span> <span class="n">psd_quants</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="n">n</span><span class="p">,</span> <span class="n">newn</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">psd</span><span class="p">)</span>
+    <span class="n">periodogram</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">fft</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">n</span><span class="p">))[</span><span class="mi">0</span><span class="p">:</span><span class="n">newn</span><span class="p">]</span>
+    <span class="n">psd_x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">3.14</span><span class="p">,</span> <span class="n">newn</span><span class="p">)</span>
+
+    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
+
+    <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">psd_x</span><span class="p">,</span> <span class="n">periodogram</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Data&quot;</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mf">0.75</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">separarte_y_axis</span><span class="p">:</span>
+        <span class="n">ax1</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">twinx</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ax1</span> <span class="o">=</span> <span class="n">ax</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">psd_x</span><span class="p">,</span> <span class="n">psd</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;tab:orange&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Posterior&quot;</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span>
+        <span class="n">psd_x</span><span class="p">,</span> <span class="n">psd_p05</span><span class="p">,</span> <span class="n">psd_p95</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;tab:orange&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.0</span>
+    <span class="p">)</span>
+
+    <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">markerscale</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">frameon</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;PSD&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Freq&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">minorticks_off</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">fig</span>
 </pre></div>
 </div>
 </div>
@@ -395,36 +434,35 @@ document.write(`
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">data</span> <span class="o">=</span> <span class="n">generate_ar_timeseries</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">n_samples</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
-<span class="n">fig</span> <span class="o">=</span> <span class="n">plot_ar_spectrogram_psd</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;AR(3) Data&#39;</span><span class="p">);</span>
-<span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;ar3_data.png&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-<img src="ar3_data.png" width="400"><div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">mcmc</span> <span class="o">=</span> <span class="n">gibbs_pspline_simple</span><span class="p">(</span>
-    <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">Ntotal</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span> <span class="n">burnin</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">degree</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">eqSpacedKnots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">compute_psds</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">metadata_plotfn</span><span class="o">=</span><span class="s2">&quot;psline_sampling_ar3.png&quot;</span>
-<span class="p">)</span>
+<span class="n">fig</span> <span class="o">=</span> <span class="n">plot_ar_spectrogram_psd</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;AR(3) Data&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<script type="application/vnd.jupyter.widget-view+json">{"model_id": "e5a3be2f55be48e9b48215d4d07f9d50", "version_major": 2, "version_minor": 0}</script><script type="application/vnd.jupyter.widget-view+json">{"model_id": "94874389c7f240b4b7711c49113a2395", "version_major": 2, "version_minor": 0}</script><div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/avaj040/Documents/projects/pspline_psd/src/pspline_psd/plotting/plot_sampling_metadata.py:62: UserWarning: The figure layout has changed to tight
-  fig.tight_layout()
+<img alt="../_images/6665455d931babe5737246f0c413399558d9fb94e331631a842982f4e6e4b831.png" src="../_images/6665455d931babe5737246f0c413399558d9fb94e331631a842982f4e6e4b831.png" />
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">mcmc</span> <span class="o">=</span> <span class="n">gibbs_pspline_simple</span><span class="p">(</span>
+    <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">Ntotal</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span> <span class="n">burnin</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">degree</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">eqSpacedKnots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">compute_psds</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+<span class="n">fig</span> <span class="o">=</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">make_summary_plot</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "859b49e79feb48fba187a53ae3ac8ca0", "version_major": 2, "version_minor": 0}</script><script type="application/vnd.jupyter.widget-view+json">{"model_id": "fd923866484945dd8b483bf01a401b64", "version_major": 2, "version_minor": 0}</script><img alt="../_images/efc0028746c78add35de3687467f6ac4e1f24777195a7c498497efd3409e652c.png" src="../_images/efc0028746c78add35de3687467f6ac4e1f24777195a7c498497efd3409e652c.png" />
 </div>
-<img src="psline_sampling_ar3.png" width="400"><div class="cell docutils container">
+</div>
+<div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">plot_psd</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">psd_quantiles</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/22d67f1247581e923ac70eb040953b7ecdbea616e7c9aae9b99d0b8fbffd6d7e.png" src="../_images/22d67f1247581e923ac70eb040953b7ecdbea616e7c9aae9b99d0b8fbffd6d7e.png" />
+<img alt="../_images/d4466904af35f75e3e700a42478f097351d2350a25d6f429d4426b854dc3c997.png" src="../_images/d4466904af35f75e3e700a42478f097351d2350a25d6f429d4426b854dc3c997.png" />
 </div>
 </div>
 </section>
@@ -434,60 +472,66 @@ document.write(`
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">data</span> <span class="o">=</span> <span class="n">generate_ar_timeseries</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">n_samples</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
 <span class="n">fig</span> <span class="o">=</span> <span class="n">plot_ar_spectrogram_psd</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;AR(4) Data&#39;</span><span class="p">);</span>
-<span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;ar4_data.png&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
+<span class="n">fig</span>
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<img alt="../_images/0af6f8e4df5b804b4f1d102dbc4774d67753dfe6d22b7a2b56249f71efb8094a.png" src="../_images/0af6f8e4df5b804b4f1d102dbc4774d67753dfe6d22b7a2b56249f71efb8094a.png" />
+<img alt="../_images/0af6f8e4df5b804b4f1d102dbc4774d67753dfe6d22b7a2b56249f71efb8094a.png" src="../_images/0af6f8e4df5b804b4f1d102dbc4774d67753dfe6d22b7a2b56249f71efb8094a.png" />
 </div>
-<img src="ar4_data.png" width="400"><div class="cell docutils container">
+</div>
+</section>
+<section id="equally-spaced-knots">
+<h2>Equally spaced knots<a class="headerlink" href="#equally-spaced-knots" title="Permalink to this heading">#</a></h2>
+<div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">mcmc</span> <span class="o">=</span> <span class="n">gibbs_pspline_simple</span><span class="p">(</span>
-    <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">Ntotal</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span> <span class="n">burnin</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">degree</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">eqSpacedKnots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">compute_psds</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">metadata_plotfn</span><span class="o">=</span><span class="s2">&quot;psline_sampling_ar4.png&quot;</span>
+    <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">Ntotal</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span> <span class="n">burnin</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">degree</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">eqSpacedKnots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">compute_psds</span><span class="o">=</span><span class="kc">True</span>
 <span class="p">)</span>
+<span class="n">mcmc</span><span class="o">.</span><span class="n">make_summary_plot</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<script type="application/vnd.jupyter.widget-view+json">{"model_id": "fb3a5d0daa224e5fae3482cee6aec10c", "version_major": 2, "version_minor": 0}</script><script type="application/vnd.jupyter.widget-view+json">{"model_id": "fb79b8eb600f4869bf0f7a318622aabf", "version_major": 2, "version_minor": 0}</script><div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/avaj040/Documents/projects/pspline_psd/src/pspline_psd/plotting/plot_sampling_metadata.py:62: UserWarning: The figure layout has changed to tight
-  fig.tight_layout()
-</pre></div>
-</div>
-</div>
-</div>
-<img src="psline_sampling_ar4.png" width="400"><div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">plot_psd</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">psd_quantiles</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<img alt="../_images/e6a094341d574d6a7bf271eb83265f82b93076324ce8c9f021dd8b257662544f.png" src="../_images/e6a094341d574d6a7bf271eb83265f82b93076324ce8c9f021dd8b257662544f.png" />
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "083a82d99a1649dab6e1523d23a62aac", "version_major": 2, "version_minor": 0}</script><script type="application/vnd.jupyter.widget-view+json">{"model_id": "46a48fe7b1fd4954a39c8fdb0fb49e33", "version_major": 2, "version_minor": 0}</script><img alt="../_images/ba5b00178445fcd8050f0093e91baca06f80f6bf04ce20157725adadff9ad896.png" src="../_images/ba5b00178445fcd8050f0093e91baca06f80f6bf04ce20157725adadff9ad896.png" />
+<img alt="../_images/ba5b00178445fcd8050f0093e91baca06f80f6bf04ce20157725adadff9ad896.png" src="../_images/ba5b00178445fcd8050f0093e91baca06f80f6bf04ce20157725adadff9ad896.png" />
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">mcmc</span> <span class="o">=</span> <span class="n">gibbs_pspline_simple</span><span class="p">(</span>
-    <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">Ntotal</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span> <span class="n">burnin</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">degree</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">eqSpacedKnots</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">compute_psds</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">metadata_plotfn</span><span class="o">=</span><span class="s2">&quot;psline_sampling_ar4_non_equal.png&quot;</span>
-<span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">plot_psd</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">psd_quantiles</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<script type="application/vnd.jupyter.widget-view+json">{"model_id": "f893d90be4d14725b60a5c61e19a6f0e", "version_major": 2, "version_minor": 0}</script><script type="application/vnd.jupyter.widget-view+json">{"model_id": "af392c6a989a4884bcfd0250e86820be", "version_major": 2, "version_minor": 0}</script><div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/avaj040/Documents/projects/pspline_psd/src/pspline_psd/plotting/plot_sampling_metadata.py:62: UserWarning: The figure layout has changed to tight
-  fig.tight_layout()
+<img alt="../_images/c3e4c1a4651247f75a743fd429907807ad5e6e9f73e235c4b5887bb68f349a8d.png" src="../_images/c3e4c1a4651247f75a743fd429907807ad5e6e9f73e235c4b5887bb68f349a8d.png" />
+</div>
+</div>
+</section>
+<section id="non-equally-spaced-knots">
+<h2>Non-equally spaced knots<a class="headerlink" href="#non-equally-spaced-knots" title="Permalink to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">mcmc</span> <span class="o">=</span> <span class="n">gibbs_pspline_simple</span><span class="p">(</span>
+    <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">Ntotal</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span> <span class="n">burnin</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">degree</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">eqSpacedKnots</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">compute_psds</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+<span class="n">fig</span> <span class="o">=</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">make_summary_plot</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "59b87ba426a94fbab1fb1bdecb562338", "version_major": 2, "version_minor": 0}</script><script type="application/vnd.jupyter.widget-view+json">{"model_id": "e0d116f58daa432085bdefa0f6c3e314", "version_major": 2, "version_minor": 0}</script><img alt="../_images/ebe44803dc9869f06110bbbe6121069579cdc43b1017f7f811f2eec5c3ae7784.png" src="../_images/ebe44803dc9869f06110bbbe6121069579cdc43b1017f7f811f2eec5c3ae7784.png" />
 </div>
-<img src="psline_sampling_ar4_non_equal.png" width="400"><div class="cell docutils container">
+</div>
+<div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">plot_psd</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">psd_quantiles</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/890a6b1c476ca2ce6da7407e77491b3c546a8128e9836fb0ac9737fac42b5842.png" src="../_images/890a6b1c476ca2ce6da7407e77491b3c546a8128e9836fb0ac9737fac42b5842.png" />
+<img alt="../_images/29f294bc09e99c6f0f7d4b92a030602a30749f722274623ce5eedb04bb582cf0.png" src="../_images/29f294bc09e99c6f0f7d4b92a030602a30749f722274623ce5eedb04bb582cf0.png" />
 </div>
 </div>
 </section>
@@ -562,6 +606,8 @@ document.write(`
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-1-ar-3">Example 1: AR(3)</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-2-ar-4">Example 2: AR(4)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#equally-spaced-knots">Equally spaced knots</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#non-equally-spaced-knots">Non-equally spaced knots</a></li>
 </ul>
   </nav></div>
 

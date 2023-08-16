@@ -64,7 +64,7 @@ const thebe_selector_output = ".output, .cell_output"
     <script>DOCUMENTATION_OPTIONS.pagename = 'examples/p_splines';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Example: LISA White Dwarf background" href="petra_data.html" />
+    <link rel="next" title="Example: LISA White Dwarf background" href="wdb_gw_background.html" />
     <link rel="prev" title="Example: AR process" href="example.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -153,7 +153,7 @@ const thebe_selector_output = ".output, .cell_output"
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../api/api.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example.html">Example: AR process</a></li>
-<li class="toctree-l1"><a class="reference internal" href="petra_data.html">Example: LISA White Dwarf background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wdb_gw_background.html">Example: LISA White Dwarf background</a></li>
 </ul>
 
     </div>
@@ -359,7 +359,61 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article" role="main">
                   
-  
+  <div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">matplotlib</span> inline
+<span class="o">%</span><span class="k">load_ext</span> autoreload
+<span class="o">!</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>git+https://github.com/avivajpeyi/pspline_psd.git<span class="w"> </span>-q
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>^C
+<span class=" -Color -Color-Red">ERROR: Operation cancelled by user</span>
+
+<span class=" -Color -Color-Bold">[</span><span class=" -Color -Color-Blue">notice</span><span class=" -Color -Color-Bold">]</span> A new release of pip is available: <span class=" -Color -Color-Red">23.0.1</span> -&gt; <span class=" -Color -Color-Green">23.2.1</span>
+<span class=" -Color -Color-Bold">[</span><span class=" -Color -Color-Blue">notice</span><span class=" -Color -Color-Bold">]</span> To update, run: <span class=" -Color -Color-Green">pip install --upgrade pip</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">pspline_psd.splines.p_splines</span> <span class="kn">import</span> <span class="n">PSplines</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
+<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+
+<span class="n">knots</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+<span class="n">degree</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">pspline</span> <span class="o">=</span> <span class="n">PSplines</span><span class="p">(</span><span class="n">knots</span><span class="p">,</span> <span class="n">degree</span><span class="p">,</span> <span class="p">)</span>
+<span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">pspline</span><span class="o">.</span><span class="n">n_basis</span><span class="p">)</span>
+<span class="n">pspline</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/662f0f5bd1619aac6ce2559b0b97728421e7a148ec22b8b4b91cda210e1e6bfe.png" src="../_images/662f0f5bd1619aac6ce2559b0b97728421e7a148ec22b8b4b91cda210e1e6bfe.png" />
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">knots</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span><span class="mf">0.6</span><span class="p">,</span><span class="mf">0.85</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+<span class="n">degree</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">pspline</span> <span class="o">=</span> <span class="n">PSplines</span><span class="p">(</span><span class="n">knots</span><span class="p">,</span> <span class="n">degree</span><span class="p">,</span> <span class="p">)</span>
+<span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span><span class="mf">0.7</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mf">0.2</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">pspline</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/2dc5b2b633826fbff42e3d6f3376927cbf4ea53056d64d55b51b69c2e98d8c2a.png" src="../_images/2dc5b2b633826fbff42e3d6f3376927cbf4ea53056d64d55b51b69c2e98d8c2a.png" />
+</div>
+</div>
+
     <script type="text/x-thebe-config">
     {
         requestKernel: true,
@@ -401,7 +455,7 @@ document.write(`
       </div>
     </a>
     <a class="right-next"
-       href="petra_data.html"
+       href="wdb_gw_background.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
