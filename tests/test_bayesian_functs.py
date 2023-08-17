@@ -10,10 +10,10 @@ from pspline_psd.sample.gibbs_pspline_simple import (
 from pspline_psd.splines.generator import build_spline_model, unroll_list_to_new_length
 from pspline_psd.splines.initialisation import (
     _generate_initial_weights,
-    dbspline,
     knot_locator,
 )
 from pspline_psd.utils import get_fz, get_periodogram
+from pspline_psd.splines.p_splines import PSplines
 
 MAKE_PLOTS = True
 
@@ -64,31 +64,28 @@ def test_llike(helpers):
 
     periodogram = get_periodogram(fz)
     knots = knot_locator(data, k=k, degree=degree, eqSpaced=True)
-    db_list = dbspline(omega, knots, degree=degree)
-    n = len(periodogram)
-
-    psd = build_spline_model(V, db_list, n)
-    assert not np.any(psd == 0)
-
-    llike_val = llike(v=V, τ=τ, pdgrm=periodogram, db_list=db_list)
+    spline_model = PSplines(knots, degree=degree)
+    llike_val = llike(v=V, τ=τ, pdgrm=periodogram, spline_model=spline_model)
     assert not np.isnan(llike_val)
+    psd = spline_model(v=V)
+    assert not np.isnan(psd).any()
 
     ll_vals = helpers.load_ll()
     highest_ll_idx = np.argmax(ll_vals)
     best_V = helpers.load_v()[:, highest_ll_idx]
     best_τ = helpers.load_tau()[highest_ll_idx]
-    best_llike_val = llike(v=best_V, τ=best_τ, pdgrm=periodogram, db_list=db_list)
+    best_llike_val = llike(v=best_V, τ=best_τ, pdgrm=periodogram, spline_model=spline_model)
 
     # assert best_llike_val == ll_vals[highest_ll_idx]
     assert np.abs(llike_val - best_llike_val) < 100
-    best_psd = build_spline_model(best_V, db_list, n)
+    best_psd = spline_model(v=best_V)
 
     if MAKE_PLOTS:
         fig = __plot_psd(
             periodogram,
             [psd, best_psd],
             [f"PSD lnl{llike_val:.2f}", f"PSD lnl{best_llike_val:.2f}"],
-            db_list,
+            spline_model.basis,
         )
         fig.savefig(f"{helpers.OUTDIR}/test_llike.png")
         fig.show()

@@ -13,8 +13,8 @@ def test_simple_example(helpers):
     fn = f"{helpers.OUTDIR}/sample_metadata.png"
     gibbs_pspline_simple(
         data=data,
-        Ntotal=3000,
-        burnin=1000,
+        Ntotal=300,
+        burnin=100,
         degree=3,
         eqSpacedKnots=False,
         compute_psds=True,

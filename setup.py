@@ -1,6 +1,7 @@
 import codecs
 import os
 import re
+import sys
 
 from setuptools import find_packages, setup
 
@@ -13,16 +14,28 @@ CLASSIFIERS = [
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
-    "Programming Language :: Python",
-    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
 ]
+
+# ensure python 3.8
+python_version = (3, 8)
+if sys.version_info == python_version:
+    error = """
+    This package requires Python {}.{}
+    """.format(
+        *python_version
+    )
+    sys.exit(error)
+
 
 INSTALL_REQUIRES = [
     "arviz",
     "scikit-fda",
     "matplotlib",
     "loguru",
-    "bilby"
+    "bilby",
+    "statsmodels",
+
 ]
 EXTRA_REQUIRE = {
     "dev": [

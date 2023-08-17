@@ -20,7 +20,7 @@ jobs:
     # The type of runner that the job will run on
     strategy:
       matrix:
-        python-versions: [3.9]
+        python-versions: [3.8]
         os: [ubuntu-20.04]
     runs-on: ${{ matrix.os }}
 
@@ -35,9 +35,9 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install poetry tox tox-gh-actions
+          pip install -e .[dev]
 
-      - name: test with tox
+      - name: test with pytest
         run:
           tox
 

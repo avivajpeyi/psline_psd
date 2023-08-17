@@ -8,15 +8,16 @@ from pspline_psd.splines.p_splines import PSplines
 MAKE_PLOTS = True
 
 
-def test_spline_creation():
+def test_spline_creation(tmpdir):
     """Test that the splines can be generated"""
     degree = 2
     knots = np.array([0, 1, 2, 3, 4, 5, 6])
     pspline = PSplines(knots=knots, degree=degree)
     assert pspline is not None
     fig, ax = pspline.plot(weights=np.random.randn(pspline.n_basis))
-    fig.show()
-
+    if MAKE_PLOTS:
+        plt.savefig(tmpdir.join("test_spline_creation.png"))
+        plt.close()
 
 def test_spline_basis_normalised(helpers):
     """Test that the spline basis are normalised"""

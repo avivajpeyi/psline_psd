@@ -1,5 +1,6 @@
 format: jb-book
 root: index
 chapters:
+  - file: contributing
   - file: api/api
   - glob: examples/*
