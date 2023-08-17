@@ -257,9 +257,4 @@ class PSplines:
         return fig, ax
 
 
-def test_pslines():
-    knots = np.linspace(0, 1, 5)
-    degree = 2
-    pspline = PSplines(knots, degree)
-    pspline.plot(weights=np.random.randn(pspline.n_basis))
-    plt.show()
+
