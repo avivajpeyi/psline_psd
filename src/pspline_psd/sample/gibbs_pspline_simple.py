@@ -66,14 +66,14 @@ def gibbs_pspline_simple(
         for i in range(thin):
             itr = i + adj
             args = [k, V, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, periodogram, pspline_model]
-            f_store = lpost(*args)
+            lpost_store = lpost(*args)
             # 1. explore the parameter space for new V
             V, V_star, accept_frac, sigma = _tune_proposal_distribution(
-                aux, accept_frac, sigma, V, V_star, f_store, args
+                aux, accept_frac, sigma, V, V_star, lpost_store, args
             )
             args[1] = V
             accep_frac_list[itr] = accept_frac  # Acceptance probability
-            lpost_trace[itr] = f_store  # log post trace
+            lpost_trace[itr] = lpost_store  # log post trace
             # 2. sample new values for φ, δ, τ
             φ, δ, τ = sample_φδτ(*args)
 
@@ -104,7 +104,15 @@ def gibbs_pspline_simple(
     return sampling_result
 
 
-def _tune_proposal_distribution(aux, accept_frac, sigma, V, V_star, f_store, args):
+def _tune_proposal_distribution(
+    aux: np.array,
+    accept_frac: float,
+    sigma: float,
+    V: np.array,
+    V_star: np.array,
+    lpost_store,
+    args,
+):
     k_1 = args[0] - 1
 
     # tunning proposal distribution
@@ -123,13 +131,15 @@ def _tune_proposal_distribution(aux, accept_frac, sigma, V, V_star, f_store, arg
         pos = aux[g]
         V_star[pos] = V[pos] + sigma * Z
         args[1] = V_star  # update V_star
-        f_star = lpost(*args)
+        lpost_star = lpost(*args)
 
         # is the proposed V_star better than the current V_store?
-        alpha1 = np.min([0, (f_star - f_store).ravel()[0]])  # log acceptance ratio
+        alpha1 = np.min(
+            [0, (lpost_star - lpost_store).ravel()[0]]
+        )  # log acceptance ratio
         if U < alpha1:
             V[pos] = V_star[pos]  # Accept W.star
-            f_store = f_star
+            lpost_store = lpost_star
             accept_count += 1  # acceptance probability
         else:
             V_star[pos] = V[pos]  # reset proposal value

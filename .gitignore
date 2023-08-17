@@ -12,6 +12,8 @@ __pycache__/
 *.so
 src/pspline_psd/pspline_psd_version.py
 
+logpsplinePsd_AR
+
 # Distribution / packaging
 .Python
 env/
