@@ -49,11 +49,3 @@ jobs:
           fail_ci_if_error: true
           files: coverage.xml
 
-
-      - name: publish to Test PyPI
-        uses: pypa/gh-action-pypi-publish@master
-        with:
-          user: __token__
-          password: ${{ secrets.TEST_PYPI_API_TOKEN}}
-          repository_url: https://test.pypi.org/legacy/
-          skip_existing: true
