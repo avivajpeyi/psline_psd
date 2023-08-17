@@ -39,7 +39,7 @@ jobs:
 
       - name: test with pytest
         run:
-          tox
+          pytest --cov=pspline_psd --cov-report=xml tests
 
       - name: list files
         run: ls -l .

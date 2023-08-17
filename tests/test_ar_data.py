@@ -2,12 +2,12 @@ from pspline_psd.example_datasets.ar_data import generate_ar_timeseries, plot_ar
 import os
 
 
-def test_ar_datagen(tmp_path):
+def test_ar_datagen(tmpdir):
     # Generate and plot AR timeseries of different orders
     for order in range(1, 5):
         ar_series = generate_ar_timeseries(order=order)
         title = f'AR({order})'
         fig = plot_ar_spectrogram_psd(ar_series, title)
-        fname = tmp_path / f'ar_{order}.png'
+        fname = f'{tmpdir}/ar_{order}.png'
         fig.savefig(fname)
         assert os.path.exists(fname)

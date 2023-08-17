@@ -1,10 +1,12 @@
 """Initialisation functions for the penalised B-splines."""
 import numpy as np
-from scipy.interpolate import  interp1d
+from scipy.interpolate import interp1d
 from .p_splines import PSplines
 
+from typing import Tuple, Union
 
-def knot_locator(pdgrm: np.ndarray, k: int, degree: int, eqSpaced: bool = False):
+
+def knot_locator(pdgrm: np.ndarray, k: int, degree: int, eqSpaced: bool = False) -> np.array:
     """Determines the knot locations for a B-spline basis of degree `degree` and `k` knots.
 
     Returns
@@ -40,20 +42,16 @@ def knot_locator(pdgrm: np.ndarray, k: int, degree: int, eqSpaced: bool = False)
     return knots
 
 
-
-
-
 def _get_initial_spline_data(
-    periodogram, k, degree, diffMatrixOrder, eqSpacedKnots
-):
+        periodogram: np.ndarray, k: int, degree: int, diffMatrixOrder: int, eqSpacedKnots: bool
+) -> Tuple[np.ndarray, np.ndarray, PSplines]:
     V = _generate_initial_weights(periodogram, k)
     knots = knot_locator(periodogram, k, degree, eqSpacedKnots)
     psplines = PSplines(knots=knots, degree=degree, diffMatrixOrder=diffMatrixOrder)
     return V, knots, psplines
 
 
-
-def _generate_initial_weights(periodogram, k):
+def _generate_initial_weights(periodogram: np.ndarray, k: int) -> np.ndarray:
     scaled_periodogram = periodogram / np.sum(periodogram)
     idx = np.linspace(0, len(scaled_periodogram) - 1, k)
     idx = np.round(idx).astype(int)
@@ -69,5 +67,3 @@ def _generate_initial_weights(periodogram, k):
     v = v.reshape(-1, 1)
     assert v.shape == (k - 1, 1)
     return v
-
-

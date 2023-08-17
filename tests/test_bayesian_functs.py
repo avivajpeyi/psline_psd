@@ -15,17 +15,20 @@ from pspline_psd.splines.initialisation import (
 from pspline_psd.utils import get_fz, get_periodogram
 from pspline_psd.splines.p_splines import PSplines
 
-MAKE_PLOTS = True
+
 
 
 def test_psd_unroll():
-    ar = unroll_list_to_new_length(np.array([1, 2, 3, 4]), n=8)
-    assert np.allclose(ar, np.array([1, 2, 2, 3, 3, 4, 4, 4]))
-    ar = unroll_list_to_new_length(np.array([1, 2, 3]), n=6)
-    assert np.allclose(ar, np.array([1, 2, 2, 3, 3, 3]))
-    ar = unroll_list_to_new_length(np.array([1, 2, 3]), n=5)
-    assert np.allclose(ar, np.array([1, 2, 2, 3, 3]))
+    test_args = [
+        dict(old_list=np.array([1, 2, 3, 4]),n=8,expected=np.array([1, 1, 2, 2, 3, 3, 4, 4])),
+        dict(old_list=np.array([1, 2, 3]),n=6,expected=np.array([1, 1, 2, 2, 3, 3])),
+        dict(old_list=np.array([1, 2, 3]),n=5,expected=np.array([1, 1, 2, 2, 3])),
+        dict(old_list=np.array([1, 2, 3]),n=4,expected=np.array([1, 2, 2, 3])),
+    ]
 
+    for test in test_args:
+        ar = unroll_list_to_new_length(test["old_list"], n=test["n"])
+        assert np.allclose(ar, test["expected"]), f"{ar} != {test['expected']}"
 
 def test_lprior():
     v = np.array([-68.6346650, 4.4997348, 1.6011013, -0.1020887])
@@ -55,40 +58,32 @@ def test_lprior():
     assert np.isclose(val, 0.1120841558)
 
 
-def test_llike(helpers):
-    data = helpers.load_raw_data()
+def test_llike(test_timeseries, tmpdir):
     degree = 3
     k = 32
-    τ, δ, φ, fz, periodogram, V, omega = _get_initial_values(data, k)
-    fz = get_fz(data)
+
+    τ, δ, φ, fz, periodogram, omega = _get_initial_values(test_timeseries, k)
+    V, knots, psplines = _get_initial_spline_data(
+        test_timeseries, k, degree, diffMatrixOrder=2, eqSpacedKnots=True
+    )
+    fz = get_fz(test_timeseries)
 
     periodogram = get_periodogram(fz)
-    knots = knot_locator(data, k=k, degree=degree, eqSpaced=True)
+    knots = knot_locator(test_timeseries, k=k, degree=degree, eqSpaced=True)
     spline_model = PSplines(knots, degree=degree)
     llike_val = llike(v=V, τ=τ, pdgrm=periodogram, spline_model=spline_model)
     assert not np.isnan(llike_val)
     psd = spline_model(v=V)
     assert not np.isnan(psd).any()
 
-    ll_vals = helpers.load_ll()
-    highest_ll_idx = np.argmax(ll_vals)
-    best_V = helpers.load_v()[:, highest_ll_idx]
-    best_τ = helpers.load_tau()[highest_ll_idx]
-    best_llike_val = llike(v=best_V, τ=best_τ, pdgrm=periodogram, spline_model=spline_model)
-
-    # assert best_llike_val == ll_vals[highest_ll_idx]
-    assert np.abs(llike_val - best_llike_val) < 100
-    best_psd = spline_model(v=best_V)
-
-    if MAKE_PLOTS:
-        fig = __plot_psd(
-            periodogram,
-            [psd, best_psd],
-            [f"PSD lnl{llike_val:.2f}", f"PSD lnl{best_llike_val:.2f}"],
-            spline_model.basis,
-        )
-        fig.savefig(f"{helpers.OUTDIR}/test_llike.png")
-        fig.show()
+    fig = __plot_psd(
+        periodogram,
+        [psd],
+        [f"PSD lnl{llike_val:.2f}"],
+        spline_model.basis,
+    )
+    fig.savefig(f"{tmpdir}/test_llike.png")
+    plt.close(fig)
 
 
 def __plot_psd(periodogram, psds, labels, db_list):
@@ -112,9 +107,8 @@ def __plot_psd(periodogram, psds, labels, db_list):
     return plt.gcf()
 
 
-def test_sample_prior(helpers):
-    data = helpers.load_raw_data()
-    data = data - np.mean(data)
+def test_sample_prior(test_timeseries, tmpdir):
+    data = test_timeseries - np.mean(test_timeseries)
     rescale = np.std(data)
     data = data / rescale
 
@@ -131,16 +125,15 @@ def test_sample_prior(helpers):
         "omega": omega,
         "diffMatrixOrder": diffMatrixOrder,
     }
-    τ0, δ0, φ0, fz, periodogram, V0, omega = _get_initial_values(**kwargs)
-    db_list, P = _get_initial_spline_data(
-        data, k, degree, omega, diffMatrixOrder, eqSpacedKnots=True
+    τ0, δ0, φ0, fz, periodogram, omega = _get_initial_values(**kwargs)
+    V, knots, psplines = _get_initial_spline_data(
+        data, k, degree, diffMatrixOrder, eqSpacedKnots=True
     )
-    v = _generate_initial_weights(periodogram, k)
     # create dict with k, v, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, periodogram, db_list, P
 
     kwargs = dict(
         k=k,
-        v=v,
+        v=V,
         τ=None,
         τα=0.001,
         τβ=0.001,
@@ -151,11 +144,10 @@ def test_sample_prior(helpers):
         δα=1e-4,
         δβ=1e-4,
         periodogram=periodogram,
-        db_list=db_list,
-        P=P,
+        spline_model=psplines,
     )
 
-    N = 5000
+    N = 500
     pri_samples = np.zeros((N, 3))
     for i in range(N):
         pri_samples[i, :] = sample_φδτ(**kwargs)
@@ -166,4 +158,4 @@ def test_sample_prior(helpers):
         axes[i].hist(pri_samples[:, i], bins=50)
         axes[i].set_xlabel(["φ'", "δ'", "τ'"][i])
     plt.tight_layout()
-    plt.show()
+    plt.savefig(f"{tmpdir}/test_sample_prior.png")

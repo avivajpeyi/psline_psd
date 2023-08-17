@@ -1,7 +1,7 @@
 import numpy as np
 
 from pspline_psd.utils import get_fz, get_periodogram
-
+from typing import Tuple
 
 def _get_initial_values(
     data,
@@ -11,7 +11,35 @@ def _get_initial_values(
     δα: float = 1e-04,
     δβ: float = 1e-04,
     **kwargs,
-):
+)-> Tuple[float, float, float, np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Return the initial values for the Gibbs sampler
+
+    Parameters
+    ----------
+    data : np.ndarray
+        The TIMESERIES data to be analysed
+
+    k : int
+        The number of knots to use in the spline
+
+    φα : float, optional
+        The alpha parameter for the prior on φ, by default 1
+
+    φβ : float, optional
+        The beta parameter for the prior on φ, by default 1
+
+    δα : float, optional
+        The alpha parameter for the prior on δ, by default 1e-04
+
+    δβ : float, optional
+        The beta parameter for the prior on δ, by default 1e-04
+
+    Returns
+    -------
+    Tuple[float, float, float, np.ndarray, np.ndarray, np.ndarray]
+    The initial values for τ, δ, φ, fz, periodogram, omega
+    """
     τ = np.var(data) / (2 * np.pi)
     δ = δα / δβ
     φ = φα / (φβ * δ)

@@ -5,12 +5,12 @@ import numpy as np
 from pspline_psd.sample.gibbs_pspline_simple import gibbs_pspline_simple
 
 
-def test_simple_example(helpers):
+def test_simple_example(test_timeseries, tmpdir):
     np.random.seed(0)
-    data = helpers.load_raw_data()
+    data = test_timeseries
     data = data - data.mean()
 
-    fn = f"{helpers.OUTDIR}/sample_metadata.png"
+    fn = f"{tmpdir}/sample_metadata.png"
     gibbs_pspline_simple(
         data=data,
         Ntotal=300,
@@ -19,6 +19,6 @@ def test_simple_example(helpers):
         eqSpacedKnots=False,
         compute_psds=True,
         metadata_plotfn=fn,
-        k=30,
+        k=10,
     )
     assert os.path.exists(fn)
