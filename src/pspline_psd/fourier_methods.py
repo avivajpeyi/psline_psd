@@ -18,8 +18,8 @@ def get_fz(x: np.ndarray) -> np.ndarray:
     # FIXME: the last element has an error
 
     """
-
-    assert np.allclose(np.mean(x), 0), f"x must be mean-centered (mu(x)={np.mean(x)})"
+    # mean-center data
+    x = x - np.mean(x)
 
     n = len(x)
     sqrt2 = np.sqrt(2)
@@ -49,9 +49,16 @@ def get_fz(x: np.ndarray) -> np.ndarray:
     return FZ / sqrtn
 
 
-def get_periodogram(fz: np.ndarray):
+def get_periodogram(fz: np.ndarray = None, timeseries: np.ndarray = None) -> np.ndarray:
     """
-    Function computes the periodogram of fz
+    Function computes the data of fz
     (Assumes fz is already rescaled)
     """
+    if timeseries is None and fz is None:
+        raise ValueError("Must provide either timeseries or fz")
+    elif timeseries is not None and fz is not None:
+        raise ValueError("Must provide either timeseries or fz, not both")
+    elif timeseries is not None:
+        fz = get_fz(timeseries)
+
     return np.power(np.abs(fz), 2)

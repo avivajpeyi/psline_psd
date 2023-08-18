@@ -5,44 +5,46 @@ from tqdm.auto import trange
 from ..splines import build_spline_model
 
 
-def generate_psd_posterior(
-    freq,
+def generate_spline_posterior(
+    spline_len,
     db_list,
     tau_samples,
     v_samples,
 ):
     n = len(tau_samples)
-    psd = np.zeros((n, len(freq)))
-    kwargs = dict(db_list=db_list, n=len(freq))
-    for i in trange(n, desc="Generating PSD posterior"):
-        psd[i, :] = build_spline_model(v=v_samples[i, :], **kwargs) * tau_samples[i]
-    return psd
+    splines = np.zeros((n, spline_len))
+    kwargs = dict(db_list=db_list, n=spline_len)
+    for i in trange(n, desc="Generating Spline posterior"):
+        splines[i, :] = build_spline_model(v=v_samples[i, :], **kwargs) * tau_samples[i]
+    return splines
 
 
-def generate_psd_quantiles(freq, db_list, tau_samples, v_samples, uniform_bands=True):
-    psds = generate_psd_posterior(freq, db_list, tau_samples, v_samples)
-    psd_median = np.quantile(psds, 0.5, axis=0)
-    psd_quants = np.quantile(psds, [0.05, 0.95], axis=0)
+def generate_spline_quantiles(
+    spline_len, db_list, tau_samples, v_samples, uniform_bands=True
+):
+    splines = generate_spline_posterior(spline_len, db_list, tau_samples, v_samples)
+    splines_median = np.quantile(splines, 0.5, axis=0)
+    splines_quants = np.quantile(splines, [0.05, 0.95], axis=0)
 
-    lnpsds = logfuller(psds)
-    lnpsd_median = np.median(lnpsds, axis=0)
-    lnpsd_mad = median_abs_deviation(lnpsds, axis=0)
-    lnpsd_uniform_max = uniformmax(lnpsds)
-    lnpsd_c_value = np.quantile(lnpsd_uniform_max, 0.9) * lnpsd_mad
+    lnsplines = logfuller(splines)
+    lnsplines_median = np.median(lnsplines, axis=0)
+    lnsplines_mad = median_abs_deviation(lnsplines, axis=0)
+    lnsplines_uniform_max = uniformmax(lnsplines)
+    lnsplines_c_value = np.quantile(lnsplines_uniform_max, 0.9) * lnsplines_mad
 
     uniform_psd_quants = np.array(
         [
-            np.exp(lnpsd_median - lnpsd_c_value),
-            np.exp(lnpsd_median + lnpsd_c_value),
+            np.exp(lnsplines_median - lnsplines_c_value),
+            np.exp(lnsplines_median + lnsplines_c_value),
         ]
     )
 
     if uniform_bands:
-        psd_with_unc = np.vstack([psd_median, uniform_psd_quants])
+        psd_with_unc = np.vstack([splines_median, uniform_psd_quants])
     else:
-        psd_with_unc = np.vstack([psd_median, psd_quants])
+        psd_with_unc = np.vstack([splines_median, splines_quants])
 
-    assert psd_with_unc.shape == (3, len(freq))
+    assert psd_with_unc.shape == (3, spline_len)
     assert np.all(psd_with_unc > 0)
     return psd_with_unc
 

@@ -4,15 +4,15 @@ import pytest
 from scipy.fft import fft
 
 from pspline_psd.bayesian_utilities.bayesian_functions import llike
-from pspline_psd.sample.gibbs_pspline_simple import gibbs_pspline_simple
-from pspline_psd.sample.post_processing import generate_psd_quantiles
+from pspline_psd.fourier_methods import get_fz
+from pspline_psd.sample.post_processing import generate_spline_quantiles
+from pspline_psd.sample.spline_model_sampler import sample_with_spline_model
 from pspline_psd.splines.generator import get_unscaled_spline
 from pspline_psd.splines.initialisation import (
     _generate_initial_weights,
     dbspline,
     knot_locator,
 )
-from pspline_psd.utils import get_fz
 
 plt.style.use("default")
 # import gridspec from matplotlib
@@ -69,7 +69,7 @@ def test_psd_postproc_comparision(helpers):
     r_data = __r_mcmc(data, nsteps)
     py_data = __py_mcmc(data, nsteps)
     omega = np.linspace(0, np.pi, len(r_data.psd[:, 0]))
-    py_post = generate_psd_quantiles(
+    py_post = generate_spline_quantiles(
         omega, r_data.dblist.T, r_data.samples[:, 2], r_data.v.T
     )
 
@@ -269,7 +269,7 @@ def __r_mcmc(data, nsteps):
 
 def __py_mcmc(data, nsteps):
     burnin = int(0.5 * nsteps)
-    mcmc = gibbs_pspline_simple(
+    mcmc = sample_with_spline_model(
         data,
         burnin=burnin,
         Ntotal=nsteps,

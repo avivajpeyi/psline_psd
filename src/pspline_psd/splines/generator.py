@@ -1,5 +1,6 @@
 import numpy as np
-from .utils import unroll_list_to_new_length, density_mixture
+
+from .utils import density_mixture, unroll_list_to_new_length
 
 
 def build_spline_model(v: np.ndarray, db_list: np.ndarray, n: int):
@@ -43,7 +44,7 @@ def convert_v_to_weights(v: np.ndarray):
     return weight
 
 
-def get_unscaled_spline(v: np.ndarray, db_list: np.ndarray):
+def get_unscaled_spline(v: np.ndarray, db_list: np.ndarray, epsilon=1e-20):
     """Compute unscaled spline using mixture of B-splines with weights from v
 
     Parameters
@@ -60,8 +61,5 @@ def get_unscaled_spline(v: np.ndarray, db_list: np.ndarray):
 
     """
     weights = convert_v_to_weights(v)
-    psd = density_mixture(densities=db_list.T, weights=weights)
-    epsilon = 1e-20
-    # element wise maximum value bewteen psd and epsilon
-    psd = np.maximum(psd, epsilon)
-    return psd
+    combined = density_mixture(densities=db_list.T, weights=weights)
+    return np.maximum(combined, epsilon)

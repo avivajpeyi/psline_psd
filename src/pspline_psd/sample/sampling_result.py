@@ -1,15 +1,16 @@
 import arviz as az
 import numpy as np
+import pandas as pd
 from arviz import InferenceData
 from scipy.fft import fft
 
 from ..plotting import plot_metadata
-from .post_processing import generate_psd_posterior, generate_psd_quantiles
+from .post_processing import generate_spline_posterior, generate_spline_quantiles
 
 
 class Result:
     def __init__(self, idata):
-        self.idata = idata.to_dict()
+        self.idata = idata
 
     @classmethod
     def compile_idata_from_sampling_results(
@@ -20,9 +21,8 @@ class Result:
         frac_accept,
         basis,
         knots,
-        periodogram,
-        omega,
-        raw_data,
+        data,
+        burn_in,
     ) -> "Result":
         nsamp, n_basis_minus_1, _ = v_samples.shape
 
@@ -45,9 +45,7 @@ class Result:
             coords=dict(v_idx=v_idx, draws=draw_idx),
             dims=dict(
                 phi=["draws"],
-                delta=[
-                    "draws",
-                ],
+                delta=["draws"],
                 tau=["draws"],
                 v=["draws", "v_idx"],
             ),
@@ -55,16 +53,27 @@ class Result:
             attrs={},
         )
         sample_stats = az.dict_to_dataset(
-            dict(acceptance_rate=frac_accept, lp=lpost_trace)
+            dict(
+                acceptance_rate=frac_accept[draw_idx],
+                lp=lpost_trace[draw_idx],
+            ),
+            coords=dict(draws=draw_idx),
+            attrs=dict(burn_in=burn_in),
+            dims=dict(
+                acceptance_rate=["draws"],
+                lp=["draws"],
+            ),
+            default_dims=[],
+            index_origin=None,
         )
         observed_data = az.dict_to_dataset(
-            dict(periodogram=periodogram[0 : len(omega)], raw_data=raw_data),
+            dict(data=data[0 : len(data)]),
             library=None,
-            coords={"frequency": omega, "idx": np.arange(len(raw_data))},
-            dims={"periodogram": ["frequency"], "raw_data": ["idx"]},
+            coords=dict(idx=np.arange(len(data))),
+            dims=dict(data=["idx"]),
             default_dims=[],
-            attrs={},
             index_origin=None,
+            attrs={},
         )
 
         spline_data = az.dict_to_dataset(
@@ -81,62 +90,91 @@ class Result:
             index_origin=None,
         )
 
-        return cls(
-            InferenceData(
-                posterior=posterior,
-                sample_stats=sample_stats,
-                observed_data=observed_data,
-                constant_data=spline_data,
+        idata = InferenceData(
+            posterior=posterior,
+            sample_stats=sample_stats,
+            observed_data=observed_data,
+            constant_data=spline_data,
+        )
+        return cls(idata)
+
+    @property
+    def burn_in(self):
+        if not hasattr(self, "_burn_in"):
+            self._burn_in = self.idata.sample_stats.attrs["burn_in"]
+        return self._burn_in
+
+    @property
+    def __posterior(self):
+        # just the samples after 'burn_in' idx
+        return self.idata.posterior.sel(draws=slice(self.burn_in, None))
+
+    @property
+    def sample_stats(self):
+        return self.idata.sample_stats.sel(draws=slice(self.burn_in, None))
+
+    @property
+    def post_samples(self):
+        return np.array(
+            [
+                self.__posterior["phi"],
+                self.__posterior["delta"],
+                self.__posterior["tau"],
+            ]
+        ).T
+
+    @property
+    def v(self):
+        return self.__posterior["v"]
+
+    def all_samples(self):
+        # samples without burn in cuttoff
+        post = self.idata.posterior
+        sampling_dat = self.idata.sample_stats
+        return pd.DataFrame(
+            dict(
+                phi=post["phi"].values,
+                delta=post["delta"].values,
+                tau=post["tau"].values,
+                acceptance_rate=sampling_dat["acceptance_rate"].values,
+                lp=sampling_dat["lp"].values,
             )
         )
 
     @property
-    def post_samples(self):
-        post = self.idata["posterior"]
-        post_samples = np.array([post["phi"], post["delta"], post["tau"]]).T
-        return post_samples
-
-    @property
-    def v(self):
-        return self.idata["posterior"]["v"]
-
-    @property
-    def omega(self):
-        return self.idata["coords"]["frequency"]
-
-    @property
     def basis(self):
-        return self.idata["constant_data"]["basis"]
-
-    @property
-    def sample_stats(self):
-        return self.idata["sample_stats"]
+        return self.idata.constant_data["basis"]
 
     @property
     def knots(self):
-        return self.idata["constant_data"]["knots"]
+        return self.idata.constant_data["knots"]
 
-    def make_summary_plot(self, fn: str=""):
-        raw_data = self.idata["observed_data"]["raw_data"]
-        data_scale = np.std(raw_data)
-        raw_data = raw_data / data_scale
+    @property
+    def k(self):
+        # umber of basis functions
+        return len(self.basis.T)
 
-        accept_frac = self.sample_stats["acceptance_rate"].flatten()
+    @property
+    def data(self):
+        return self.idata.observed_data["data"]
 
-        psd_quants = self.psd_quantiles * np.power(data_scale, 2)
-        n, newn = len(raw_data), len(self.omega)
-        periodogram = np.abs(np.power(fft(raw_data), 2) / (2 * np.pi * n))[0:newn]
-        periodogram = periodogram * np.power(data_scale, 2)
+    @property
+    def data_length(self):
+        return len(self.data)
 
+    def make_summary_plot(self, fn: str = ""):
+        data = self.idata.observed_data["data"].values
+        psd_quants = self.psd_quantiles
+        all_samples = self.all_samples()
         return plot_metadata(
-            self.post_samples,
-            accept_frac,
-            psd_quants,
-            periodogram,
-            self.basis,
-            self.knots,
-            self.v[-1],
-            fn,
+            all_samples[["phi", "delta", "tau"]].values,
+            all_samples.acceptance_rate.values,
+            psd_quants=psd_quants,
+            data=data,
+            db_list=self.basis,
+            knots=self.knots,
+            burn_in=self.burn_in,
+            metadata_plotfn=fn,
         )
 
     @property
@@ -144,15 +182,15 @@ class Result:
         """return quants if present, else compute cache and return"""
         # if attribute exists return
         if not hasattr(self, "_psd_quant"):
-            self._psd_quant = generate_psd_quantiles(
-                self.omega, self.basis, self.post_samples[:, 2], self.v
+            self._psd_quant = generate_spline_quantiles(
+                self.data_length, self.basis, self.post_samples[:, 2], self.v
             )
         return self._psd_quant
 
     @property
     def psd_posterior(self):
         if not hasattr(self, "_psds"):
-            self._psds = generate_psd_posterior(
-                self.omega, self.basis, self.post_samples[:, 2], self.v
+            self._psds = generate_spline_posterior(
+                self.data_length, self.basis, self.post_samples[:, 2], self.v
             )
         return self._psds

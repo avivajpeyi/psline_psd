@@ -1,17 +1,15 @@
-import numpy as np
-
-from pspline_psd.utils import get_fz, get_periodogram
 from typing import Tuple
 
+import numpy as np
+
+
 def _get_initial_values(
-    data,
-    k,
+    data: np.ndarray,
     φα: float = 1,
     φβ: float = 1,
     δα: float = 1e-04,
     δβ: float = 1e-04,
-    **kwargs,
-)-> Tuple[float, float, float, np.ndarray, np.ndarray, np.ndarray]:
+) -> Tuple[float, float, float]:
     """
     Return the initial values for the Gibbs sampler
 
@@ -19,9 +17,6 @@ def _get_initial_values(
     ----------
     data : np.ndarray
         The TIMESERIES data to be analysed
-
-    k : int
-        The number of knots to use in the spline
 
     φα : float, optional
         The alpha parameter for the prior on φ, by default 1
@@ -38,16 +33,12 @@ def _get_initial_values(
     Returns
     -------
     Tuple[float, float, float, np.ndarray, np.ndarray, np.ndarray]
-    The initial values for τ, δ, φ, fz, periodogram, omega
+    The initial values for τ, δ, φ, fz, data, omega
     """
     τ = np.var(data) / (2 * np.pi)
     δ = δα / δβ
     φ = φα / (φβ * δ)
-    fz = get_fz(data)
-    periodogram = get_periodogram(fz)
-    n = len(data)
-    omega = 2 * np.arange(0, n / 2 + 1) / n
-    return τ, δ, φ, fz, periodogram, omega
+    return τ, δ, φ
 
 
 def _argument_preconditions(

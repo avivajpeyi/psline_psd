@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from pspline_psd.sample.gibbs_pspline_simple import _get_initial_values
+from pspline_psd.sample.spline_model_sampler import _get_initial_values
 from pspline_psd.splines.initialisation import knot_locator
 from pspline_psd.splines.p_splines import PSplines
 

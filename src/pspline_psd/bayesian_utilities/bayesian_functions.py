@@ -39,62 +39,63 @@ def δ_prior(φ, φα, φβ, δα, δβ):
     return Gamma(k=shape, theta=1 / rate)
 
 
-def inv_τ_prior(v, periodogram, spline_model, τα, τβ):
+def inv_τ_prior(v, data, spline_model, τα, τβ):
     """Inverse(?) prior for tau -- tau = 1/inv_tau_sample"""
 
     # TODO: ask about the even/odd difference, and what 'bFreq' is
 
-    n = len(periodogram)
-    psd = spline_model(v=v, n=n)
+    n = len(data)
+    _spline = spline_model(v=v, n=n)
     is_even = n % 2 == 0
     if is_even:
-        whtn_pdgm = periodogram[1:-1] / psd[1:-1]
+        spline_normed_data = data[1:-1] / _spline[1:-1]
     else:
-        whtn_pdgm = periodogram[1:] / psd[1:]
+        spline_normed_data = data[1:] / _spline[1:]
 
-    n = len(whtn_pdgm)
+    n = len(spline_normed_data)
 
     shape = τα + n / 2
-    rate = τβ + np.sum(whtn_pdgm) / (2 * np.pi) / 2
+    rate = τβ + np.sum(spline_normed_data) / (2 * np.pi) / 2
     return Gamma(k=shape, theta=1 / rate)
 
 
-def sample_φδτ(k, v, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, periodogram, spline_model):
+def sample_φδτ(k, v, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, data, spline_model):
     φ = φ_prior(k, v, spline_model.penalty_matrix, φα, φβ, δ).sample().flat[0]
     δ = δ_prior(φ, φα, φβ, δα, δβ).sample().flat[0]
-    τ = 1 / inv_τ_prior(v, periodogram, spline_model, τα, τβ).sample()
+    τ = 1 / inv_τ_prior(v, data, spline_model, τα, τβ).sample()
     return φ, δ, τ
 
 
-def llike(v, τ, pdgrm, spline_model):
+def llike(v, τ, data, spline_model):
     """Whittle log likelihood"""
     # TODO: Move to using bilby likelihood
     # TODO: the parameters to this function should
     #  be the sampling parameters, not the matrix itself!
     # todo: V should be computed in here
 
-    n = len(pdgrm)
-    spline_psd = spline_model(v=v, n=n)
-    f = τ * spline_psd
+    n = len(data)
+    _spline = spline_model(v=v, n=n) * τ
 
     is_even = n % 2 == 0
     if is_even:
-        f = f[1:]
-        pdgrm = pdgrm[1:]
+        _spline = _spline[1:]
+        data = data[1:]
     else:
-        f = f[1:-1]
-        pdgrm = pdgrm[1:-1]
+        _spline = _spline[1:-1]
+        data = data[1:-1]
 
-    integrand = np.log(f) + pdgrm / (f * 2 * np.pi)
+    integrand = np.log(_spline) + data / (_spline * 2 * np.pi)
     lnlike = -np.sum(integrand) / 2
     if not np.isfinite(lnlike):
         raise ValueError(f"lnlike is not finite: {lnlike}")
     return lnlike
 
 
-def lpost(k, v, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, pdgrm, psline_model):
-    logprior = lprior(k, v, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, psline_model.penalty_matrix)
-    loglike = llike(v, τ, pdgrm, psline_model)
+def lpost(k, v, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, data, psline_model):
+    logprior = lprior(
+        k, v, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, psline_model.penalty_matrix
+    )
+    loglike = llike(v, τ, data, psline_model)
     logpost = logprior + loglike
     if not np.isfinite(logpost):
         raise ValueError(

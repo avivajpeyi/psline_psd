@@ -1,10 +1,11 @@
-import pytest
-from pspline_psd.utils import get_fz
-from pspline_psd.utils import get_periodogram
-from pspline_psd.splines import knot_locator
-import matplotlib.pyplot as plt
-from pathlib import Path
 import os
+from pathlib import Path
+
+import matplotlib.pyplot as plt
+import pytest
+
+from pspline_psd.fourier_methods import get_fz, get_periodogram
+from pspline_psd.splines import knot_locator
 
 MAKE_PLOTS = True
 
@@ -56,8 +57,6 @@ def test_basis_same_as_r_package_basis(helpers):
     assert residuals < 1e-5
 
 
-
-
 def load_rdata(path):
     import rpy2.robjects as robjects
 
@@ -90,10 +89,9 @@ def r_obj_as_dict(vector):
     return result
 
 
-
 import numpy as np
 
-from pspline_psd.utils import get_fz, get_periodogram
+from pspline_psd.fourier_methods import get_fz, get_periodogram
 
 
 def test_periodogram(helpers):
@@ -119,7 +117,6 @@ def test_periodogram(helpers):
     )
     fig.show()
     assert np.allclose(expected_pdgm, py_pdgm, atol=1e-5)
-
 
 
 class Helpers:
@@ -198,22 +195,18 @@ def test_fft(helpers):
     assert np.allclose(expected_fz, py_fz, atol=1e-5)
 
 
-
 import matplotlib.pyplot as plt
 import numpy as np
 
 from pspline_psd.bayesian_utilities import llike, lprior
 from pspline_psd.bayesian_utilities.bayesian_functions import _vPv, sample_φδτ
-from pspline_psd.sample.gibbs_pspline_simple import (
+from pspline_psd.fourier_methods import get_fz, get_periodogram
+from pspline_psd.sample.spline_model_sampler import (
     _get_initial_spline_data,
     _get_initial_values,
 )
 from pspline_psd.splines.generator import build_spline_model, unroll_list_to_new_length
-from pspline_psd.splines.initialisation import (
-    _generate_initial_weights,
-    knot_locator,
-)
-from pspline_psd.utils import get_fz, get_periodogram
+from pspline_psd.splines.initialisation import _generate_initial_weights, knot_locator
 from pspline_psd.splines.p_splines import PSplines
 
 MAKE_PLOTS = True
@@ -275,7 +268,9 @@ def test_llike(helpers):
     highest_ll_idx = np.argmax(ll_vals)
     best_V = helpers.load_v()[:, highest_ll_idx]
     best_τ = helpers.load_tau()[highest_ll_idx]
-    best_llike_val = llike(v=best_V, τ=best_τ, pdgrm=periodogram, spline_model=spline_model)
+    best_llike_val = llike(
+        v=best_V, τ=best_τ, pdgrm=periodogram, spline_model=spline_model
+    )
 
     # assert best_llike_val == ll_vals[highest_ll_idx]
     assert np.abs(llike_val - best_llike_val) < 100
@@ -293,7 +288,7 @@ def test_llike(helpers):
 
 
 def __plot_psd(periodogram, psds, labels, db_list):
-    plt.plot(periodogram / np.sum(periodogram), label="periodogram", color="k")
+    plt.plot(periodogram / np.sum(periodogram), label="data", color="k")
     for psd, l in zip(psds, labels):
         plt.plot(psd / np.sum(psd), label=l)
     ylims = plt.gca().get_ylim()
@@ -327,7 +322,6 @@ def test_sample_prior(helpers):
 
     kwargs = {
         "data": data,
-        "k": k,
         "degree": degree,
         "omega": omega,
         "diffMatrixOrder": diffMatrixOrder,
@@ -337,7 +331,7 @@ def test_sample_prior(helpers):
         data, k, degree, omega, diffMatrixOrder, eqSpacedKnots=True
     )
     v = _generate_initial_weights(periodogram, k)
-    # create dict with k, v, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, periodogram, db_list, P
+    # create dict with k, v, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, data, db_list, P
 
     kwargs = dict(
         k=k,

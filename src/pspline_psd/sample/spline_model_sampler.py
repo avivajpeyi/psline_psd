@@ -9,7 +9,7 @@ from .sampler_initialisation import _argument_preconditions, _get_initial_values
 from .sampling_result import Result
 
 
-def gibbs_pspline_simple(
+def sample_with_spline_model(
     data: np.ndarray,
     Ntotal: int,
     burnin: int,
@@ -20,7 +20,7 @@ def gibbs_pspline_simple(
     φβ: float = 1,
     δα: float = 1e-04,
     δβ: float = 1e-04,
-    k: int = None,
+    k: int = 30,
     eqSpacedKnots: bool = False,
     degree: int = 3,
     diffMatrixOrder: int = 2,
@@ -32,13 +32,19 @@ def gibbs_pspline_simple(
     # TODO: switch to using bilby?
     """
     kwargs = locals()
-    data_scale = np.std(data)
-    raw_data = data.copy()
-    data, k = _argument_preconditions(**kwargs)
-    kwargs.update({"data": data, "k": k})
-    τ0, δ0, φ0, fz, periodogram, omega = _get_initial_values(**kwargs)
+    # data_scale = np.std(data)
+    # raw_data = data.copy()
+    # data, k = _argument_preconditions(**kwargs)
+
+    τ0, δ0, φ0 = _get_initial_values(
+        data=data,
+        φα=φα,
+        φβ=φβ,
+        δα=δα,
+        δβ=δβ,
+    )
     V0, knots, pspline_model = _get_initial_spline_data(
-        periodogram, k, degree, diffMatrixOrder, eqSpacedKnots
+        data, k, degree, diffMatrixOrder, eqSpacedKnots
     )
 
     # Empty lists for the MCMC samples
@@ -65,7 +71,7 @@ def gibbs_pspline_simple(
 
         for i in range(thin):
             itr = i + adj
-            args = [k, V, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, periodogram, pspline_model]
+            args = [k, V, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, data, pspline_model]
             lpost_store = lpost(*args)
             # 1. explore the parameter space for new V
             V, V_star, accept_frac, sigma = _tune_proposal_distribution(
@@ -80,13 +86,6 @@ def gibbs_pspline_simple(
         samples[j, :] = np.array([φ, δ, τ])
         samples_V[j, :] = V
 
-    # remove burnin
-    burn = round(burnin / thin)
-    samples = samples[burn:, :]
-    samples_V = samples_V[burn:, :]
-    accep_frac_list = accep_frac_list[burn:]
-    lpost_trace = lpost_trace[burn:]
-
     sampling_result = Result.compile_idata_from_sampling_results(
         posterior_samples=samples,
         v_samples=samples_V,
@@ -94,9 +93,8 @@ def gibbs_pspline_simple(
         frac_accept=accep_frac_list,
         basis=pspline_model.basis,
         knots=knots,
-        periodogram=periodogram,
-        omega=omega,
-        raw_data=raw_data,
+        data=data,
+        burn_in=round(burnin / thin),
     )
     if metadata_plotfn:
         sampling_result.make_summary_plot(metadata_plotfn)
@@ -113,7 +111,8 @@ def _tune_proposal_distribution(
     lpost_store,
     args,
 ):
-    k_1 = args[0] - 1
+    k = args[0]
+    k_1 = k - 1
 
     # tunning proposal distribution
     if accept_frac < 0.30:  # increasing acceptance pbb

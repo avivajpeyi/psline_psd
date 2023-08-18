@@ -1,12 +1,15 @@
 """Initialisation functions for the penalised B-splines."""
+from typing import Tuple
+
 import numpy as np
 from scipy.interpolate import interp1d
+
 from .p_splines import PSplines
 
-from typing import Tuple, Union
 
-
-def knot_locator(pdgrm: np.ndarray, k: int, degree: int, eqSpaced: bool = False) -> np.array:
+def knot_locator(
+    data: np.ndarray, k: int, degree: int, eqSpaced: bool = False
+) -> np.array:
     """Determines the knot locations for a B-spline basis of degree `degree` and `k` knots.
 
     Returns
@@ -19,9 +22,9 @@ def knot_locator(pdgrm: np.ndarray, k: int, degree: int, eqSpaced: bool = False)
         knots = np.linspace(0, 1, num=k - degree + 1)
         return knots
 
-    aux = np.sqrt(pdgrm)
+    aux = np.sqrt(data)
     dens = np.abs(aux - np.mean(aux)) / np.std(aux)
-    n = len(pdgrm)
+    n = len(data)
 
     dens = dens / np.sum(dens)
     cumf = np.cumsum(dens)
@@ -36,26 +39,35 @@ def knot_locator(pdgrm: np.ndarray, k: int, degree: int, eqSpaced: bool = False)
         bounds_error=False,
     )
 
-    # knots based on periodogram peaks
+    # knots based on data peaks
     knots = invDf(np.linspace(0, 1, num=k - degree + 1))
+
+    if np.any(~np.isfinite(knots)):
+        import matplotlib.pyplot as plt
+
+        # plot the data, show the knots, and show the data
+        plt.plot(data)
+        plt.plot(knots, np.zeros_like(knots), "o")
+        plt.savefig("ERROR.png")
+        raise ValueError("Knots contain NaNs or non-finite numbers")
 
     return knots
 
 
 def _get_initial_spline_data(
-        periodogram: np.ndarray, k: int, degree: int, diffMatrixOrder: int, eqSpacedKnots: bool
+    data: np.ndarray, k: int, degree: int, diffMatrixOrder: int, eqSpacedKnots: bool
 ) -> Tuple[np.ndarray, np.ndarray, PSplines]:
-    V = _generate_initial_weights(periodogram, k)
-    knots = knot_locator(periodogram, k, degree, eqSpacedKnots)
+    V = _generate_initial_weights(data, k)
+    knots = knot_locator(data, k, degree, eqSpacedKnots)
     psplines = PSplines(knots=knots, degree=degree, diffMatrixOrder=diffMatrixOrder)
     return V, knots, psplines
 
 
-def _generate_initial_weights(periodogram: np.ndarray, k: int) -> np.ndarray:
-    scaled_periodogram = periodogram / np.sum(periodogram)
-    idx = np.linspace(0, len(scaled_periodogram) - 1, k)
+def _generate_initial_weights(data: np.ndarray, k: int) -> np.ndarray:
+    scaled_data = data / np.sum(data)
+    idx = np.linspace(0, len(scaled_data) - 1, k)
     idx = np.round(idx).astype(int)
-    w = scaled_periodogram[idx]
+    w = scaled_data[idx]
 
     assert len(w) == k
     w[w == 0] = 1e-50  # prevents log(0) errors
