@@ -152,7 +152,8 @@ const thebe_selector_output = ".output, .cell_output"
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributng</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/api.html">API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="example.html">Example: AR process</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_ar_psd.html">Example: AR process</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_wavelet.html">Example: Wavelet</a></li>
 <li class="toctree-l1"><a class="reference internal" href="p_splines.html">PSpline Generation</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Example: LISA White Dwarf background</a></li>
 </ul>
@@ -394,98 +395,102 @@ document.write(`
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/69d37ba7a2fbe6d5101d221d54eab4069ecc8df6c7db39f8f8ead7c4d9ed331c.png" src="../_images/69d37ba7a2fbe6d5101d221d54eab4069ecc8df6c7db39f8f8ead7c4d9ed331c.png" />
+<img alt="../_images/fabd40dd3d8f0ae10f06a3557cdde71ff9d4ec41b4cd2266bbb8011a58993416.png" src="../_images/fabd40dd3d8f0ae10f06a3557cdde71ff9d4ec41b4cd2266bbb8011a58993416.png" />
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pspline_psd.sample.gibbs_pspline_simple</span> <span class="kn">import</span> <span class="n">gibbs_pspline_simple</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pspline_psd.fourier_methods</span> <span class="kn">import</span> <span class="n">get_periodogram</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 
-<span class="n">mcmc</span> <span class="o">=</span> <span class="n">gibbs_pspline_simple</span><span class="p">(</span>
-    <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">strain</span><span class="p">,</span>
-    <span class="n">Ntotal</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
-    <span class="n">burnin</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+<span class="n">pdgrm</span> <span class="o">=</span> <span class="n">get_periodogram</span><span class="p">(</span><span class="n">timeseries</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">strain</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">pdgrm</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[&lt;matplotlib.lines.Line2D at 0x125cf61c0&gt;]
+</pre></div>
+</div>
+<img alt="../_images/f80721a681bb3181467f314171e82ee9071bb0377a9b22899dc13921c0f7b265.png" src="../_images/f80721a681bb3181467f314171e82ee9071bb0377a9b22899dc13921c0f7b265.png" />
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">semilogx</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">pdgrm</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[&lt;matplotlib.lines.Line2D at 0x125db8850&gt;]
+</pre></div>
+</div>
+<img alt="../_images/b8119deeffa77273561c05dc6feb8e2f5b03d8995a0803cccd842d301ee3d5e5.png" src="../_images/b8119deeffa77273561c05dc6feb8e2f5b03d8995a0803cccd842d301ee3d5e5.png" />
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">scaled_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">pdgrm</span><span class="p">)</span>
+<span class="n">scaled_data</span> <span class="o">=</span> <span class="n">scaled_data</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">scaled_data</span><span class="p">)</span>
+<span class="n">scaled_data</span> <span class="o">=</span> <span class="n">scaled_data</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">scaled_data</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">semilogx</span><span class="p">(</span><span class="n">scaled_data</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[&lt;matplotlib.lines.Line2D at 0x13a68a9a0&gt;]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>findfont: Font family [&#39;sans-serif&#39;] not found. Falling back to DejaVu Sans.
+findfont: Generic family &#39;sans-serif&#39; not found because none of the following families were found: Liberation Sans
+findfont: Font family [&#39;cursive&#39;] not found. Falling back to DejaVu Sans.
+findfont: Generic family &#39;cursive&#39; not found because none of the following families were found: Liberation Sans
+findfont: Font family [&#39;sans&#39;] not found. Falling back to DejaVu Sans.
+findfont: Generic family &#39;sans&#39; not found because none of the following families were found: Liberation Sans
+findfont: Font family [&#39;sans&#39;] not found. Falling back to DejaVu Sans.
+findfont: Generic family &#39;sans&#39; not found because none of the following families were found: Liberation Sans
+findfont: Font family [&#39;sans&#39;] not found. Falling back to DejaVu Sans.
+findfont: Generic family &#39;sans&#39; not found because none of the following families were found: Liberation Sans
+</pre></div>
+</div>
+<img alt="../_images/903efcc4bc65e8457b37340cb3e5cf874401159cb78a37a177c9c6681a5cee70.png" src="../_images/903efcc4bc65e8457b37340cb3e5cf874401159cb78a37a177c9c6681a5cee70.png" />
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pspline_psd.sample.spline_model_sampler</span> <span class="kn">import</span> <span class="n">sample_with_spline_model</span>
+
+
+
+<span class="n">mcmc</span> <span class="o">=</span> <span class="n">sample_with_spline_model</span><span class="p">(</span>
+    <span class="n">data</span><span class="o">=</span><span class="n">scaled_data</span><span class="p">,</span>
+    <span class="n">Ntotal</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span>
+    <span class="n">burnin</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
     <span class="n">degree</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
-    <span class="n">eqSpacedKnots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">eqSpacedKnots</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">compute_psds</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<script type="application/vnd.jupyter.widget-view+json">{"version_major": 2, "version_minor": 0, "model_id": "32238fdd97cc48f98501627e8bfe1a9a"}</script></div>
+<script type="application/vnd.jupyter.widget-view+json">{"version_major": 2, "version_minor": 0, "model_id": "718576a86d1048cea02f2f25a1c52d37"}</script></div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pspline_psd.plotting.plot_psd</span> <span class="kn">import</span> <span class="n">plot_psd</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pspline_psd.plotting.plot_spline_model_and_data</span> <span class="kn">import</span> <span class="n">plot_spline_model_and_data</span>
 
-<span class="n">fig</span> <span class="o">=</span> <span class="n">plot_psd</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">psd_quantiles</span><span class="p">)</span>
+<span class="n">fig</span> <span class="o">=</span> <span class="n">plot_spline_model_and_data</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">psd_quantiles</span><span class="p">,</span> <span class="n">knots</span><span class="o">=</span><span class="n">mcmc</span><span class="o">.</span><span class="n">knots</span><span class="p">,</span> <span class="n">separarte_y_axis</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<script type="application/vnd.jupyter.widget-view+json">{"version_major": 2, "version_minor": 0, "model_id": "f5f75ac620c04b8fa8b2cb1ed558fe10"}</script><div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
-<span class="ne">AttributeError</span><span class="g g-Whitespace">                            </span>Traceback (most recent call last)
-<span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">17</span><span class="p">],</span> <span class="n">line</span> <span class="mi">3</span>
-<span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="kn">from</span> <span class="nn">pspline_psd.plotting.plot_psd</span> <span class="kn">import</span> <span class="n">plot_psd</span>
-<span class="ne">----&gt; </span><span class="mi">3</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">plot_psd</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">psd_quantiles</span><span class="p">)</span>
-
-<span class="nn">File ~/Documents/projects/pspline_psd/src/pspline_psd/plotting/plot_psd.py:13,</span> in <span class="ni">plot_psd</span><span class="nt">(data, psd_quants, separarte_y_axis)</span>
-<span class="g g-Whitespace">      </span><span class="mi">9</span> <span class="n">periodogram</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">fft</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">n</span><span class="p">))[</span><span class="mi">0</span><span class="p">:</span><span class="n">newn</span><span class="p">]</span>
-<span class="g g-Whitespace">     </span><span class="mi">10</span> <span class="n">psd_x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">3.14</span><span class="p">,</span> <span class="n">newn</span><span class="p">)</span>
-<span class="ne">---&gt; </span><span class="mi">13</span> <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-<span class="g g-Whitespace">     </span><span class="mi">15</span> <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">psd_x</span><span class="p">,</span> <span class="n">periodogram</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Data&quot;</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mf">0.75</span><span class="p">)</span>
-<span class="g g-Whitespace">     </span><span class="mi">17</span> <span class="k">if</span> <span class="n">separarte_y_axis</span><span class="p">:</span>
-
-<span class="nn">File ~/.cache/pypoetry/virtualenvs/pspline-psd-qEGi5x65-py3.8/lib/python3.8/site-packages/matplotlib/pyplot.py:1338,</span> in <span class="ni">subplot</span><span class="nt">(*args, **kwargs)</span>
-<span class="g g-Whitespace">   </span><span class="mi">1335</span>             <span class="k">break</span>
-<span class="g g-Whitespace">   </span><span class="mi">1336</span> <span class="k">else</span><span class="p">:</span>
-<span class="g g-Whitespace">   </span><span class="mi">1337</span>     <span class="c1"># we have exhausted the known Axes and none match, make a new one!</span>
-<span class="ne">-&gt; </span><span class="mi">1338</span>     <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-<span class="g g-Whitespace">   </span><span class="mi">1340</span> <span class="n">fig</span><span class="o">.</span><span class="n">sca</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span>
-<span class="g g-Whitespace">   </span><span class="mi">1342</span> <span class="n">axes_to_delete</span> <span class="o">=</span> <span class="p">[</span><span class="n">other</span> <span class="k">for</span> <span class="n">other</span> <span class="ow">in</span> <span class="n">fig</span><span class="o">.</span><span class="n">axes</span>
-<span class="g g-Whitespace">   </span><span class="mi">1343</span>                   <span class="k">if</span> <span class="n">other</span> <span class="o">!=</span> <span class="n">ax</span> <span class="ow">and</span> <span class="n">ax</span><span class="o">.</span><span class="n">bbox</span><span class="o">.</span><span class="n">fully_overlaps</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">bbox</span><span class="p">)]</span>
-
-<span class="nn">File ~/.cache/pypoetry/virtualenvs/pspline-psd-qEGi5x65-py3.8/lib/python3.8/site-packages/matplotlib/figure.py:757,</span> in <span class="ni">FigureBase.add_subplot</span><span class="nt">(self, *args, **kwargs)</span>
-<span class="g g-Whitespace">    </span><span class="mi">754</span>         <span class="n">args</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span>
-<span class="g g-Whitespace">    </span><span class="mi">755</span>     <span class="n">projection_class</span><span class="p">,</span> <span class="n">pkw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_projection_requirements</span><span class="p">(</span>
-<span class="g g-Whitespace">    </span><span class="mi">756</span>         <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-<span class="ne">--&gt; </span><span class="mi">757</span>     <span class="n">ax</span> <span class="o">=</span> <span class="n">projection_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">pkw</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">758</span>     <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">projection_class</span><span class="p">,</span> <span class="n">pkw</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">759</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_add_axes_internal</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
-
-<span class="nn">File ~/.cache/pypoetry/virtualenvs/pspline-psd-qEGi5x65-py3.8/lib/python3.8/site-packages/matplotlib/axes/_base.py:697,</span> in <span class="ni">_AxesBase.__init__</span><span class="nt">(self, fig, facecolor, frameon, sharex, sharey, label, xscale, yscale, box_aspect, *args, **kwargs)</span>
-<span class="g g-Whitespace">    </span><span class="mi">694</span> <span class="k">if</span> <span class="n">yscale</span><span class="p">:</span>
-<span class="g g-Whitespace">    </span><span class="mi">695</span>     <span class="bp">self</span><span class="o">.</span><span class="n">set_yscale</span><span class="p">(</span><span class="n">yscale</span><span class="p">)</span>
-<span class="ne">--&gt; </span><span class="mi">697</span> <span class="bp">self</span><span class="o">.</span><span class="n">_internal_update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">699</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">axis</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_axis_map</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-<span class="g g-Whitespace">    </span><span class="mi">700</span>     <span class="n">axis</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">_connect_picklable</span><span class="p">(</span>
-<span class="g g-Whitespace">    </span><span class="mi">701</span>         <span class="s1">&#39;units&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unit_change_handler</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
-
-<span class="nn">File ~/.cache/pypoetry/virtualenvs/pspline-psd-qEGi5x65-py3.8/lib/python3.8/site-packages/matplotlib/artist.py:1223,</span> in <span class="ni">Artist._internal_update</span><span class="nt">(self, kwargs)</span>
-<span class="g g-Whitespace">   </span><span class="mi">1216</span> <span class="k">def</span> <span class="nf">_internal_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
-<span class="g g-Whitespace">   </span><span class="mi">1217</span><span class="w">     </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="g g-Whitespace">   </span><span class="mi">1218</span><span class="sd">     Update artist properties without prenormalizing them, but generating</span>
-<span class="g g-Whitespace">   </span><span class="mi">1219</span><span class="sd">     errors as if calling `set`.</span>
-<span class="g g-Whitespace">   </span><span class="mi">1220</span><span class="sd"> </span>
-<span class="g g-Whitespace">   </span><span class="mi">1221</span><span class="sd">     The lack of prenormalization is to maintain backcompatibility.</span>
-<span class="g g-Whitespace">   </span><span class="mi">1222</span><span class="sd">     &quot;&quot;&quot;</span>
-<span class="ne">-&gt; </span><span class="mi">1223</span>     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_update_props</span><span class="p">(</span>
-<span class="g g-Whitespace">   </span><span class="mi">1224</span>         <span class="n">kwargs</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{cls.__name__}</span><span class="s2">.set() got an unexpected keyword argument &quot;</span>
-<span class="g g-Whitespace">   </span><span class="mi">1225</span>         <span class="s2">&quot;</span><span class="si">{prop_name!r}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-<span class="nn">File ~/.cache/pypoetry/virtualenvs/pspline-psd-qEGi5x65-py3.8/lib/python3.8/site-packages/matplotlib/artist.py:1197,</span> in <span class="ni">Artist._update_props</span><span class="nt">(self, props, errfmt)</span>
-<span class="g g-Whitespace">   </span><span class="mi">1195</span>             <span class="n">func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;set_</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-<span class="g g-Whitespace">   </span><span class="mi">1196</span>             <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
-<span class="ne">-&gt; </span><span class="mi">1197</span>                 <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span>
-<span class="g g-Whitespace">   </span><span class="mi">1198</span>                     <span class="n">errfmt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">cls</span><span class="o">=</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="n">prop_name</span><span class="o">=</span><span class="n">k</span><span class="p">))</span>
-<span class="g g-Whitespace">   </span><span class="mi">1199</span>             <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">func</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
-<span class="g g-Whitespace">   </span><span class="mi">1200</span> <span class="k">if</span> <span class="n">ret</span><span class="p">:</span>
-
-<span class="ne">AttributeError</span>: Axes.set() got an unexpected keyword argument &#39;figsize&#39;
-</pre></div>
+<script type="application/vnd.jupyter.widget-view+json">{"version_major": 2, "version_minor": 0, "model_id": "dc930f5c23c7439fbe95ae9bc09a9cdc"}</script><img alt="../_images/2df26f60b7ea3cceaccd160e3f3a4bf7f1662c6311f51bbbf4b8cbf25ce26f14.png" src="../_images/2df26f60b7ea3cceaccd160e3f3a4bf7f1662c6311f51bbbf4b8cbf25ce26f14.png" />
 </div>
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;Figure size 640x480 with 0 Axes&gt;
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># WE NEED A LOG-SPLINE MODEL</span>
 </pre></div>
 </div>
 </div>
