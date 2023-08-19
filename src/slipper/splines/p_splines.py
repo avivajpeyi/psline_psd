@@ -1,11 +1,11 @@
+import matplotlib.pyplot as plt
 import numpy as np
-from skfda.representation.basis import BSplineBasis
+from matplotlib.colors import TwoSlopeNorm
 from skfda.misc.operators import LinearDifferentialOperator
 from skfda.misc.regularization import L2Regularization
-import matplotlib.pyplot as plt
-from matplotlib.colors import TwoSlopeNorm
-from .utils import density_mixture
-from .generator import convert_v_to_weights, unroll_list_to_new_length
+from skfda.representation.basis import BSplineBasis
+
+from .utils import convert_v_to_weights, density_mixture, unroll_list_to_new_length
 
 
 class PSplines:
@@ -22,7 +22,7 @@ class PSplines:
     """
 
     def __init__(
-            self, knots: np.array, degree: int, diffMatrixOrder: int = 2, n_grid_points=None
+        self, knots: np.array, degree: int, diffMatrixOrder: int = 2, n_grid_points=None
     ):
         """Initialise the PSplines class
 
@@ -43,7 +43,9 @@ class PSplines:
         self.knots: np.array = knots
         self.degree: int = degree
 
-        self.n_grid_points: int = n_grid_points  # number of points to evaluate the basis functions at
+        self.n_grid_points: int = (
+            n_grid_points  # number of points to evaluate the basis functions at
+        )
         self.diffMatrixOrder: int = diffMatrixOrder
         self.penalty_matrix: np.ndarray = self.__generate_penalty_matrix()
         self.basis: np.ndarray = self.__generate_basis_matrix()
@@ -75,8 +77,10 @@ class PSplines:
 
     @property
     def grid_points(self) -> np.array:
-        if not hasattr(self, '_grid_points'):
-            self._grid_points = np.linspace(self.knots[0], self.knots[-1], self.n_grid_points)
+        if not hasattr(self, "_grid_points"):
+            self._grid_points = np.linspace(
+                self.knots[0], self.knots[-1], self.n_grid_points
+            )
         return self._grid_points
 
     def __get_fda_bspline_basis(self, knots=None):
@@ -114,7 +118,7 @@ class PSplines:
             # normalize the basis functions
             knots_with_boundary = self.__get_knots_with_boundary()
             n_knots = len(knots_with_boundary)
-            mid_to_end_knots = knots_with_boundary[self.degree + 1:]
+            mid_to_end_knots = knots_with_boundary[self.degree + 1 :]
             start_to_mid_knots = knots_with_boundary[: (n_knots - self.degree - 1)]
             bs_int = (mid_to_end_knots - start_to_mid_knots) / (self.degree + 1)
             bs_int[bs_int == 0] = np.inf
@@ -129,7 +133,7 @@ class PSplines:
 
         return basis_matrix
 
-    def __generate_penalty_matrix(self, epsilon = 1e-6) -> np.ndarray:
+    def __generate_penalty_matrix(self, epsilon=1e-6) -> np.ndarray:
         """
         Generate a penalty matrix of any order
         Returns:
@@ -138,17 +142,19 @@ class PSplines:
         """
         # exclude the last knot to avoid singular matrix
         basis = self.__get_fda_bspline_basis(knots=self.knots[0:-1])
-        regularization = L2Regularization(LinearDifferentialOperator(self.diffMatrixOrder))
+        regularization = L2Regularization(
+            LinearDifferentialOperator(self.diffMatrixOrder)
+        )
         p = regularization.penalty_matrix(basis)
         p / np.max(p)
         p = p + epsilon * np.eye(p.shape[1])  # P^(-1)=Sigma (Covariance matrix)
         return p
 
     def __call__(
-            self,
-            weights: np.ndarray = [],
-            v: np.ndarray = [],
-            n: int = None,
+        self,
+        weights: np.ndarray = [],
+        v: np.ndarray = [],
+        n: int = None,
     ) -> np.ndarray:
         """
         Generate a spline model from a vector of spline coefficients and a list of B-spline basis functions
@@ -161,8 +167,6 @@ class PSplines:
         elif len(weights) == 0 and len(v) > 0:
             weights = convert_v_to_weights(v)
 
-
-
         spline = density_mixture(weights, self.basis.T)
 
         if n is None:
@@ -174,7 +178,13 @@ class PSplines:
         return spline
 
     def plot_basis(
-            self, ax=None, weights=None, basis_kwargs={}, spline_kwargs={}, knots_kwargs={}, plot_weighted_basis=False
+        self,
+        ax=None,
+        weights=None,
+        basis_kwargs={},
+        spline_kwargs={},
+        knots_kwargs={},
+        plot_weighted_basis=False,
     ):
         """Plot the basis + knots.
 
@@ -200,33 +210,32 @@ class PSplines:
 
         plot_weighted_basis = plot_weighted_basis and weights is not None
 
-
         for i in range(self.n_basis):
             kwg = basis_kwargs.copy()
-            kwg['color'] = kwg.get('color', f'C{i}')
+            kwg["color"] = kwg.get("color", f"C{i}")
             ax.plot(self.grid_points, self.basis[:, i], **kwg)
             if plot_weighted_basis:
-                kwg['ls'] = kwg.get('ls', '--')
+                kwg["ls"] = kwg.get("ls", "--")
                 weighted_b = self.basis[:, i] * weights[i]
                 ax.plot(self.grid_points, weighted_b, **kwg)
 
         for i in range(self.n_knots):
             kwg = knots_kwargs.copy()
-            kwg['color'] = kwg.get('color', 'tab:gray')
-            kwg['marker'] = kwg.get('marker', 'o')
-            kwg['ms'] = kwg.get('ms', 15)
-            kwg['zorder'] = kwg.get('zorder', 10)
+            kwg["color"] = kwg.get("color", "tab:gray")
+            kwg["marker"] = kwg.get("marker", "o")
+            kwg["ms"] = kwg.get("ms", 15)
+            kwg["zorder"] = kwg.get("zorder", 10)
             ax.plot(self.knots[i], 0, **kwg)
 
         if weights is not None:
             kwg = spline_kwargs.copy()
-            kwg['color'] = kwg.get('color', 'k')
+            kwg["color"] = kwg.get("color", "k")
             spline_model = self(weights)
             ax.plot(self.grid_points, spline_model, **kwg)
 
         ax.set_ylim(bottom=0)
-        ax.set_xlabel('Grid points')
-        ax.set_title('Basis functions')
+        ax.set_xlabel("Grid points")
+        ax.set_title("Basis functions")
 
         return fig, ax
 
@@ -255,6 +264,3 @@ class PSplines:
         self.plot_penalty_matrix(ax=ax[1])
         plt.tight_layout()
         return fig, ax
-
-
-

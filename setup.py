@@ -5,9 +5,9 @@ import sys
 
 from setuptools import find_packages, setup
 
-NAME = "pspline_psd"
+NAME = "slipper"
 PACKAGES = find_packages(where="src")
-META_PATH = os.path.join("src", "pspline_psd", "__init__.py")
+META_PATH = os.path.join("src", "slipper", "__init__.py")
 CLASSIFIERS = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
@@ -35,7 +35,6 @@ INSTALL_REQUIRES = [
     "loguru",
     "bilby",
     "statsmodels",
-
 ]
 EXTRA_REQUIRE = {
     "dev": [

@@ -3,12 +3,12 @@ import numpy as np
 import pytest
 from scipy.fft import fft
 
-from pspline_psd.bayesian_utilities.bayesian_functions import llike
-from pspline_psd.fourier_methods import get_fz
-from pspline_psd.sample.post_processing import generate_spline_quantiles
-from pspline_psd.sample.spline_model_sampler import sample_with_spline_model
-from pspline_psd.splines.generator import get_unscaled_spline
-from pspline_psd.splines.initialisation import (
+from slipper.bayesian_utilities.bayesian_functions import llike
+from slipper.fourier_methods import get_fz
+from slipper.sample.post_processing import generate_spline_quantiles
+from slipper.sample.spline_model_sampler import fit_data_with_pspline_model
+from slipper.splines.generator import get_unscaled_spline
+from slipper.splines.initialisation import (
     _generate_initial_weights,
     dbspline,
     knot_locator,
@@ -269,7 +269,7 @@ def __r_mcmc(data, nsteps):
 
 def __py_mcmc(data, nsteps):
     burnin = int(0.5 * nsteps)
-    mcmc = sample_with_spline_model(
+    mcmc = fit_data_with_pspline_model(
         data,
         burnin=burnin,
         Ntotal=nsteps,

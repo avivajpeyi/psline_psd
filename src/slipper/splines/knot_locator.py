@@ -1,6 +1,6 @@
-import numpy as np
-
 import enum
+
+import numpy as np
 
 
 class KnotLocatorType(enum.Enum):

@@ -10,8 +10,8 @@ CLEAN = True
 
 
 def pytest_configure(config):
-    # NB this causes `pspline_psd/__init__.py` to run
-    import pspline_psd  # noqa
+    # NB this causes `slipper/__init__.py` to run
+    import slipper  # noqa
 
 
 def mkdir(path):
@@ -31,8 +31,8 @@ def test_pdgrm(tmpdir) -> str:
     fname = f"{tmpdir}/ar_3.csv"
     regenerate = True if not os.path.exists(fname) else CLEAN
     if regenerate:
-        from pspline_psd.example_datasets.ar_data import generate_ar_timeseries
-        from pspline_psd.fourier_methods import get_periodogram
+        from slipper.example_datasets.ar_data import generate_ar_timeseries
+        from slipper.fourier_methods import get_periodogram
 
         data = generate_ar_timeseries(order=3, n_samples=500)
         pdgm = get_periodogram(timeseries=data)

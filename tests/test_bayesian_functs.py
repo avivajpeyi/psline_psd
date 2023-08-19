@@ -1,16 +1,16 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from pspline_psd.bayesian_utilities import llike, lprior
-from pspline_psd.bayesian_utilities.bayesian_functions import _vPv, sample_φδτ
-from pspline_psd.fourier_methods import get_fz, get_periodogram
-from pspline_psd.sample.spline_model_sampler import (
+from slipper.bayesian_utilities import llike, lprior
+from slipper.bayesian_utilities.bayesian_functions import _vPv, sample_φδτ
+from slipper.fourier_methods import get_fz, get_periodogram
+from slipper.sample.spline_model_sampler import (
     _get_initial_spline_data,
     _get_initial_values,
 )
-from pspline_psd.splines.generator import build_spline_model, unroll_list_to_new_length
-from pspline_psd.splines.initialisation import _generate_initial_weights, knot_locator
-from pspline_psd.splines.p_splines import PSplines
+from slipper.splines.initialisation import knot_locator
+from slipper.splines.p_splines import PSplines
+from slipper.splines.utils import build_spline_model, unroll_list_to_new_length
 
 
 def test_psd_unroll():
@@ -71,7 +71,7 @@ def test_llike(test_pdgrm, tmpdir):
     periodogram = get_periodogram(fz)
     knots = knot_locator(test_pdgrm, k=k, degree=degree, eqSpaced=True)
     spline_model = PSplines(knots, degree=degree)
-    llike_val = llike(v=V, τ=τ, pdgrm=periodogram, spline_model=spline_model)
+    llike_val = llike(v=V, τ=τ, data=test_pdgrm, spline_model=spline_model)
     assert not np.isnan(llike_val)
     psd = spline_model(v=V)
     assert not np.isnan(psd).any()
@@ -117,14 +117,7 @@ def test_sample_prior(test_pdgrm, tmpdir):
     n = len(data)
     omega = np.linspace(0, 1, n // 2 + 1)
     diffMatrixOrder = 2
-
-    kwargs = {
-        "data": data,
-        "degree": degree,
-        "omega": omega,
-        "diffMatrixOrder": diffMatrixOrder,
-    }
-    τ0, δ0, φ0, periodogram, omega = _get_initial_values(**kwargs)
+    τ0, δ0, φ0 = _get_initial_values(data)
     V, knots, psplines = _get_initial_spline_data(
         data, k, degree, diffMatrixOrder, eqSpacedKnots=True
     )
@@ -142,7 +135,7 @@ def test_sample_prior(test_pdgrm, tmpdir):
         δ=1,
         δα=1e-4,
         δβ=1e-4,
-        periodogram=periodogram,
+        data=data,
         spline_model=psplines,
     )
 

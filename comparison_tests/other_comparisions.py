@@ -4,8 +4,8 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pytest
 
-from pspline_psd.fourier_methods import get_fz, get_periodogram
-from pspline_psd.splines import knot_locator
+from slipper.fourier_methods import get_fz, get_periodogram
+from slipper.splines import knot_locator
 
 MAKE_PLOTS = True
 
@@ -91,7 +91,7 @@ def r_obj_as_dict(vector):
 
 import numpy as np
 
-from pspline_psd.fourier_methods import get_fz, get_periodogram
+from slipper.fourier_methods import get_fz, get_periodogram
 
 
 def test_periodogram(helpers):
@@ -198,16 +198,16 @@ def test_fft(helpers):
 import matplotlib.pyplot as plt
 import numpy as np
 
-from pspline_psd.bayesian_utilities import llike, lprior
-from pspline_psd.bayesian_utilities.bayesian_functions import _vPv, sample_φδτ
-from pspline_psd.fourier_methods import get_fz, get_periodogram
-from pspline_psd.sample.spline_model_sampler import (
+from slipper.bayesian_utilities import llike, lprior
+from slipper.bayesian_utilities.bayesian_functions import _vPv, sample_φδτ
+from slipper.fourier_methods import get_fz, get_periodogram
+from slipper.sample.spline_model_sampler import (
     _get_initial_spline_data,
     _get_initial_values,
 )
-from pspline_psd.splines.generator import build_spline_model, unroll_list_to_new_length
-from pspline_psd.splines.initialisation import _generate_initial_weights, knot_locator
-from pspline_psd.splines.p_splines import PSplines
+from slipper.splines.generator import build_spline_model, unroll_list_to_new_length
+from slipper.splines.initialisation import _generate_initial_weights, knot_locator
+from slipper.splines.p_splines import PSplines
 
 MAKE_PLOTS = True
 

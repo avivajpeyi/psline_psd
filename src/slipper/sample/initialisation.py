@@ -75,15 +75,7 @@ def _argument_preconditions(
         degree > diffMatrixOrder
     ), "penalty order must be lower than the bspline density degree"
     assert isinstance(metadata_plotfn, str), "metadata_plotdir must be a string"
-
-    n = len(data)
-    if k is None:
-        k = min(round(n / 4), 40)
-
-    if abs(np.mean(data)) > 1e-4:
-        raise ValueError("data must be mean-centered before fitting")
-
-    assert k >= degree + 2, "k must be at least degree + 2"
+    assert k >= degree + 2, f"k must be at least degree + 2, (k={k}, degree={degree})"
     assert (
         Ntotal - burnin
     ) / thin > k, (
@@ -91,6 +83,4 @@ def _argument_preconditions(
     )
     assert (
         k - 2 >= diffMatrixOrder
-    ), "diffMatrixOrder must be lower than or equal to k-2"
-
-    return data, k
+    ), f"diffMatrixOrder ({diffMatrixOrder}) must be lower than or equal to k-2 (k={k})"

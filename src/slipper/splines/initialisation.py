@@ -46,6 +46,7 @@ def knot_locator(
         import matplotlib.pyplot as plt
 
         # plot the data, show the knots, and show the data
+        plt.figure()
         plt.plot(data)
         plt.plot(knots, np.zeros_like(knots), "o")
         plt.savefig("ERROR.png")

@@ -2,8 +2,6 @@ import numpy as np
 from bilby.core.prior import Gamma
 from numpy import dot
 
-from ..splines import build_spline_model
-
 
 def _vPv(v, P):
     return dot(dot(v.T, P), v)

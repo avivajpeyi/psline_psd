@@ -5,14 +5,14 @@ from tqdm.auto import trange
 
 from ..bayesian_utilities import lpost, sample_φδτ
 from ..splines import _get_initial_spline_data
-from .sampler_initialisation import _argument_preconditions, _get_initial_values
+from .initialisation import _argument_preconditions, _get_initial_values
 from .sampling_result import Result
 
 
-def sample_with_spline_model(
+def fit_data_with_pspline_model(
     data: np.ndarray,
-    Ntotal: int,
-    burnin: int,
+    Ntotal: int = 1000,
+    burnin: int = None,
     thin: int = 1,
     τα: float = 0.001,
     τβ: float = 0.001,
@@ -28,13 +28,16 @@ def sample_with_spline_model(
     metadata_plotfn: str = "",
 ) -> Result:
     """
-    Gibbs sampler for the Whittle likelihood with a P-spline prior on the log spectrum.
+    Gibbs sampler for the Whittle likelihood with a P-spline model.
     # TODO: switch to using bilby?
     """
+    if burnin is None:
+        burnin = round(Ntotal / 4)
+    if k is None:
+        k = min(round(len(data) / 4), 40)
+
     kwargs = locals()
-    # data_scale = np.std(data)
-    # raw_data = data.copy()
-    # data, k = _argument_preconditions(**kwargs)
+    _argument_preconditions(**kwargs)
 
     τ0, δ0, φ0 = _get_initial_values(
         data=data,

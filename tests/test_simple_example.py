@@ -2,17 +2,18 @@ import os
 
 import numpy as np
 
-from pspline_psd.plotting.plot_spline_model_and_data import plot_spline_model_and_data
-from pspline_psd.sample.spline_model_sampler import sample_with_spline_model
+from slipper.plotting.plot_spline_model_and_data import plot_spline_model_and_data
+from slipper.sample.spline_model_sampler import fit_data_with_pspline_model
+
+NTOTAL = 250
 
 
 def test_simple_example(test_pdgrm: np.ndarray, tmpdir: str):
     np.random.seed(0)
     fn = f"{tmpdir}/sample_metadata.png"
-    sample_with_spline_model(
+    fit_data_with_pspline_model(
         data=test_pdgrm,
-        Ntotal=3000,
-        burnin=1000,
+        Ntotal=NTOTAL,
         degree=3,
         eqSpacedKnots=False,
         compute_psds=True,
@@ -38,17 +39,15 @@ def test_funct():
     scaling = np.abs(np.min(y))
     y = y + scaling
 
-    mcmc = sample_with_spline_model(
+    mcmc = fit_data_with_pspline_model(
         data=y,
-        Ntotal=200,
-        burnin=100,
+        Ntotal=NTOTAL,
         degree=3,
         eqSpacedKnots=False,
         compute_psds=True,
         metadata_plotfn="test.png",
-        k=30,
+        k=5,
     )
-
     fig = plot_spline_model_and_data(
         data=y, model_quants=mcmc.psd_quantiles, knots=mcmc.knots, separarte_y_axis=True
     )

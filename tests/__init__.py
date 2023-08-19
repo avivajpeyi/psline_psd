@@ -1,1 +1,1 @@
-"""Unit test package for pspline_psd."""
+"""Unit test package for slipper."""
