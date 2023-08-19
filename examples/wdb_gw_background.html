@@ -135,8 +135,14 @@ const thebe_selector_output = ".output, .cell_output"
   
   
   
+    
+    
+      
+    
+    
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../_static/logo.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
   
-    <p class="title logo__title">PSplinePSD</p>
   
 </a></div>
         <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
@@ -145,7 +151,7 @@ const thebe_selector_output = ".output, .cell_output"
         <ul class="nav bd-sidenav bd-sidenav__home-link">
             <li class="toctree-l1">
                 <a class="reference internal" href="../index.html">
-                    P-Spline PSD
+                    Slipper
                 </a>
             </li>
         </ul>
@@ -458,11 +464,11 @@ findfont: Generic family &#39;sans&#39; not found because none of the following 
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pspline_psd.sample.spline_model_sampler</span> <span class="kn">import</span> <span class="n">sample_with_spline_model</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pspline_psd.sample.spline_model_sampler</span> <span class="kn">import</span> <span class="n">fit_data_with_pspline_model</span>
 
 
 
-<span class="n">mcmc</span> <span class="o">=</span> <span class="n">sample_with_spline_model</span><span class="p">(</span>
+<span class="n">mcmc</span> <span class="o">=</span> <span class="n">fit_data_with_pspline_model</span><span class="p">(</span>
     <span class="n">data</span><span class="o">=</span><span class="n">scaled_data</span><span class="p">,</span>
     <span class="n">Ntotal</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span>
     <span class="n">burnin</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>

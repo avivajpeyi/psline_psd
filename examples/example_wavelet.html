@@ -136,8 +136,14 @@ const thebe_selector_output = ".output, .cell_output"
   
   
   
+    
+    
+      
+    
+    
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../_static/logo.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
   
-    <p class="title logo__title">PSplinePSD</p>
   
 </a></div>
         <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
@@ -146,7 +152,7 @@ const thebe_selector_output = ".output, .cell_output"
         <ul class="nav bd-sidenav bd-sidenav__home-link">
             <li class="toctree-l1">
                 <a class="reference internal" href="../index.html">
-                    P-Spline PSD
+                    Slipper
                 </a>
             </li>
         </ul>
@@ -368,7 +374,7 @@ document.write(`
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">pspline_psd.sample.spline_model_sampler</span> <span class="kn">import</span> <span class="n">sample_with_spline_model</span>
+<span class="kn">from</span> <span class="nn">pspline_psd.sample.spline_model_sampler</span> <span class="kn">import</span> <span class="n">fit_data_with_pspline_model</span>
 <span class="kn">from</span> <span class="nn">pspline_psd.plotting</span> <span class="kn">import</span> <span class="n">set_plotting_style</span>
 <span class="kn">from</span> <span class="nn">pspline_psd.plotting.plot_spline_model_and_data</span> <span class="kn">import</span> <span class="n">plot_spline_model_and_data</span>
 <span class="kn">from</span> <span class="nn">pspline_psd.plotting.utils</span> <span class="kn">import</span> <span class="n">convert_axes_spines_to_arrows</span>
@@ -406,7 +412,7 @@ document.write(`
 <span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">line</span> <span class="mi">3</span>
 <span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="g g-Whitespace">      </span><span class="mi">2</span> <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="ne">----&gt; </span><span class="mi">3</span> <span class="kn">from</span> <span class="nn">pspline_psd.sample.spline_model_sampler</span> <span class="kn">import</span> <span class="n">sample_with_spline_model</span>
+<span class="ne">----&gt; </span><span class="mi">3</span> <span class="kn">from</span> <span class="nn">pspline_psd.sample.spline_model_sampler</span> <span class="kn">import</span> <span class="n">fit_data_with_pspline_model</span>
 <span class="g g-Whitespace">      </span><span class="mi">4</span> <span class="kn">from</span> <span class="nn">pspline_psd.plotting</span> <span class="kn">import</span> <span class="n">set_plotting_style</span>
 <span class="g g-Whitespace">      </span><span class="mi">5</span> <span class="kn">from</span> <span class="nn">pspline_psd.plotting.plot_spline_model_and_data</span> <span class="kn">import</span> <span class="n">plot_spline_model_and_data</span>
 
@@ -420,7 +426,7 @@ document.write(`
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">mcmc_objs</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="n">n_basis</span> <span class="o">=</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">30</span><span class="p">]</span>
 <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">n_basis</span><span class="p">:</span>
-    <span class="n">mcmc_</span> <span class="o">=</span> <span class="n">sample_with_spline_model</span><span class="p">(</span>
+    <span class="n">mcmc_</span> <span class="o">=</span> <span class="n">fit_data_with_pspline_model</span><span class="p">(</span>
         <span class="n">data</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">Ntotal</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">burnin</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
         <span class="n">degree</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">eqSpacedKnots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> 
         <span class="n">compute_psds</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">k</span>
@@ -460,7 +466,7 @@ document.write(`
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">mcmc_objs_non_equal_knots</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="n">n_basis</span> <span class="o">=</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">30</span><span class="p">]</span>
 <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">n_basis</span><span class="p">:</span>
-    <span class="n">mcmc_</span> <span class="o">=</span> <span class="n">sample_with_spline_model</span><span class="p">(</span>
+    <span class="n">mcmc_</span> <span class="o">=</span> <span class="n">fit_data_with_pspline_model</span><span class="p">(</span>
         <span class="n">data</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">Ntotal</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">burnin</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
         <span class="n">degree</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">eqSpacedKnots</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="n">compute_psds</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">k</span>
