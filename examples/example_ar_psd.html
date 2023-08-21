@@ -161,7 +161,7 @@ const thebe_selector_output = ".output, .cell_output"
 <li class="toctree-l1"><a class="reference internal" href="../api/api.html">API</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Example: AR process</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_wavelet.html">Example: Wavelet</a></li>
-<li class="toctree-l1"><a class="reference internal" href="p_splines.html">PSpline Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="p_splines.html">P-Spline Generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="wdb_gw_background.html">Example: LISA White Dwarf background</a></li>
 </ul>
 
@@ -375,16 +375,7 @@ document.write(`
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">matplotlib</span> inline
 <span class="o">%</span><span class="k">load_ext</span> autoreload
-<span class="o">!</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>git+https://github.com/avivajpeyi/pspline_psd.git<span class="w"> </span>-q
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>^C
-<span class=" -Color -Color-Red">ERROR: Operation cancelled by user</span>
-
-<span class=" -Color -Color-Bold">[</span><span class=" -Color -Color-Blue">notice</span><span class=" -Color -Color-Bold">]</span> A new release of pip is available: <span class=" -Color -Color-Red">23.0.1</span> -&gt; <span class=" -Color -Color-Green">23.2.1</span>
-<span class=" -Color -Color-Bold">[</span><span class=" -Color -Color-Blue">notice</span><span class=" -Color -Color-Bold">]</span> To update, run: <span class=" -Color -Color-Green">pip install --upgrade pip</span>
+<span class="c1"># ! pip install git+https://github.com/avivajpeyi/pspline_psd.git -q</span>
 </pre></div>
 </div>
 </div>
@@ -397,44 +388,29 @@ document.write(`
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">scipy.fft</span> <span class="kn">import</span> <span class="n">fft</span>
-<span class="kn">from</span> <span class="nn">pspline_psd.example_datasets.ar_data</span> <span class="kn">import</span> <span class="n">generate_ar_timeseries</span><span class="p">,</span> <span class="n">plot_ar_spectrogram_psd</span>
-<span class="kn">from</span> <span class="nn">pspline_psd.sample.fit_data_with_pspline_model</span> <span class="kn">import</span> <span class="n">fit_data_with_pspline_model</span>
-<span class="kn">from</span> <span class="nn">pspline_psd.plotting</span> <span class="kn">import</span> <span class="n">set_plotting_style</span>
-<span class="kn">from</span> <span class="nn">pspline_psd.fourier_methods</span> <span class="kn">import</span> <span class="n">get_periodogram</span>
-
+<span class="kn">from</span> <span class="nn">slipper.example_datasets.ar_data</span> <span class="kn">import</span> <span class="n">generate_ar_timeseries</span><span class="p">,</span> <span class="n">plot_ar_spectrogram_psd</span>
+<span class="kn">from</span> <span class="nn">slipper.sample.spline_model_sampler</span> <span class="kn">import</span> <span class="n">fit_data_with_pspline_model</span>
+<span class="kn">from</span> <span class="nn">slipper.plotting</span> <span class="kn">import</span> <span class="n">set_plotting_style</span>
+<span class="kn">from</span> <span class="nn">slipper.fourier_methods</span> <span class="kn">import</span> <span class="n">get_periodogram</span>
+<span class="kn">from</span> <span class="nn">slipper.plotting.plot_spline_model_and_data</span> <span class="kn">import</span> <span class="n">plot_spline_model_and_data</span>
 
 <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
-
 <span class="n">set_plotting_style</span><span class="p">()</span>
+<span class="n">N_TOTAL_MCMC_STEPS</span> <span class="o">=</span> <span class="mi">500</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
+<span class="ne">ModuleNotFoundError</span><span class="g g-Whitespace">                       </span>Traceback (most recent call last)
+<span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">line</span> <span class="mi">3</span>
+<span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="g g-Whitespace">      </span><span class="mi">2</span> <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="ne">----&gt; </span><span class="mi">3</span> <span class="kn">from</span> <span class="nn">scipy.fft</span> <span class="kn">import</span> <span class="n">fft</span>
+<span class="g g-Whitespace">      </span><span class="mi">4</span> <span class="kn">from</span> <span class="nn">slipper.example_datasets.ar_data</span> <span class="kn">import</span> <span class="n">generate_ar_timeseries</span><span class="p">,</span> <span class="n">plot_ar_spectrogram_psd</span>
+<span class="g g-Whitespace">      </span><span class="mi">5</span> <span class="kn">from</span> <span class="nn">slipper.sample.spline_model_sampler</span> <span class="kn">import</span> <span class="n">fit_data_with_pspline_model</span>
 
-
-
-<span class="k">def</span> <span class="nf">plot_spline_model_and_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">psd_quants</span><span class="p">,</span> <span class="n">separarte_y_axis</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-    <span class="n">psd</span><span class="p">,</span> <span class="n">psd_p05</span><span class="p">,</span> <span class="n">psd_p95</span> <span class="o">=</span> <span class="n">psd_quants</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:],</span> <span class="n">psd_quants</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">:],</span> <span class="n">psd_quants</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="p">:]</span>
-    <span class="n">n</span><span class="p">,</span> <span class="n">newn</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">psd</span><span class="p">)</span>
-    <span class="n">periodogram</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">fft</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">n</span><span class="p">))[</span><span class="mi">0</span><span class="p">:</span><span class="n">newn</span><span class="p">]</span>
-    <span class="n">psd_x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">3.14</span><span class="p">,</span> <span class="n">newn</span><span class="p">)</span>
-
-    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
-
-    <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">psd_x</span><span class="p">,</span> <span class="n">periodogram</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Data&quot;</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mf">0.75</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">separarte_y_axis</span><span class="p">:</span>
-        <span class="n">ax1</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">twinx</span><span class="p">()</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">ax1</span> <span class="o">=</span> <span class="n">ax</span>
-    <span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">psd_x</span><span class="p">,</span> <span class="n">psd</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;tab:orange&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Posterior&quot;</span><span class="p">)</span>
-    <span class="n">ax1</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span>
-        <span class="n">psd_x</span><span class="p">,</span> <span class="n">psd_p05</span><span class="p">,</span> <span class="n">psd_p95</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;tab:orange&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.0</span>
-    <span class="p">)</span>
-
-    <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">markerscale</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">frameon</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;PSD&quot;</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Freq&quot;</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">minorticks_off</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">fig</span>
+<span class="ne">ModuleNotFoundError</span>: No module named &#39;scipy&#39;
 </pre></div>
 </div>
 </div>
@@ -449,31 +425,43 @@ document.write(`
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/6665455d931babe5737246f0c413399558d9fb94e331631a842982f4e6e4b831.png" src="../_images/6665455d931babe5737246f0c413399558d9fb94e331631a842982f4e6e4b831.png" />
+<img alt="../_images/4b5a797be29803cc5f8dd1857303b46241aab0f9675b25596ddff511c866d4dc.png" src="../_images/4b5a797be29803cc5f8dd1857303b46241aab0f9675b25596ddff511c866d4dc.png" />
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pdgrm</span> <span class="o">=</span> <span class="n">get_periodogram</span><span class="p">(</span><span class="n">timeseries</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
 <span class="n">mcmc</span> <span class="o">=</span> <span class="n">fit_data_with_pspline_model</span><span class="p">(</span>
-    <span class="n">data</span><span class="o">=</span><span class="n">pdgrm</span><span class="p">,</span> <span class="n">Ntotal</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span> <span class="n">burnin</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">degree</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">eqSpacedKnots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">compute_psds</span><span class="o">=</span><span class="kc">True</span>
+    <span class="n">data</span><span class="o">=</span><span class="n">pdgrm</span><span class="p">,</span> <span class="n">Ntotal</span><span class="o">=</span><span class="n">N_TOTAL_MCMC_STEPS</span><span class="p">,</span> <span class="n">degree</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> 
+    <span class="n">eqSpaced</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">compute_psds</span><span class="o">=</span><span class="kc">True</span>
 <span class="p">)</span>
 <span class="n">fig</span> <span class="o">=</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">make_summary_plot</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<script type="application/vnd.jupyter.widget-view+json">{"model_id": "859b49e79feb48fba187a53ae3ac8ca0", "version_major": 2, "version_minor": 0}</script><script type="application/vnd.jupyter.widget-view+json">{"model_id": "fd923866484945dd8b483bf01a401b64", "version_major": 2, "version_minor": 0}</script><img alt="../_images/efc0028746c78add35de3687467f6ac4e1f24777195a7c498497efd3409e652c.png" src="../_images/efc0028746c78add35de3687467f6ac4e1f24777195a7c498497efd3409e652c.png" />
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">plot_spline_model_and_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">psd_quantiles</span><span class="p">)</span>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>|<span class=" -Color -Color-Blue">Slipper</span>|20/08 23:16:00|<span class=" -Color -Color-Bold">  INFO  </span>| <span class=" -Color -Color-Green">Running sampler with the following arguments:</span>
+<span class=" -Color -Color-Green">Sampler arguments:</span>
+<span class=" -Color -Color-Green">{&#39;Ntotal&#39;: 500,</span>
+<span class=" -Color -Color-Green"> &#39;burnin&#39;: 166,</span>
+<span class=" -Color -Color-Green"> &#39;plot_checkpoint&#39;: False,</span>
+<span class=" -Color -Color-Green"> &#39;thin&#39;: 1,</span>
+<span class=" -Color -Color-Green"> &#39;δα&#39;: 0.0001,</span>
+<span class=" -Color -Color-Green"> &#39;δβ&#39;: 0.0001,</span>
+<span class=" -Color -Color-Green"> &#39;τα&#39;: 0.001,</span>
+<span class=" -Color -Color-Green"> &#39;τβ&#39;: 0.001,</span>
+<span class=" -Color -Color-Green"> &#39;φα&#39;: 1,</span>
+<span class=" -Color -Color-Green"> &#39;φβ&#39;: 1}</span>
+<span class=" -Color -Color-Green">Spline arguments:</span>
+<span class=" -Color -Color-Green">{&#39;degree&#39;: 3,</span>
+<span class=" -Color -Color-Green"> &#39;diffMatrixOrder&#39;: 2,</span>
+<span class=" -Color -Color-Green"> &#39;eqSpaced&#39;: False,</span>
+<span class=" -Color -Color-Green"> &#39;eqSpaced&#39;: True,</span>
+<span class=" -Color -Color-Green"> &#39;k&#39;: 30}</span>
+<span class=" -Color -Color-Green">N it: 500*1 = 500</span>
 </pre></div>
 </div>
-</div>
-<div class="cell_output docutils container">
-<img alt="../_images/d4466904af35f75e3e700a42478f097351d2350a25d6f429d4426b854dc3c997.png" src="../_images/d4466904af35f75e3e700a42478f097351d2350a25d6f429d4426b854dc3c997.png" />
+<img alt="../_images/d2988705fc9a6771f76d6762e6f07ad99d57ebe6450f21bbc8de7a6d6568bce3.png" src="../_images/d2988705fc9a6771f76d6762e6f07ad99d57ebe6450f21bbc8de7a6d6568bce3.png" />
 </div>
 </div>
 </section>
@@ -488,8 +476,8 @@ document.write(`
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/0af6f8e4df5b804b4f1d102dbc4774d67753dfe6d22b7a2b56249f71efb8094a.png" src="../_images/0af6f8e4df5b804b4f1d102dbc4774d67753dfe6d22b7a2b56249f71efb8094a.png" />
-<img alt="../_images/0af6f8e4df5b804b4f1d102dbc4774d67753dfe6d22b7a2b56249f71efb8094a.png" src="../_images/0af6f8e4df5b804b4f1d102dbc4774d67753dfe6d22b7a2b56249f71efb8094a.png" />
+<img alt="../_images/bef489ddde6ba7373369e51f19f05da1311335d48ccd03bdf4fee416ac83b6b6.png" src="../_images/bef489ddde6ba7373369e51f19f05da1311335d48ccd03bdf4fee416ac83b6b6.png" />
+<img alt="../_images/bef489ddde6ba7373369e51f19f05da1311335d48ccd03bdf4fee416ac83b6b6.png" src="../_images/bef489ddde6ba7373369e51f19f05da1311335d48ccd03bdf4fee416ac83b6b6.png" />
 </div>
 </div>
 </section>
@@ -499,25 +487,54 @@ document.write(`
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pdgrm</span> <span class="o">=</span> <span class="n">get_periodogram</span><span class="p">(</span><span class="n">timeseries</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
 <span class="n">mcmc</span> <span class="o">=</span> <span class="n">fit_data_with_pspline_model</span><span class="p">(</span>
-    <span class="n">data</span><span class="o">=</span><span class="n">pdgrm</span><span class="p">,</span> <span class="n">Ntotal</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span> <span class="n">burnin</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">degree</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">eqSpacedKnots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">compute_psds</span><span class="o">=</span><span class="kc">True</span>
+    <span class="n">data</span><span class="o">=</span><span class="n">pdgrm</span><span class="p">,</span> <span class="n">Ntotal</span><span class="o">=</span><span class="n">N_TOTAL_MCMC_STEPS</span><span class="p">,</span> <span class="n">degree</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> 
+    <span class="n">eqSpaced</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">compute_psds</span><span class="o">=</span><span class="kc">True</span>
 <span class="p">)</span>
-<span class="n">mcmc</span><span class="o">.</span><span class="n">make_summary_plot</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<script type="application/vnd.jupyter.widget-view+json">{"model_id": "083a82d99a1649dab6e1523d23a62aac", "version_major": 2, "version_minor": 0}</script><script type="application/vnd.jupyter.widget-view+json">{"model_id": "46a48fe7b1fd4954a39c8fdb0fb49e33", "version_major": 2, "version_minor": 0}</script><img alt="../_images/ba5b00178445fcd8050f0093e91baca06f80f6bf04ce20157725adadff9ad896.png" src="../_images/ba5b00178445fcd8050f0093e91baca06f80f6bf04ce20157725adadff9ad896.png" />
-<img alt="../_images/ba5b00178445fcd8050f0093e91baca06f80f6bf04ce20157725adadff9ad896.png" src="../_images/ba5b00178445fcd8050f0093e91baca06f80f6bf04ce20157725adadff9ad896.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>|<span class=" -Color -Color-Blue">Slipper</span>|20/08 23:15:12|<span class=" -Color -Color-Bold">  INFO  </span>| <span class=" -Color -Color-Green">Running sampler with the following arguments:</span>
+<span class=" -Color -Color-Green">Sampler arguments:</span>
+<span class=" -Color -Color-Green">{&#39;Ntotal&#39;: 500,</span>
+<span class=" -Color -Color-Green"> &#39;burnin&#39;: 166,</span>
+<span class=" -Color -Color-Green"> &#39;plot_checkpoint&#39;: False,</span>
+<span class=" -Color -Color-Green"> &#39;thin&#39;: 1,</span>
+<span class=" -Color -Color-Green"> &#39;δα&#39;: 0.0001,</span>
+<span class=" -Color -Color-Green"> &#39;δβ&#39;: 0.0001,</span>
+<span class=" -Color -Color-Green"> &#39;τα&#39;: 0.001,</span>
+<span class=" -Color -Color-Green"> &#39;τβ&#39;: 0.001,</span>
+<span class=" -Color -Color-Green"> &#39;φα&#39;: 1,</span>
+<span class=" -Color -Color-Green"> &#39;φβ&#39;: 1}</span>
+<span class=" -Color -Color-Green">Spline arguments:</span>
+<span class=" -Color -Color-Green">{&#39;degree&#39;: 3,</span>
+<span class=" -Color -Color-Green"> &#39;diffMatrixOrder&#39;: 2,</span>
+<span class=" -Color -Color-Green"> &#39;eqSpaced&#39;: False,</span>
+<span class=" -Color -Color-Green"> &#39;eqSpaced&#39;: True,</span>
+<span class=" -Color -Color-Green"> &#39;k&#39;: 30}</span>
+<span class=" -Color -Color-Green">N it: 500*1 = 500</span>
+</pre></div>
+</div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">plot_spline_model_and_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">psd_quantiles</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">make_summary_plot</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/c3e4c1a4651247f75a743fd429907807ad5e6e9f73e235c4b5887bb68f349a8d.png" src="../_images/c3e4c1a4651247f75a743fd429907807ad5e6e9f73e235c4b5887bb68f349a8d.png" />
+<img alt="../_images/5f15c25d3db224c0dd3a99fe6514008ad2a4435cdba8f05ed4d330418e0480ad.png" src="../_images/5f15c25d3db224c0dd3a99fe6514008ad2a4435cdba8f05ed4d330418e0480ad.png" />
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">plot_spline_model_and_data</span><span class="p">(</span><span class="n">pdgrm</span><span class="p">,</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">psd_quantiles</span><span class="p">,</span> <span class="n">separarte_y_axis</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/defa5baa69f8e671a2b0662ae9616a263ae03a7352202f5ec7e8f7179702dfd1.png" src="../_images/defa5baa69f8e671a2b0662ae9616a263ae03a7352202f5ec7e8f7179702dfd1.png" />
 </div>
 </div>
 </section>
@@ -527,24 +544,62 @@ document.write(`
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pdgrm</span> <span class="o">=</span> <span class="n">get_periodogram</span><span class="p">(</span><span class="n">timeseries</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
 <span class="n">mcmc</span> <span class="o">=</span> <span class="n">fit_data_with_pspline_model</span><span class="p">(</span>
-    <span class="n">data</span><span class="o">=</span><span class="n">pdgrm</span><span class="p">,</span> <span class="n">Ntotal</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span> <span class="n">burnin</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">degree</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">eqSpacedKnots</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">compute_psds</span><span class="o">=</span><span class="kc">True</span>
+    <span class="n">data</span><span class="o">=</span><span class="n">pdgrm</span><span class="p">,</span> <span class="n">Ntotal</span><span class="o">=</span><span class="n">N_TOTAL_MCMC_STEPS</span><span class="p">,</span> <span class="n">degree</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> 
+    <span class="n">eqSpaced</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">compute_psds</span><span class="o">=</span><span class="kc">True</span>
 <span class="p">)</span>
-<span class="n">fig</span> <span class="o">=</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">make_summary_plot</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<script type="application/vnd.jupyter.widget-view+json">{"model_id": "59b87ba426a94fbab1fb1bdecb562338", "version_major": 2, "version_minor": 0}</script><script type="application/vnd.jupyter.widget-view+json">{"model_id": "e0d116f58daa432085bdefa0f6c3e314", "version_major": 2, "version_minor": 0}</script><img alt="../_images/ebe44803dc9869f06110bbbe6121069579cdc43b1017f7f811f2eec5c3ae7784.png" src="../_images/ebe44803dc9869f06110bbbe6121069579cdc43b1017f7f811f2eec5c3ae7784.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>|<span class=" -Color -Color-Blue">Slipper</span>|20/08 23:15:28|<span class=" -Color -Color-Bold">  INFO  </span>| <span class=" -Color -Color-Green">Running sampler with the following arguments:</span>
+<span class=" -Color -Color-Green">Sampler arguments:</span>
+<span class=" -Color -Color-Green">{&#39;Ntotal&#39;: 500,</span>
+<span class=" -Color -Color-Green"> &#39;burnin&#39;: 166,</span>
+<span class=" -Color -Color-Green"> &#39;plot_checkpoint&#39;: False,</span>
+<span class=" -Color -Color-Green"> &#39;thin&#39;: 1,</span>
+<span class=" -Color -Color-Green"> &#39;δα&#39;: 0.0001,</span>
+<span class=" -Color -Color-Green"> &#39;δβ&#39;: 0.0001,</span>
+<span class=" -Color -Color-Green"> &#39;τα&#39;: 0.001,</span>
+<span class=" -Color -Color-Green"> &#39;τβ&#39;: 0.001,</span>
+<span class=" -Color -Color-Green"> &#39;φα&#39;: 1,</span>
+<span class=" -Color -Color-Green"> &#39;φβ&#39;: 1}</span>
+<span class=" -Color -Color-Green">Spline arguments:</span>
+<span class=" -Color -Color-Green">{&#39;degree&#39;: 3,</span>
+<span class=" -Color -Color-Green"> &#39;diffMatrixOrder&#39;: 2,</span>
+<span class=" -Color -Color-Green"> &#39;eqSpaced&#39;: False,</span>
+<span class=" -Color -Color-Green"> &#39;eqSpaced&#39;: False,</span>
+<span class=" -Color -Color-Green"> &#39;k&#39;: 30}</span>
+<span class=" -Color -Color-Green">N it: 500*1 = 500</span>
+</pre></div>
+</div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">plot_spline_model_and_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">psd_quantiles</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">make_summary_plot</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/29f294bc09e99c6f0f7d4b92a030602a30749f722274623ce5eedb04bb582cf0.png" src="../_images/29f294bc09e99c6f0f7d4b92a030602a30749f722274623ce5eedb04bb582cf0.png" />
+<img alt="../_images/af196119d9dac02819ea2b0ab5c3663981412d75d2fe8ff2fa6bf1b37b394c87.png" src="../_images/af196119d9dac02819ea2b0ab5c3663981412d75d2fe8ff2fa6bf1b37b394c87.png" />
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">mcmc_quant</span> <span class="o">=</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">get_model_quantiles</span><span class="p">()</span>
+<span class="n">plt_pdgrm</span> <span class="o">=</span> <span class="n">pdgrm</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">plt_pdgrm</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="n">N</span><span class="p">)</span>
+<span class="n">fig</span> <span class="o">=</span> <span class="n">plot_spline_model_and_data</span><span class="p">(</span><span class="n">plt_pdgrm</span><span class="p">,</span> <span class="n">mcmc_quant</span><span class="p">,</span> <span class="n">separarte_y_axis</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">a_</span> <span class="ow">in</span> <span class="n">fig</span><span class="o">.</span><span class="n">get_axes</span><span class="p">():</span>
+    <span class="n">a_</span><span class="o">.</span><span class="n">set_yscale</span><span class="p">(</span><span class="s1">&#39;log&#39;</span><span class="p">)</span>
+    <span class="n">a_</span><span class="o">.</span><span class="n">relim</span><span class="p">()</span>
+    
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/7ab243a1c01bb14934a3ed8f918bf935133574adabfa85e411eeba40b1eb4430.png" src="../_images/7ab243a1c01bb14934a3ed8f918bf935133574adabfa85e411eeba40b1eb4430.png" />
 </div>
 </div>
 </section>

@@ -64,7 +64,7 @@ const thebe_selector_output = ".output, .cell_output"
     <script>DOCUMENTATION_OPTIONS.pagename = 'examples/example_wavelet';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="PSpline Generation" href="p_splines.html" />
+    <link rel="next" title="P-Spline Generation" href="p_splines.html" />
     <link rel="prev" title="Example: AR process" href="example_ar_psd.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -161,7 +161,7 @@ const thebe_selector_output = ".output, .cell_output"
 <li class="toctree-l1"><a class="reference internal" href="../api/api.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_ar_psd.html">Example: AR process</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Example: Wavelet</a></li>
-<li class="toctree-l1"><a class="reference internal" href="p_splines.html">PSpline Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="p_splines.html">P-Spline Generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="wdb_gw_background.html">Example: LISA White Dwarf background</a></li>
 </ul>
 
@@ -374,10 +374,10 @@ document.write(`
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">pspline_psd.sample.spline_model_sampler</span> <span class="kn">import</span> <span class="n">fit_data_with_pspline_model</span>
-<span class="kn">from</span> <span class="nn">pspline_psd.plotting</span> <span class="kn">import</span> <span class="n">set_plotting_style</span>
-<span class="kn">from</span> <span class="nn">pspline_psd.plotting.plot_spline_model_and_data</span> <span class="kn">import</span> <span class="n">plot_spline_model_and_data</span>
-<span class="kn">from</span> <span class="nn">pspline_psd.plotting.utils</span> <span class="kn">import</span> <span class="n">convert_axes_spines_to_arrows</span>
+<span class="kn">from</span> <span class="nn">slipper.sample.spline_model_sampler</span> <span class="kn">import</span> <span class="n">fit_data_with_pspline_model</span>
+<span class="kn">from</span> <span class="nn">slipper.plotting</span> <span class="kn">import</span> <span class="n">set_plotting_style</span>
+<span class="kn">from</span> <span class="nn">slipper.plotting.plot_spline_model_and_data</span> <span class="kn">import</span> <span class="n">plot_spline_model_and_data</span>
+<span class="kn">from</span> <span class="nn">slipper.plotting.utils</span> <span class="kn">import</span> <span class="n">convert_axes_spines_to_arrows</span>
 
 
 <span class="k">def</span> <span class="nf">func</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
@@ -412,11 +412,11 @@ document.write(`
 <span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">line</span> <span class="mi">3</span>
 <span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="g g-Whitespace">      </span><span class="mi">2</span> <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="ne">----&gt; </span><span class="mi">3</span> <span class="kn">from</span> <span class="nn">pspline_psd.sample.spline_model_sampler</span> <span class="kn">import</span> <span class="n">fit_data_with_pspline_model</span>
-<span class="g g-Whitespace">      </span><span class="mi">4</span> <span class="kn">from</span> <span class="nn">pspline_psd.plotting</span> <span class="kn">import</span> <span class="n">set_plotting_style</span>
-<span class="g g-Whitespace">      </span><span class="mi">5</span> <span class="kn">from</span> <span class="nn">pspline_psd.plotting.plot_spline_model_and_data</span> <span class="kn">import</span> <span class="n">plot_spline_model_and_data</span>
+<span class="ne">----&gt; </span><span class="mi">3</span> <span class="kn">from</span> <span class="nn">slipper.sample.spline_model_sampler</span> <span class="kn">import</span> <span class="n">fit_data_with_pspline_model</span>
+<span class="g g-Whitespace">      </span><span class="mi">4</span> <span class="kn">from</span> <span class="nn">slipper.plotting</span> <span class="kn">import</span> <span class="n">set_plotting_style</span>
+<span class="g g-Whitespace">      </span><span class="mi">5</span> <span class="kn">from</span> <span class="nn">slipper.plotting.plot_spline_model_and_data</span> <span class="kn">import</span> <span class="n">plot_spline_model_and_data</span>
 
-<span class="ne">ModuleNotFoundError</span>: No module named &#39;pspline_psd&#39;
+<span class="ne">ModuleNotFoundError</span>: No module named &#39;slipper&#39;
 </pre></div>
 </div>
 </div>
@@ -428,15 +428,63 @@ document.write(`
 <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">n_basis</span><span class="p">:</span>
     <span class="n">mcmc_</span> <span class="o">=</span> <span class="n">fit_data_with_pspline_model</span><span class="p">(</span>
         <span class="n">data</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">Ntotal</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">burnin</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
-        <span class="n">degree</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">eqSpacedKnots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> 
-        <span class="n">compute_psds</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">k</span>
+        <span class="n">degree</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">eqSpaced</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> 
+         <span class="n">k</span><span class="o">=</span><span class="n">k</span>
     <span class="p">)</span>
     <span class="n">mcmc_objs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mcmc_</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<script type="application/vnd.jupyter.widget-view+json">{"version_major": 2, "version_minor": 0, "model_id": "e4a06e75892645a0b7712615e1ba181d"}</script><script type="application/vnd.jupyter.widget-view+json">{"version_major": 2, "version_minor": 0, "model_id": "74fe29d3a69d46c98750de243860614f"}</script><script type="application/vnd.jupyter.widget-view+json">{"version_major": 2, "version_minor": 0, "model_id": "16426d658d744a24ad1aed0059d3eafc"}</script><script type="application/vnd.jupyter.widget-view+json">{"version_major": 2, "version_minor": 0, "model_id": "ca1b8c21daa64979b90fa2d5c64dde6f"}</script></div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Optimization terminated successfully.
+         Current function value: 102.261546
+         Iterations: 663
+         Function evaluations: 1191
+</pre></div>
+</div>
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "fbffdc7ca4104f7e9e477d6783c8950f", "version_major": 2, "version_minor": 0}</script><div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>findfont: Font family [&#39;cursive&#39;] not found. Falling back to DejaVu Sans.
+findfont: Generic family &#39;cursive&#39; not found because none of the following families were found: Liberation Sans
+findfont: Font family [&#39;sans&#39;] not found. Falling back to DejaVu Sans.
+findfont: Generic family &#39;sans&#39; not found because none of the following families were found: Liberation Sans
+findfont: Font family [&#39;sans&#39;] not found. Falling back to DejaVu Sans.
+findfont: Generic family &#39;sans&#39; not found because none of the following families were found: Liberation Sans
+findfont: Font family [&#39;sans&#39;] not found. Falling back to DejaVu Sans.
+findfont: Generic family &#39;sans&#39; not found because none of the following families were found: Liberation Sans
+/Users/avaj0001/Documents/projects/pspline_psd/src/slipper/plotting/plot_spline_model_and_data.py:60: UserWarning: This figure was using constrained_layout, but that is incompatible with subplots_adjust and/or tight_layout; disabling constrained_layout.
+  fig.tight_layout()
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Optimization terminated successfully.
+         Current function value: 52.862876
+         Iterations: 24853
+         Function evaluations: 34723
+</pre></div>
+</div>
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "496b244e7373474480402f2fc7dc9720", "version_major": 2, "version_minor": 0}</script><div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/Users/avaj0001/Documents/projects/pspline_psd/src/slipper/plotting/plot_spline_model_and_data.py:60: UserWarning: This figure was using constrained_layout, but that is incompatible with subplots_adjust and/or tight_layout; disabling constrained_layout.
+  fig.tight_layout()
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Optimization terminated successfully.
+         Current function value: 24.860890
+         Iterations: 8507
+         Function evaluations: 11569
+</pre></div>
+</div>
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "5ffce052dece48a2b8069892862030c6", "version_major": 2, "version_minor": 0}</script><div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/Users/avaj0001/Documents/projects/pspline_psd/src/slipper/plotting/plot_spline_model_and_data.py:60: UserWarning: This figure was using constrained_layout, but that is incompatible with subplots_adjust and/or tight_layout; disabling constrained_layout.
+  fig.tight_layout()
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Optimization terminated successfully.
+         Current function value: 27.393890
+         Iterations: 37942
+         Function evaluations: 46086
+</pre></div>
+</div>
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "3441f72c303b4721909040722f0d637d", "version_major": 2, "version_minor": 0}</script><div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/Users/avaj0001/Documents/projects/pspline_psd/src/slipper/plotting/plot_spline_model_and_data.py:60: UserWarning: This figure was using constrained_layout, but that is incompatible with subplots_adjust and/or tight_layout; disabling constrained_layout.
+  fig.tight_layout()
+</pre></div>
+</div>
+</div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -458,7 +506,11 @@ document.write(`
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/bdcc2c26dfb08afaca889ff8b61051f3e0f64276926af38ee87fc07685f3ab34.png" src="../_images/bdcc2c26dfb08afaca889ff8b61051f3e0f64276926af38ee87fc07685f3ab34.png" />
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>findfont: Font family [&#39;sans-serif&#39;] not found. Falling back to DejaVu Sans.
+findfont: Generic family &#39;sans-serif&#39; not found because none of the following families were found: Liberation Sans
+</pre></div>
+</div>
+<img alt="../_images/5b5ed9837ff27b68e21a8b58545a2dcbb332b6dd90de217416856a96b7a7b16e.png" src="../_images/5b5ed9837ff27b68e21a8b58545a2dcbb332b6dd90de217416856a96b7a7b16e.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -468,15 +520,55 @@ document.write(`
 <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">n_basis</span><span class="p">:</span>
     <span class="n">mcmc_</span> <span class="o">=</span> <span class="n">fit_data_with_pspline_model</span><span class="p">(</span>
         <span class="n">data</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">Ntotal</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">burnin</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
-        <span class="n">degree</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">eqSpacedKnots</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">compute_psds</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">k</span>
+        <span class="n">degree</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">eqSpaced</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+         <span class="n">k</span><span class="o">=</span><span class="n">k</span>
     <span class="p">)</span>
     <span class="n">mcmc_objs_non_equal_knots</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mcmc_</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<script type="application/vnd.jupyter.widget-view+json">{"version_major": 2, "version_minor": 0, "model_id": "665b44a7a1ea40929196da2957cb8eb9"}</script><script type="application/vnd.jupyter.widget-view+json">{"version_major": 2, "version_minor": 0, "model_id": "786b95a09c23474197728e01568347c0"}</script><script type="application/vnd.jupyter.widget-view+json">{"version_major": 2, "version_minor": 0, "model_id": "d200ffbb77b746ee88d2d4de0f723db8"}</script><script type="application/vnd.jupyter.widget-view+json">{"version_major": 2, "version_minor": 0, "model_id": "e97560f7d99f42a2810873d59556caa1"}</script></div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Optimization terminated successfully.
+         Current function value: 102.259820
+         Iterations: 638
+         Function evaluations: 1161
+</pre></div>
+</div>
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "95d9c76f6a0d4f63b1ac2887aea5cd72", "version_major": 2, "version_minor": 0}</script><div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/Users/avaj0001/Documents/projects/pspline_psd/src/slipper/plotting/plot_spline_model_and_data.py:60: UserWarning: This figure was using constrained_layout, but that is incompatible with subplots_adjust and/or tight_layout; disabling constrained_layout.
+  fig.tight_layout()
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Optimization terminated successfully.
+         Current function value: 30.322044
+         Iterations: 18088
+         Function evaluations: 25278
+</pre></div>
+</div>
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "633784ff40934a8fa814c5dd54ef552c", "version_major": 2, "version_minor": 0}</script><div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/Users/avaj0001/Documents/projects/pspline_psd/src/slipper/plotting/plot_spline_model_and_data.py:60: UserWarning: This figure was using constrained_layout, but that is incompatible with subplots_adjust and/or tight_layout; disabling constrained_layout.
+  fig.tight_layout()
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Optimization terminated successfully.
+         Current function value: 24.406945
+         Iterations: 8972
+         Function evaluations: 12041
+</pre></div>
+</div>
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "3bc91820fcbd408ba5b18386ad972032", "version_major": 2, "version_minor": 0}</script><div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/Users/avaj0001/Documents/projects/pspline_psd/src/slipper/plotting/plot_spline_model_and_data.py:60: UserWarning: This figure was using constrained_layout, but that is incompatible with subplots_adjust and/or tight_layout; disabling constrained_layout.
+  fig.tight_layout()
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Optimization terminated successfully.
+         Current function value: 25.110331
+         Iterations: 62848
+         Function evaluations: 75874
+</pre></div>
+</div>
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "1dd5eff4937f4e27881a646a293691d3", "version_major": 2, "version_minor": 0}</script><div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/Users/avaj0001/Documents/projects/pspline_psd/src/slipper/plotting/plot_spline_model_and_data.py:60: UserWarning: This figure was using constrained_layout, but that is incompatible with subplots_adjust and/or tight_layout; disabling constrained_layout.
+  fig.tight_layout()
+</pre></div>
+</div>
+</div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -485,7 +577,7 @@ document.write(`
 </div>
 </div>
 <div class="cell_output docutils container">
-<script type="application/vnd.jupyter.widget-view+json">{"version_major": 2, "version_minor": 0, "model_id": "e7854b123f6e40f591840df2bc7a1d10"}</script><script type="application/vnd.jupyter.widget-view+json">{"version_major": 2, "version_minor": 0, "model_id": "4447cad27d2b45828cf3563fc5a99ebf"}</script><script type="application/vnd.jupyter.widget-view+json">{"version_major": 2, "version_minor": 0, "model_id": "770814d5c6de4275bf2d615c9168f5f9"}</script><script type="application/vnd.jupyter.widget-view+json">{"version_major": 2, "version_minor": 0, "model_id": "a5a83e0a7488478c8d4d44d609b87f15"}</script><img alt="../_images/064d4956478920057e065782918def623bbc690cbf8209d9cef263106fa7750d.png" src="../_images/064d4956478920057e065782918def623bbc690cbf8209d9cef263106fa7750d.png" />
+<img alt="../_images/e38be5d44d12e54829c11a27349c155fcb36c715dbb7830d8d99bca0d87fb4d2.png" src="../_images/e38be5d44d12e54829c11a27349c155fcb36c715dbb7830d8d99bca0d87fb4d2.png" />
 </div>
 </div>
 </section>
@@ -535,7 +627,7 @@ document.write(`
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">PSpline Generation</p>
+        <p class="prev-next-title">P-Spline Generation</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

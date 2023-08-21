@@ -17,10 +17,10 @@ nbclient.exceptions.CellExecutionError: An error occurred while executing the fo
 ------------------
 import matplotlib.pyplot as plt
 import numpy as np
-from pspline_psd.sample.spline_model_sampler import fit_data_with_pspline_model
-from pspline_psd.plotting import set_plotting_style
-from pspline_psd.plotting.plot_spline_model_and_data import plot_spline_model_and_data
-from pspline_psd.plotting.utils import convert_axes_spines_to_arrows
+from slipper.sample.spline_model_sampler import fit_data_with_pspline_model
+from slipper.plotting import set_plotting_style
+from slipper.plotting.plot_spline_model_and_data import plot_spline_model_and_data
+from slipper.plotting.utils import convert_axes_spines_to_arrows
 
 
 def func(x):
@@ -55,9 +55,9 @@ ax.legend();
 Cell [0;32mIn[2], line 3[0m
 [1;32m      1[0m [38;5;28;01mimport[39;00m [38;5;21;01mmatplotlib[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpyplot[39;00m [38;5;28;01mas[39;00m [38;5;21;01mplt[39;00m
 [1;32m      2[0m [38;5;28;01mimport[39;00m [38;5;21;01mnumpy[39;00m [38;5;28;01mas[39;00m [38;5;21;01mnp[39;00m
-[0;32m----> 3[0m [38;5;28;01mfrom[39;00m [38;5;21;01mpspline_psd[39;00m[38;5;21;01m.[39;00m[38;5;21;01msample[39;00m[38;5;21;01m.[39;00m[38;5;21;01mspline_model_sampler[39;00m [38;5;28;01mimport[39;00m fit_data_with_pspline_model
-[1;32m      4[0m [38;5;28;01mfrom[39;00m [38;5;21;01mpspline_psd[39;00m[38;5;21;01m.[39;00m[38;5;21;01mplotting[39;00m [38;5;28;01mimport[39;00m set_plotting_style
-[1;32m      5[0m [38;5;28;01mfrom[39;00m [38;5;21;01mpspline_psd[39;00m[38;5;21;01m.[39;00m[38;5;21;01mplotting[39;00m[38;5;21;01m.[39;00m[38;5;21;01mplot_spline_model_and_data[39;00m [38;5;28;01mimport[39;00m plot_spline_model_and_data
+[0;32m----> 3[0m [38;5;28;01mfrom[39;00m [38;5;21;01mslipper[39;00m[38;5;21;01m.[39;00m[38;5;21;01msample[39;00m[38;5;21;01m.[39;00m[38;5;21;01mspline_model_sampler[39;00m [38;5;28;01mimport[39;00m fit_data_with_pspline_model
+[1;32m      4[0m [38;5;28;01mfrom[39;00m [38;5;21;01mslipper[39;00m[38;5;21;01m.[39;00m[38;5;21;01mplotting[39;00m [38;5;28;01mimport[39;00m set_plotting_style
+[1;32m      5[0m [38;5;28;01mfrom[39;00m [38;5;21;01mslipper[39;00m[38;5;21;01m.[39;00m[38;5;21;01mplotting[39;00m[38;5;21;01m.[39;00m[38;5;21;01mplot_spline_model_and_data[39;00m [38;5;28;01mimport[39;00m plot_spline_model_and_data
 
-[0;31mModuleNotFoundError[0m: No module named 'pspline_psd'
+[0;31mModuleNotFoundError[0m: No module named 'slipper'
 

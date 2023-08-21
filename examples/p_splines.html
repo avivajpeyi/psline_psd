@@ -9,7 +9,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>PSpline Generation &#8212; PSplinePSD</title>
+    <title>P-Spline Generation &#8212; PSplinePSD</title>
   
   
   
@@ -161,7 +161,7 @@ const thebe_selector_output = ".output, .cell_output"
 <li class="toctree-l1"><a class="reference internal" href="../api/api.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_ar_psd.html">Example: AR process</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_wavelet.html">Example: Wavelet</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">PSpline Generation</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">P-Spline Generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="wdb_gw_background.html">Example: LISA White Dwarf background</a></li>
 </ul>
 
@@ -344,7 +344,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>PSpline Generation</h1>
+    <h1>P-Spline Generation</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -362,32 +362,24 @@ document.write(`
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">matplotlib</span> inline
 <span class="o">%</span><span class="k">load_ext</span> autoreload
-<span class="o">!</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>git+https://github.com/avivajpeyi/pspline_psd.git<span class="w"> </span>-q
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>^C
-<span class=" -Color -Color-Red">ERROR: Operation cancelled by user</span>
-
-<span class=" -Color -Color-Bold">[</span><span class=" -Color -Color-Blue">notice</span><span class=" -Color -Color-Bold">]</span> A new release of pip is available: <span class=" -Color -Color-Red">23.0.1</span> -&gt; <span class=" -Color -Color-Green">23.2.1</span>
-<span class=" -Color -Color-Bold">[</span><span class=" -Color -Color-Blue">notice</span><span class=" -Color -Color-Bold">]</span> To update, run: <span class=" -Color -Color-Green">pip install --upgrade pip</span>
+<span class="c1"># ! pip install git+https://github.com/avivajpeyi/pspline_psd.git -q</span>
 </pre></div>
 </div>
 </div>
 </div>
-<section class="tex2jax_ignore mathjax_ignore" id="pspline-generation">
-<h1>PSpline Generation<a class="headerlink" href="#pspline-generation" title="Permalink to this heading">#</a></h1>
+<section class="tex2jax_ignore mathjax_ignore" id="p-spline-generation">
+<h1>P-Spline Generation<a class="headerlink" href="#p-spline-generation" title="Permalink to this heading">#</a></h1>
+<p>You can generate a p-spline basis using some set of knots using the following:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">pspline_psd.splines.p_splines</span> <span class="kn">import</span> <span class="n">PSplines</span>
+<span class="kn">from</span> <span class="nn">slipper.splines.p_splines</span> <span class="kn">import</span> <span class="n">PSplines</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 
 <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 
 <span class="n">knots</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
-<span class="n">degree</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">degree</span> <span class="o">=</span> <span class="mi">3</span>
 <span class="n">pspline</span> <span class="o">=</span> <span class="n">PSplines</span><span class="p">(</span><span class="n">knots</span><span class="p">,</span> <span class="n">degree</span><span class="p">,</span> <span class="p">)</span>
 <span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">pspline</span><span class="o">.</span><span class="n">n_basis</span><span class="p">)</span>
 <span class="n">pspline</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
@@ -396,14 +388,24 @@ document.write(`
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/662f0f5bd1619aac6ce2559b0b97728421e7a148ec22b8b4b91cda210e1e6bfe.png" src="../_images/662f0f5bd1619aac6ce2559b0b97728421e7a148ec22b8b4b91cda210e1e6bfe.png" />
+<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
+<span class="ne">ModuleNotFoundError</span><span class="g g-Whitespace">                       </span>Traceback (most recent call last)
+<span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">line</span> <span class="mi">2</span>
+<span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="ne">----&gt; </span><span class="mi">2</span> <span class="kn">from</span> <span class="nn">slipper.splines.p_splines</span> <span class="kn">import</span> <span class="n">PSplines</span>
+<span class="g g-Whitespace">      </span><span class="mi">3</span> <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="g g-Whitespace">      </span><span class="mi">5</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+
+<span class="ne">ModuleNotFoundError</span>: No module named &#39;slipper&#39;
+</pre></div>
+</div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">knots</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span><span class="mf">0.6</span><span class="p">,</span><span class="mf">0.85</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
 <span class="n">degree</span> <span class="o">=</span> <span class="mi">2</span>
-<span class="n">pspline</span> <span class="o">=</span> <span class="n">PSplines</span><span class="p">(</span><span class="n">knots</span><span class="p">,</span> <span class="n">degree</span><span class="p">,</span> <span class="p">)</span>
+<span class="n">pspline</span> <span class="o">=</span> <span class="n">PSplines</span><span class="p">(</span><span class="n">knots</span><span class="p">,</span> <span class="n">degree</span><span class="p">,</span> <span class="n">diffMatrixOrder</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span><span class="mf">0.7</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mf">0.2</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span>
 <span class="n">pspline</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
@@ -411,7 +413,34 @@ document.write(`
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/2dc5b2b633826fbff42e3d6f3376927cbf4ea53056d64d55b51b69c2e98d8c2a.png" src="../_images/2dc5b2b633826fbff42e3d6f3376927cbf4ea53056d64d55b51b69c2e98d8c2a.png" />
+<img alt="../_images/95bab1dfc91660cf750bd64d24ebe2e9ae259c17e6645fa642fc6e49ae4573ab.png" src="../_images/95bab1dfc91660cf750bd64d24ebe2e9ae259c17e6645fa642fc6e49ae4573ab.png" />
+</div>
+</div>
+<p>We can also initialise some weights as a guess given some data we are trying to fit:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">slipper.example_datasets.ar_data</span> <span class="kn">import</span> <span class="n">get_ar_periodogram</span>
+<span class="kn">from</span> <span class="nn">slipper.splines.initialisation</span> <span class="kn">import</span> <span class="n">knot_locator</span>
+
+<span class="n">N</span> <span class="o">=</span> <span class="mi">500</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">get_ar_periodogram</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">n_samples</span><span class="o">=</span><span class="n">N</span><span class="p">)</span>
+<span class="n">degree</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">knots</span> <span class="o">=</span> <span class="n">knot_locator</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">degree</span><span class="o">=</span><span class="n">degree</span><span class="p">)</span>
+<span class="n">pspline</span> <span class="o">=</span> <span class="n">PSplines</span><span class="p">(</span><span class="n">knots</span><span class="o">=</span><span class="n">knots</span><span class="p">,</span> <span class="n">degree</span><span class="o">=</span><span class="n">degree</span><span class="p">,</span> <span class="n">diffMatrixOrder</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">w0</span> <span class="o">=</span> <span class="n">pspline</span><span class="o">.</span><span class="n">guess_weights</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="n">newx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="n">N</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">pspline</span><span class="o">.</span><span class="n">plot_basis</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="n">w0</span><span class="p">,</span> <span class="n">basis_kwargs</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">newx</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="s2">&quot;,k&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/Users/avaj0001/Documents/projects/pspline_psd/src/slipper/splines/p_splines.py:294: RuntimeWarning: Maximum number of function evaluations has been exceeded.
+  res = minimize(
+</pre></div>
+</div>
+<img alt="../_images/7ad73e56b1d359b0d9b902c8068301f9af8362855b34d48a9f7618e0772449a5.png" src="../_images/7ad73e56b1d359b0d9b902c8068301f9af8362855b34d48a9f7618e0772449a5.png" />
 </div>
 </div>
 </section>
