@@ -366,6 +366,57 @@ document.write(`
 </div>
 </div>
 <div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>  <span class=" -Color -Color-Bold -Color-Bold-Red">error</span>: <span class=" -Color -Color-Bold">subprocess-exited-with-error</span>
+  
+  <span class=" -Color -Color-Red">×</span> <span class=" -Color -Color-Green">python setup.py bdist_wheel</span> did not run successfully.
+  <span class=" -Color -Color-Red">│</span> exit code: <span class=" -Color -Color-Bold -Color-Bold-Cyan">1</span>
+  <span class=" -Color -Color-Red">╰─&gt;</span> <span class=" -Color -Color-Red">[39 lines of output]</span>
+  <span class=" -Color -Color-Red">   </span> Traceback (most recent call last):
+  <span class=" -Color -Color-Red">   </span>   File &quot;&lt;string&gt;&quot;, line 2, in &lt;module&gt;
+  <span class=" -Color -Color-Red">   </span>   File &quot;&lt;pip-setuptools-caller&gt;&quot;, line 34, in &lt;module&gt;
+  <span class=" -Color -Color-Red">   </span>   File &quot;/tmp/pip-install-8li77mh3/logging_22bed6f80b514a848b04122b10347dcd/setup.py&quot;, line 3, in &lt;module&gt;
+  <span class=" -Color -Color-Red">   </span>     setup(name = &quot;logging&quot;,
+  <span class=" -Color -Color-Red">   </span>   File &quot;/opt/hostedtoolcache/Python/3.8.17/x64/lib/python3.8/distutils/core.py&quot;, line 134, in setup
+  <span class=" -Color -Color-Red">   </span>     ok = dist.parse_command_line()
+  <span class=" -Color -Color-Red">   </span>   File &quot;/opt/hostedtoolcache/Python/3.8.17/x64/lib/python3.8/distutils/dist.py&quot;, line 483, in parse_command_line
+  <span class=" -Color -Color-Red">   </span>     args = self._parse_command_opts(parser, args)
+  <span class=" -Color -Color-Red">   </span>   File &quot;/opt/hostedtoolcache/Python/3.8.17/x64/lib/python3.8/site-packages/setuptools/dist.py&quot;, line 951, in _parse_command_opts
+  <span class=" -Color -Color-Red">   </span>     nargs = _Distribution._parse_command_opts(self, parser, args)
+  <span class=" -Color -Color-Red">   </span>   File &quot;/opt/hostedtoolcache/Python/3.8.17/x64/lib/python3.8/distutils/dist.py&quot;, line 539, in _parse_command_opts
+  <span class=" -Color -Color-Red">   </span>     cmd_class = self.get_command_class(command)
+  <span class=" -Color -Color-Red">   </span>   File &quot;/opt/hostedtoolcache/Python/3.8.17/x64/lib/python3.8/site-packages/setuptools/dist.py&quot;, line 790, in get_command_class
+  <span class=" -Color -Color-Red">   </span>     self.cmdclass[command] = cmdclass = ep.load()
+  <span class=" -Color -Color-Red">   </span>   File &quot;/opt/hostedtoolcache/Python/3.8.17/x64/lib/python3.8/site-packages/pkg_resources/__init__.py&quot;, line 2450, in load
+  <span class=" -Color -Color-Red">   </span>     return self.resolve()
+  <span class=" -Color -Color-Red">   </span>   File &quot;/opt/hostedtoolcache/Python/3.8.17/x64/lib/python3.8/site-packages/pkg_resources/__init__.py&quot;, line 2456, in resolve
+  <span class=" -Color -Color-Red">   </span>     module = __import__(self.module_name, fromlist=[&#39;__name__&#39;], level=0)
+  <span class=" -Color -Color-Red">   </span>   File &quot;/opt/hostedtoolcache/Python/3.8.17/x64/lib/python3.8/site-packages/wheel/bdist_wheel.py&quot;, line 29, in &lt;module&gt;
+  <span class=" -Color -Color-Red">   </span>     from .metadata import pkginfo_to_metadata
+  <span class=" -Color -Color-Red">   </span>   File &quot;/opt/hostedtoolcache/Python/3.8.17/x64/lib/python3.8/site-packages/wheel/metadata.py&quot;, line 15, in &lt;module&gt;
+  <span class=" -Color -Color-Red">   </span>     from .vendored.packaging.requirements import Requirement
+  <span class=" -Color -Color-Red">   </span>   File &quot;/opt/hostedtoolcache/Python/3.8.17/x64/lib/python3.8/site-packages/wheel/vendored/packaging/requirements.py&quot;, line 8, in &lt;module&gt;
+  <span class=" -Color -Color-Red">   </span>     from ._parser import parse_requirement
+  <span class=" -Color -Color-Red">   </span>   File &quot;/opt/hostedtoolcache/Python/3.8.17/x64/lib/python3.8/site-packages/wheel/vendored/packaging/_parser.py&quot;, line 10, in &lt;module&gt;
+  <span class=" -Color -Color-Red">   </span>     from ._tokenizer import DEFAULT_RULES, Tokenizer
+  <span class=" -Color -Color-Red">   </span>   File &quot;/opt/hostedtoolcache/Python/3.8.17/x64/lib/python3.8/site-packages/wheel/vendored/packaging/_tokenizer.py&quot;, line 6, in &lt;module&gt;
+  <span class=" -Color -Color-Red">   </span>     from .specifiers import Specifier
+  <span class=" -Color -Color-Red">   </span>   File &quot;/opt/hostedtoolcache/Python/3.8.17/x64/lib/python3.8/site-packages/wheel/vendored/packaging/specifiers.py&quot;, line 27, in &lt;module&gt;
+  <span class=" -Color -Color-Red">   </span>     from .utils import canonicalize_version
+  <span class=" -Color -Color-Red">   </span>   File &quot;/opt/hostedtoolcache/Python/3.8.17/x64/lib/python3.8/site-packages/wheel/vendored/packaging/utils.py&quot;, line 8, in &lt;module&gt;
+  <span class=" -Color -Color-Red">   </span>     from .tags import Tag, parse_tag
+  <span class=" -Color -Color-Red">   </span>   File &quot;/opt/hostedtoolcache/Python/3.8.17/x64/lib/python3.8/site-packages/wheel/vendored/packaging/tags.py&quot;, line 5, in &lt;module&gt;
+  <span class=" -Color -Color-Red">   </span>     import logging
+  <span class=" -Color -Color-Red">   </span>   File &quot;/tmp/pip-install-8li77mh3/logging_22bed6f80b514a848b04122b10347dcd/logging/__init__.py&quot;, line 618
+  <span class=" -Color -Color-Red">   </span>     raise NotImplementedError, &#39;emit must be implemented &#39;\
+  <span class=" -Color -Color-Red">   </span>                              ^
+  <span class=" -Color -Color-Red">   </span> SyntaxError: invalid syntax
+  <span class=" -Color -Color-Red">   </span> <span class=" -Color -Color-Red">[end of output]</span>
+  
+  <span class=" -Color -Color-Bold -Color-Bold-Magenta">note</span>: This error originates from a subprocess, and is likely not a problem with pip.
+<span class=" -Color -Color-Red">  ERROR: Failed building wheel for logging</span>
+
+</pre></div>
+</div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>^C
 <span class=" -Color -Color-Red">ERROR: Operation cancelled by user</span>
 
