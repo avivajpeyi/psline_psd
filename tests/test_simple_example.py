@@ -5,20 +5,21 @@ import numpy as np
 from slipper.plotting.plot_spline_model_and_data import plot_spline_model_and_data
 from slipper.sample.spline_model_sampler import fit_data_with_pspline_model
 
-NTOTAL = 250
+NTOTAL = 100
 
 
 def test_simple_example(test_pdgrm: np.ndarray, tmpdir: str):
     np.random.seed(0)
-    fn = f"{tmpdir}/sample_metadata.png"
+    outdir = f"{tmpdir}/simple_example"
+    fn = f"{outdir}/summary.png"
     fit_data_with_pspline_model(
         data=test_pdgrm,
         Ntotal=NTOTAL,
         degree=3,
-        eqSpacedKnots=False,
-        compute_psds=True,
-        metadata_plotfn=fn,
+        eqSpaced=False,
+        outdir=outdir,
         k=10,
+        n_checkpoint_plts=1,
     )
     assert os.path.exists(fn)
 
@@ -27,7 +28,7 @@ def func(x):
     return 1 / (x**2 + 1) * np.cos(np.pi * x)
 
 
-def test_funct():
+def test_funct(tmpdir):
     n_obs = 600
     np.random.seed(0)
 
@@ -43,9 +44,8 @@ def test_funct():
         data=y,
         Ntotal=NTOTAL,
         degree=3,
-        eqSpacedKnots=False,
-        compute_psds=True,
-        metadata_plotfn="test.png",
+        eqSpaced=False,
+        outdir=tmpdir,
         k=5,
     )
     fig = plot_spline_model_and_data(
@@ -56,4 +56,4 @@ def test_funct():
     true_y = true_y / np.std(true_y)
     true_y = true_y + scaling
     ax.plot(np.linspace(0, 1, len(true_y)), true_y, color="k", alpha=0.4)
-    fig.show()
+    fig.savefig(f"{tmpdir}/summary.png")

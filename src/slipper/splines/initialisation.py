@@ -56,27 +56,10 @@ def knot_locator(
 
 
 def _get_initial_spline_data(
-    data: np.ndarray, k: int, degree: int, diffMatrixOrder: int, eqSpacedKnots: bool
+    data: np.ndarray, k: int, degree: int, diffMatrixOrder: int, eqSpaced: bool
 ) -> Tuple[np.ndarray, np.ndarray, PSplines]:
-    V = _generate_initial_weights(data, k)
-    knots = knot_locator(data, k, degree, eqSpacedKnots)
+
+    knots = knot_locator(data, k, degree, eqSpaced)
     psplines = PSplines(knots=knots, degree=degree, diffMatrixOrder=diffMatrixOrder)
+    V = psplines.guess_initial_v(data)
     return V, knots, psplines
-
-
-def _generate_initial_weights(data: np.ndarray, k: int) -> np.ndarray:
-    scaled_data = data / np.sum(data)
-    idx = np.linspace(0, len(scaled_data) - 1, k)
-    idx = np.round(idx).astype(int)
-    w = scaled_data[idx]
-
-    assert len(w) == k
-    w[w == 0] = 1e-50  # prevents log(0) errors
-    w = w / np.sum(w)
-    w0 = w[:-1]
-    v = np.log(w0 / (1 - np.sum(w0)))
-    # convert nans to very small
-    v[np.isnan(v)] = -1e50
-    v = v.reshape(-1, 1)
-    assert v.shape == (k - 1, 1)
-    return v

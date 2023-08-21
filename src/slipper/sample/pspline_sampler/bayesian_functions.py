@@ -1,10 +1,9 @@
 import numpy as np
-from bilby.core.prior import Gamma
-from numpy import dot
+from bilby.core.prior import ConditionalPriorDict, Gamma
 
 
 def _vPv(v, P):
-    return dot(dot(v.T, P), v)
+    return np.dot(np.dot(v.T, P), v)
 
 
 def lprior(k, v, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, P):
@@ -24,7 +23,7 @@ def lprior(k, v, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, P):
 
 
 def φ_prior(k, v, P, φα, φβ, δ):
-    vTPv = dot(dot(v.T, P), v)
+    vTPv = np.dot(np.dot(v.T, P), v)
     shape = (k - 1) / 2 + φα
     rate = φβ * δ + vTPv / 2
     return Gamma(k=shape, theta=1 / rate)

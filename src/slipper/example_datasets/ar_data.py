@@ -3,6 +3,8 @@ import numpy as np
 from scipy.signal import spectrogram, welch
 from statsmodels.tsa.arima_process import ArmaProcess
 
+from ..fourier_methods import get_periodogram
+
 
 def generate_ar_timeseries(
     ar_coefs=None,
@@ -44,6 +46,15 @@ def generate_ar_timeseries(
     assert np.all(np.isfinite(data)), msg
 
     return data
+
+
+def get_ar_periodogram(
+    ar_coefs=None,
+    order=None,
+    n_samples=2000,
+):
+    data = generate_ar_timeseries(ar_coefs=ar_coefs, order=order, n_samples=n_samples)
+    return get_periodogram(timeseries=data)
 
 
 def plot_ar_spectrogram_psd(timeseries, title=None):

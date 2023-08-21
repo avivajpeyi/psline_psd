@@ -73,16 +73,11 @@ def add_fits_from_body(ax, color="tab:green"):
     kgs = dict(
         Ntotal=Ntotal,
         burnin=int(Ntotal * 0.1),
-        compute_psds=True,
         k=10,
-        eqSpacedKnots=False,
+        eqSpaced=False,
     )
-    mcmc1 = fit_data_with_pspline_model(
-        above_region, **kgs, metadata_plotfn="body_above.png"
-    )
-    mcmc2 = fit_data_with_pspline_model(
-        below_region, **kgs, metadata_plotfn="body_below.png"
-    )
+    mcmc1 = fit_data_with_pspline_model(above_region, **kgs, outdir="body_above.png")
+    mcmc2 = fit_data_with_pspline_model(below_region, **kgs, outdir="body_below.png")
     for mc in [mcmc1, mcmc2]:
         x = np.linspace(0, 1, len(mc.psd_quantiles[0]))
         # twin axes

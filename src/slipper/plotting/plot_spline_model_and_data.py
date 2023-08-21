@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.fft import fft
 
 from .utils import convert_axes_spines_to_arrows, hide_axes_spines
 
@@ -22,7 +21,6 @@ def plot_spline_model_and_data(
     ax_model = ax.twinx() if separarte_y_axis else ax
     hide_axes_spines(ax_model)
     if x is None:
-        convert_axes_spines_to_arrows(ax)
         ax.set_yticks([])
         ax.set_xticks([])
         convert_axes_spines_to_arrows(ax)
@@ -35,14 +33,17 @@ def plot_spline_model_and_data(
         model_quants[1, :],
         model_quants[2, :],
     )
+
     if x is None:
-        x = np.linspace(0, 1, len(model_med))
+        x = np.linspace(0, 1, len(data))
+
+    model_x = np.linspace(0, 1, len(model_med))
 
     # plot data
     ax.scatter(x, data, color=colors["Data"], s=0.75)
-    ax_model.plot(x, model_med, color=colors["Splines"], alpha=0.5)
+    ax_model.plot(model_x, model_med, color=colors["Splines"], alpha=0.5)
     ax_model.fill_between(
-        x, model_p05, model_p95, color=colors["Splines"], alpha=0.2, linewidth=0.0
+        model_x, model_p05, model_p95, color=colors["Splines"], alpha=0.2, linewidth=0.0
     )
     if len(knots) > 0:
         ax_knots.vlines(knots, 0, 0.1, color="tab:red", alpha=0.5)
@@ -57,5 +58,4 @@ def plot_spline_model_and_data(
         ax.legend(markerscale=5, frameon=False, loc="upper right")
 
     fig = ax.get_figure()
-    fig.tight_layout()
     return fig

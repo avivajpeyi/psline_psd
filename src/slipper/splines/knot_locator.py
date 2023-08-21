@@ -1,3 +1,5 @@
+"""CURRENTLY UNUSED -- will replace splines.initialise.knot_locator"""
+
 import enum
 
 import numpy as np

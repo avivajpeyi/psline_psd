@@ -1,10 +1,8 @@
 import os
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import pytest
 
-from slipper.fourier_methods import get_fz, get_periodogram
 from slipper.splines import knot_locator
 
 MAKE_PLOTS = True
@@ -87,11 +85,6 @@ def r_obj_as_dict(vector):
         else:
             result[name] = vector[i]
     return result
-
-
-import numpy as np
-
-from slipper.fourier_methods import get_fz, get_periodogram
 
 
 def test_periodogram(helpers):
@@ -199,13 +192,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from slipper.bayesian_utilities import llike, lprior
-from slipper.bayesian_utilities.bayesian_functions import _vPv, sample_φδτ
 from slipper.fourier_methods import get_fz, get_periodogram
+from slipper.sample.pspline_sampler.bayesian_functions import _vPv, sample_φδτ
 from slipper.sample.spline_model_sampler import (
     _get_initial_spline_data,
     _get_initial_values,
 )
-from slipper.splines.generator import build_spline_model, unroll_list_to_new_length
+from slipper.splines.generator import unroll_list_to_new_length
 from slipper.splines.initialisation import _generate_initial_weights, knot_locator
 from slipper.splines.p_splines import PSplines
 
@@ -328,7 +321,7 @@ def test_sample_prior(helpers):
     }
     τ0, δ0, φ0, fz, periodogram, V0, omega = _get_initial_values(**kwargs)
     db_list, P = _get_initial_spline_data(
-        data, k, degree, omega, diffMatrixOrder, eqSpacedKnots=True
+        data, k, degree, omega, diffMatrixOrder, eqSpaced=True
     )
     v = _generate_initial_weights(periodogram, k)
     # create dict with k, v, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, data, db_list, P

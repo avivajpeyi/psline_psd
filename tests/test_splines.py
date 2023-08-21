@@ -1,17 +1,28 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from slipper.sample.spline_model_sampler import _get_initial_values
-from slipper.splines.initialisation import knot_locator
 from slipper.splines.p_splines import PSplines
 
 
 def test_spline_creation(tmpdir):
     """Test that the splines can be generated"""
     degree = 2
-    knots = np.array([0, 1, 2, 3, 4, 5, 6])
-    pspline = PSplines(knots=knots, degree=degree)
-    assert pspline is not None
-    fig, ax = pspline.plot(weights=np.random.randn(pspline.n_basis))
+    knots = sorted(np.random.uniform(0, 1, 5))
+    n_basis = len(knots) + degree - 1
+    weights = np.random.uniform(0, 1, n_basis)
+    pspline = PSplines(knots=knots, degree=degree, diffMatrixOrder=1)
+    fig, ax = pspline.plot(weights=weights)
     fig.savefig(f"{tmpdir}/test_spline_creation.png")
     plt.close()
+
+
+def test_initial_guess(test_pdgrm, tmpdir):
+    N = len(test_pdgrm)
+    knots = np.linspace(0, 1, 30)
+    pspline = PSplines(knots=knots, degree=2, diffMatrixOrder=1)
+    w0 = pspline.guess_weights(test_pdgrm)
+    newx = np.linspace(0, 1, N)
+    fig, ax = pspline.plot_basis(weights=w0, basis_kwargs=dict(alpha=0.2))
+    plt.plot(newx, test_pdgrm, ",k")
+    plt.tight_layout()
+    fig.savefig(f"{tmpdir}/test_spline_init_guess.png")

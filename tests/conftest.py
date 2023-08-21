@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 DIR = Path(__file__).parent
-CLEAN = True
+CLEAN = False
 
 
 def pytest_configure(config):
@@ -31,11 +31,9 @@ def test_pdgrm(tmpdir) -> str:
     fname = f"{tmpdir}/ar_3.csv"
     regenerate = True if not os.path.exists(fname) else CLEAN
     if regenerate:
-        from slipper.example_datasets.ar_data import generate_ar_timeseries
-        from slipper.fourier_methods import get_periodogram
+        from slipper.example_datasets.ar_data import get_ar_periodogram
 
-        data = generate_ar_timeseries(order=3, n_samples=500)
-        pdgm = get_periodogram(timeseries=data)
+        pdgm = get_ar_periodogram(order=3, n_samples=500)
         np.savetxt(fname, pdgm)
     else:
         pdgm = np.loadtxt(fname)

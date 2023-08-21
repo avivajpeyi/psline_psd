@@ -1,11 +1,6 @@
-import time
-
 import numpy as np
-from tqdm.auto import trange
 
-from ..bayesian_utilities import lpost, sample_φδτ
-from ..splines import _get_initial_spline_data
-from .initialisation import _argument_preconditions, _get_initial_values
+from .pspline_sampler import PsplineSampler
 from .sampling_result import Result
 
 
@@ -21,130 +16,30 @@ def fit_data_with_pspline_model(
     δα: float = 1e-04,
     δβ: float = 1e-04,
     k: int = 30,
-    eqSpacedKnots: bool = False,
+    eqSpaced: bool = False,
     degree: int = 3,
     diffMatrixOrder: int = 2,
-    compute_psds: bool = False,
-    metadata_plotfn: str = "",
+    outdir: str = ".",
+    n_checkpoint_plts: int = 0,
 ) -> Result:
-    """
-    Gibbs sampler for the Whittle likelihood with a P-spline model.
-    # TODO: switch to using bilby?
-    """
-    if burnin is None:
-        burnin = round(Ntotal / 4)
-    if k is None:
-        k = min(round(len(data) / 4), 40)
-
-    kwargs = locals()
-    _argument_preconditions(**kwargs)
-
-    τ0, δ0, φ0 = _get_initial_values(
+    sampler = PsplineSampler(
         data=data,
-        φα=φα,
-        φβ=φβ,
-        δα=δα,
-        δβ=δβ,
+        outdir=outdir,
+        sampler_kwargs=dict(
+            Ntotal=Ntotal,
+            thin=thin,
+            burnin=burnin,
+            τα=τα,
+            τβ=τβ,
+            φα=φα,
+            φβ=φβ,
+            δα=δα,
+            δβ=δβ,
+            n_checkpoint_plts=n_checkpoint_plts,
+        ),
+        spline_kwargs=dict(
+            k=k, eqSpaced=eqSpaced, degree=degree, diffMatrixOrder=diffMatrixOrder
+        ),
     )
-    V0, knots, pspline_model = _get_initial_spline_data(
-        data, k, degree, diffMatrixOrder, eqSpacedKnots
-    )
-
-    # Empty lists for the MCMC samples
-    n_samples = round(Ntotal / thin)
-    samples = np.zeros((n_samples, 3))
-    samples_V = np.zeros((n_samples, *V0.shape))
-    samples[0, :] = np.array([φ0, δ0, τ0])
-    samples_V[0, :] = V0
-
-    # initial values for proposal
-    lpost_trace = np.zeros(Ntotal)  # log likelihood trace
-    accep_frac_list = np.zeros(Ntotal)  # accept_frac of accepted proposals
-    sigma = 1  # proposal distribution variance for weights
-    accept_frac = 0.4  # starting value for accept_frac of accepted proposals
-    Ntot_1 = Ntotal - 1
-    φ, τ, δ, V = φ0, τ0, δ0, V0
-
-    ptime = time.process_time()
-    for j in trange(n_samples, desc="MCMC sampling"):
-        adj = j * thin
-        V_star = V.copy()
-        aux = np.arange(0, k - 1)
-        np.random.shuffle(aux)
-
-        for i in range(thin):
-            itr = i + adj
-            args = [k, V, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, data, pspline_model]
-            lpost_store = lpost(*args)
-            # 1. explore the parameter space for new V
-            V, V_star, accept_frac, sigma = _tune_proposal_distribution(
-                aux, accept_frac, sigma, V, V_star, lpost_store, args
-            )
-            args[1] = V
-            accep_frac_list[itr] = accept_frac  # Acceptance probability
-            lpost_trace[itr] = lpost_store  # log post trace
-            # 2. sample new values for φ, δ, τ
-            φ, δ, τ = sample_φδτ(*args)
-
-        samples[j, :] = np.array([φ, δ, τ])
-        samples_V[j, :] = V
-
-    sampling_result = Result.compile_idata_from_sampling_results(
-        posterior_samples=samples,
-        v_samples=samples_V,
-        lpost_trace=lpost_trace,
-        frac_accept=accep_frac_list,
-        basis=pspline_model.basis,
-        knots=knots,
-        data=data,
-        burn_in=round(burnin / thin),
-    )
-    if metadata_plotfn:
-        sampling_result.make_summary_plot(metadata_plotfn)
-
-    return sampling_result
-
-
-def _tune_proposal_distribution(
-    aux: np.array,
-    accept_frac: float,
-    sigma: float,
-    V: np.array,
-    V_star: np.array,
-    lpost_store,
-    args,
-):
-    k = args[0]
-    k_1 = k - 1
-
-    # tunning proposal distribution
-    if accept_frac < 0.30:  # increasing acceptance pbb
-        sigma = sigma * 0.90  # decreasing proposal moves
-    elif accept_frac > 0.50:  # decreasing acceptance pbb
-        sigma = sigma * 1.1  # increasing proposal moves
-
-    accept_count = 0  # ACCEPTANCE PROBABILITY
-
-    # Update "V_store" (weights)
-    for g in range(k_1):
-        Z = np.random.normal()
-        U = np.log(np.random.uniform())
-
-        pos = aux[g]
-        V_star[pos] = V[pos] + sigma * Z
-        args[1] = V_star  # update V_star
-        lpost_star = lpost(*args)
-
-        # is the proposed V_star better than the current V_store?
-        alpha1 = np.min(
-            [0, (lpost_star - lpost_store).ravel()[0]]
-        )  # log acceptance ratio
-        if U < alpha1:
-            V[pos] = V_star[pos]  # Accept W.star
-            lpost_store = lpost_star
-            accept_count += 1  # acceptance probability
-        else:
-            V_star[pos] = V[pos]  # reset proposal value
-
-    accept_frac = accept_count / k_1
-    return V, V_star, accept_frac, sigma  # return updated values
+    sampler.run()
+    return sampler.result

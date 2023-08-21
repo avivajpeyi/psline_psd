@@ -1,9 +1,12 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.colors import TwoSlopeNorm
+from scipy.optimize import minimize
 from skfda.misc.operators import LinearDifferentialOperator
 from skfda.misc.regularization import L2Regularization
 from skfda.representation.basis import BSplineBasis
+
+from slipper.plotting.utils import hide_axes_spines
 
 from .utils import convert_v_to_weights, density_mixture, unroll_list_to_new_length
 
@@ -39,6 +42,10 @@ class PSplines:
             If None, then the number of grid points is set to the maximum
             between 501 and 10 times the number of basis elements.
         """
+        assert degree > diffMatrixOrder
+        assert degree in [0, 1, 2, 3, 4, 5]
+        assert diffMatrixOrder in [0, 1, 2]
+        assert len(knots) >= degree, f"#knots: {len(knots)}, degree: {degree}"
 
         self.knots: np.array = knots
         self.degree: int = degree
@@ -183,8 +190,6 @@ class PSplines:
         weights=None,
         basis_kwargs={},
         spline_kwargs={},
-        knots_kwargs={},
-        plot_weighted_basis=False,
     ):
         """Plot the basis + knots.
 
@@ -208,35 +213,54 @@ class PSplines:
             _, ax = plt.subplots(1, 1, figsize=(5, 4))
         fig = ax.get_figure()
 
-        plot_weighted_basis = plot_weighted_basis and weights is not None
+        ax.set_xlim(self.grid_points[0], self.grid_points[-1])
+        weighed_ax = ax.twinx() if weights is not None else None
 
         for i in range(self.n_basis):
             kwg = basis_kwargs.copy()
             kwg["color"] = kwg.get("color", f"C{i}")
             ax.plot(self.grid_points, self.basis[:, i], **kwg)
-            if plot_weighted_basis:
+            if weights is not None:
                 kwg["ls"] = kwg.get("ls", "--")
                 weighted_b = self.basis[:, i] * weights[i]
-                ax.plot(self.grid_points, weighted_b, **kwg)
-
-        for i in range(self.n_knots):
-            kwg = knots_kwargs.copy()
-            kwg["color"] = kwg.get("color", "tab:gray")
-            kwg["marker"] = kwg.get("marker", "o")
-            kwg["ms"] = kwg.get("ms", 15)
-            kwg["zorder"] = kwg.get("zorder", 10)
-            ax.plot(self.knots[i], 0, **kwg)
+                weighed_ax.plot(self.grid_points, weighted_b, **kwg)
 
         if weights is not None:
             kwg = spline_kwargs.copy()
             kwg["color"] = kwg.get("color", "k")
             spline_model = self(weights)
-            ax.plot(self.grid_points, spline_model, **kwg)
+            weighed_ax.plot(self.grid_points, spline_model, **kwg)
+            hide_axes_spines(weighed_ax)
+            weighed_ax.set_ylim(bottom=0, top=np.max(spline_model) * 1.1)
+            weighed_ax.set_xlim(ax.get_xlim())
 
-        ax.set_ylim(bottom=0)
+        median_basis_i = float(np.median(np.max(self.basis, axis=0)))
+        ax.set_ylim(0, median_basis_i * 1.1)
         ax.set_xlabel("Grid points")
         ax.set_title("Basis functions")
 
+        # use knots as xticks
+        ax.set_xticks(self.knots)
+        ax.set_xticklabels(
+            [
+                f"{self.knots[i]:.1f}"
+                if i in [0, int(self.n_knots / 2), self.n_knots - 1]
+                else ""
+                for i in range(self.n_knots)
+            ]
+        )
+
+        # add textbox top left
+        textstr = f"# basis = {self.n_basis}\n# knots = {self.n_knots}"
+        ax.text(
+            0.05,
+            0.95,
+            textstr,
+            transform=ax.transAxes,
+            fontsize=10,
+            verticalalignment="top",
+            bbox=dict(boxstyle="round", facecolor="white", alpha=0.5),
+        )
         return fig, ax
 
     def plot_penalty_matrix(self, ax=None, **kwargs):
@@ -260,7 +284,48 @@ class PSplines:
     def plot(self, weights=None):
         """Plot the basis functions and the penalty matrix"""
         fig, ax = plt.subplots(1, 2, figsize=(8, 4))
-        self.plot_basis(ax=ax[0], weights=weights, plot_weighted_basis=True)
+        self.plot_basis(ax=ax[0], weights=weights)
         self.plot_penalty_matrix(ax=ax[1])
         plt.tight_layout()
         return fig, ax
+
+    def guess_weights(self, data, n_steps=10):
+        """Guess init 'v' weights for the P-spline model from the data and the knots"""
+        weights = np.zeros(self.n_basis)
+
+        # ignore the 1st aand last
+        data = data[1:-1]
+        n = len(data)
+
+        orig_grid_ln = self.n_grid_points
+        self.n_grid_points = n
+        res = minimize(
+            lambda w: _mse(self(w), data),
+            options=dict(
+                maxiter=len(weights) * n_steps,
+                xatol=1e-30,
+                disp=False,
+            ),
+            bounds=[(0, None)] * len(weights),
+            x0=weights,
+            method="Nelder-Mead",
+        )
+        w = res.x
+        w[w == 0] = 1e-50  # prevents log(0) errors
+        w = w / np.sum(w)
+        self.n_grid_points = orig_grid_ln
+        return w
+
+    def guess_initial_v(self, data):
+        """Guess init 'v' weights for the P-spline model from the data and the knots"""
+        w0 = self.guess_weights(data)[:-1]
+        w0[w0 <= 0] = 1e-20
+        v = np.log(w0 / (1 - np.sum(w0)))
+        # convert nans to very small
+        v[np.isnan(v)] = -1e50
+        v = v.reshape(self.n_basis - 1, 1)
+        return v
+
+
+def _mse(y, y_hat):
+    return np.mean((y - y_hat) ** 2)

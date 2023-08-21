@@ -3,20 +3,15 @@ import numpy as np
 import pytest
 from scipy.fft import fft
 
-from slipper.bayesian_utilities.bayesian_functions import llike
 from slipper.fourier_methods import get_fz
 from slipper.sample.post_processing import generate_spline_quantiles
+from slipper.sample.pspline_sampler.bayesian_functions import llike
 from slipper.sample.spline_model_sampler import fit_data_with_pspline_model
-from slipper.splines.generator import get_unscaled_spline
-from slipper.splines.initialisation import (
-    _generate_initial_weights,
-    dbspline,
-    knot_locator,
-)
+from slipper.splines.initialisation import _generate_initial_weights, knot_locator
+from slipper.splines.utils import get_unscaled_spline
 
 plt.style.use("default")
 # import gridspec from matplotlib
-from matplotlib import gridspec
 
 try:
     import rpy2
@@ -262,7 +257,7 @@ def __r_mcmc(data, nsteps):
     burnin = int(0.5 * nsteps)
     with np_cv_rules.context():
         mcmc = r_pspline.gibbs_pspline(
-            data, burnin=burnin, Ntotal=nsteps, degree=3, eqSpacedKnots=True
+            data, burnin=burnin, Ntotal=nsteps, degree=3, eqSpaced=True
         )
     return MCMCdata.from_r(mcmc)
 
@@ -274,8 +269,8 @@ def __py_mcmc(data, nsteps):
         burnin=burnin,
         Ntotal=nsteps,
         degree=3,
-        eqSpacedKnots=True,
-        metadata_plotfn="py_mcmc.png",
+        eqSpaced=True,
+        outdir="py_mcmc.png",
     )
 
     return mcmc

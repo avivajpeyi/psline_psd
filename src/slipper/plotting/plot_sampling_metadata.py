@@ -1,8 +1,9 @@
+import os
+
 import matplotlib.pyplot as plt
 import numpy as np
 
 from .plot_spline_model_and_data import plot_spline_model_and_data
-from .utils import convert_axes_spines_to_arrows, hide_axes_spines
 
 LATEX_LABELS = dict(
     φ=r"$\phi$",
@@ -12,28 +13,57 @@ LATEX_LABELS = dict(
 
 
 def plot_metadata(
-    post_samples, counts, psd_quants, data, db_list, knots, burn_in, metadata_plotfn
+    φδτ_samples: np.ndarray,
+    frac_accepted: np.array,
+    model_quants: np.ndarray,
+    data,
+    db_list,
+    knots,
+    burn_in,
+    fname=None,
+    max_it=None,
 ):
+    φδτ_samples[φδτ_samples == 0] = np.nan
+    frac_accepted[frac_accepted == 0] = np.nan
+
     fig = plt.figure(figsize=(5, 8), layout="constrained")
     gs = plt.GridSpec(5, 2, figure=fig)
-    draw_idx = np.arange(len(post_samples))
+    draw_idx = np.arange(len(φδτ_samples))
+    max_it = len(φδτ_samples) if max_it is None else max_it
     for i, p in enumerate(["φ", "δ", "τ"]):
+        # TRACE
         ax = fig.add_subplot(gs[i, 0])
-        ax.plot(draw_idx, post_samples[:, i], color=f"C{i}")
+        ax.plot(draw_idx[1:], φδτ_samples[1:, i], color=f"C{i}")
         ax.axvline(burn_in, color="k", linestyle="--")
         ax.set_ylabel(LATEX_LABELS[p])
         ax.set_xlabel("Iteration")
+        ax.set_xlim(0, max_it)
+
+        # HISTOGRAM
         ax = fig.add_subplot(gs[i, 1])
-        ax.hist(post_samples[burn_in:, i], bins=50, color=f"C{i}")
+        samps = φδτ_samples[:, i]
+        samps = samps[~np.isnan(samps)]
+        if len(samps[burn_in:]) > 0:
+            ax.hist(samps[burn_in:], bins=50, color=f"C{i}", density=True)
+        else:
+            ax.hist(samps[0:], bins=50, color=f"C{i}", density=True)
+        ax.set_yticks([])
         ax.set_xlabel(LATEX_LABELS[p])
+
+    # FRAC ACCEPTED TRACE
     ax = fig.add_subplot(gs[3, 0])
-    ax.plot(counts, color="C3")
+    ax.plot(frac_accepted, color="C3")
     ax.axvline(burn_in, color="k", linestyle="--")
-    ax.set_ylabel("Frac accepted")
+    ax.set_ylabel("Accepted %")
     ax.set_xlabel("Iteration")
+    ax.set_xlim(0, max_it)
     ax = fig.add_subplot(gs[3, 1])
     for i, db in enumerate(db_list.T):
         ax.plot(db, color=f"C{i}", alpha=0.3)
+    # max db_val in each row
+    spline_ymedian = float(np.median(np.max(db_list, axis=1)))
+    ax.set_ylim(0, 1.1 * spline_ymedian)
+
     ax.set_yticks([])
     ax.set_xticks([])
     ax.set_xlabel("Splines")
@@ -41,11 +71,12 @@ def plot_metadata(
 
     # plot the data and the posterior median and 90% CI
     plot_spline_model_and_data(
-        data, psd_quants, separarte_y_axis=True, ax=ax, knots=knots
+        data, model_quants, separarte_y_axis=True, ax=ax, knots=knots
     )
-    fig.tight_layout()
-    if metadata_plotfn:
-        fig.savefig(metadata_plotfn)
+    if fname:
+        basedir = os.path.dirname(fname)
+        os.makedirs(basedir, exist_ok=True)
+        fig.savefig(fname)
         plt.close(fig)
     else:
         return fig

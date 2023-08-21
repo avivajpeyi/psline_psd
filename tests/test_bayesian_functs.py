@@ -1,16 +1,14 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from slipper.bayesian_utilities import llike, lprior
-from slipper.bayesian_utilities.bayesian_functions import _vPv, sample_φδτ
-from slipper.fourier_methods import get_fz, get_periodogram
-from slipper.sample.spline_model_sampler import (
-    _get_initial_spline_data,
-    _get_initial_values,
+from slipper.sample.pspline_sampler import PsplineSampler
+from slipper.sample.pspline_sampler.bayesian_functions import (
+    _vPv,
+    llike,
+    lprior,
+    sample_φδτ,
 )
-from slipper.splines.initialisation import knot_locator
-from slipper.splines.p_splines import PSplines
-from slipper.splines.utils import build_spline_model, unroll_list_to_new_length
+from slipper.splines.utils import unroll_list_to_new_length
 
 
 def test_psd_unroll():
@@ -59,73 +57,22 @@ def test_lprior():
 
 
 def test_llike(test_pdgrm, tmpdir):
-    degree = 3
-    k = 32
+    sampler = PsplineSampler(data=test_pdgrm)
+    sampler._init_mcmc()
 
-    τ, δ, φ = _get_initial_values(test_pdgrm)
-    V, knots, psplines = _get_initial_spline_data(
-        test_pdgrm, k, degree, diffMatrixOrder=2, eqSpacedKnots=True
-    )
-    fz = get_fz(test_pdgrm)
-
-    periodogram = get_periodogram(fz)
-    knots = knot_locator(test_pdgrm, k=k, degree=degree, eqSpaced=True)
-    spline_model = PSplines(knots, degree=degree)
-    llike_val = llike(v=V, τ=τ, data=test_pdgrm, spline_model=spline_model)
+    τ, δ, φ = sampler.samples["τ"][0], sampler.samples["δ"][0], sampler.samples["φ"][0]
+    V = sampler.samples["V"][0]
+    llike_val = llike(v=V, τ=τ, data=test_pdgrm, spline_model=sampler.spline_model)
     assert not np.isnan(llike_val)
-    psd = spline_model(v=V)
-    assert not np.isnan(psd).any()
-
-    fig = __plot_psd(
-        periodogram,
-        [psd],
-        [f"PSD lnl{llike_val:.2f}"],
-        spline_model.basis,
-    )
-    fig.savefig(f"{tmpdir}/test_llike.png")
-    plt.close(fig)
-
-
-def __plot_psd(periodogram, psds, labels, db_list):
-    plt.plot(periodogram / np.sum(periodogram), label="data", color="k")
-    for psd, l in zip(psds, labels):
-        plt.plot(psd / np.sum(psd), label=l)
-    ylims = plt.gca().get_ylim()
-    basis = db_list
-    net_val = max(periodogram)
-
-    basis = basis / net_val
-    for idx, bi in enumerate(basis.T):
-        kwgs = dict(color=f"C{idx + 2}", lw=0.1, zorder=-1)
-        if idx == 0:
-            kwgs["label"] = "basis"
-        bi = unroll_list_to_new_length(bi, n=len(periodogram))
-        plt.plot(bi / net_val, **kwgs)
-    plt.ylim(*ylims)
-    plt.ylabel("PSD")
-    plt.legend(loc="upper right")
-    return plt.gcf()
 
 
 def test_sample_prior(test_pdgrm, tmpdir):
-    data = test_pdgrm - np.mean(test_pdgrm)
-    rescale = np.std(data)
-    data = data / rescale
-
-    k = 32
-    degree = 3
-    n = len(data)
-    omega = np.linspace(0, 1, n // 2 + 1)
-    diffMatrixOrder = 2
-    τ0, δ0, φ0 = _get_initial_values(data)
-    V, knots, psplines = _get_initial_spline_data(
-        data, k, degree, diffMatrixOrder, eqSpacedKnots=True
-    )
-    # create dict with k, v, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, data, db_list, P
+    sampler = PsplineSampler(data=test_pdgrm)
+    sampler._init_mcmc()
 
     kwargs = dict(
-        k=k,
-        v=V,
+        k=sampler.n_basis,
+        v=sampler.samples["V"][0],
         τ=None,
         τα=0.001,
         τβ=0.001,
@@ -135,8 +82,8 @@ def test_sample_prior(test_pdgrm, tmpdir):
         δ=1,
         δα=1e-4,
         δβ=1e-4,
-        data=data,
-        spline_model=psplines,
+        data=test_pdgrm,
+        spline_model=sampler.spline_model,
     )
 
     N = 500
