@@ -32,7 +32,7 @@ INSTALL_REQUIRES = [
     "arviz",
     "scikit-fda",
     "matplotlib",
-    # "logging",
+    "logging",
     "imageio",
     "pygifsicle",
     "bilby",

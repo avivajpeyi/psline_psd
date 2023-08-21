@@ -57,3 +57,5 @@ def test_funct(tmpdir):
     true_y = true_y + scaling
     ax.plot(np.linspace(0, 1, len(true_y)), true_y, color="k", alpha=0.4)
     fig.savefig(f"{tmpdir}/summary.png")
+
+
