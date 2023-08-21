@@ -1,3 +1,4 @@
+"""Create a gif from a series of images."""
 import glob
 import re
 
