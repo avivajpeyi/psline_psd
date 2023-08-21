@@ -291,7 +291,7 @@ class PSplines:
 
     def guess_weights(self, data, n_steps=10):
         """Guess init 'v' weights for the P-spline model from the data and the knots"""
-        weights = np.zeros(self.n_basis)
+        w = np.zeros(self.n_basis)
 
         # ignore the 1st aand last
         data = data[1:-1]
@@ -302,12 +302,12 @@ class PSplines:
         res = minimize(
             lambda w: _mse(self(w), data),
             options=dict(
-                maxiter=len(weights) * n_steps,
+                maxiter=self.n_basis * n_steps,
                 xatol=1e-30,
                 disp=False,
             ),
-            bounds=[(0, None)] * len(weights),
-            x0=weights,
+            bounds=[(0, None)] * self.n_basis,
+            x0=w,
             method="Nelder-Mead",
         )
         w = res.x
