@@ -183,6 +183,7 @@ def _timestamp():
     return time.strftime("%Y%m%d_%H%M%S")
 
 
+
 def _tune_proposal_distribution(
         aux: np.array,
         accept_frac: float,
@@ -191,40 +192,46 @@ def _tune_proposal_distribution(
         weight_star: np.array,
         lpost_store,
         args,
-        lnlike_fn: Callable,
+        lnpost_fn:Callable,
 ):
     n_weight_columns = len(weight)
 
-    # tunning proposal distribution
+    # tuning proposal distribution
     if accept_frac < 0.30:  # increasing acceptance pbb
         sigma = sigma * 0.90  # decreasing proposal moves
     elif accept_frac > 0.50:  # decreasing acceptance pbb
         sigma = sigma * 1.1  # increasing proposal moves
 
-    ## TUNE tau??
-
     accept_count = 0  # ACCEPTANCE PROBABILITY
 
     # Update weights
     for g in range(0, n_weight_columns):
-        Z = np.random.normal()
-        U = np.log(np.random.uniform())
-
         pos = aux[g]
-        weight_star[pos] = weight[pos] + sigma * Z
-        args[1] = weight_star  # update V_star
-        lpost_star = lnlike_fn(*args)
-
-        # is the proposed V_star better than the current V_store?
-        alpha1 = np.min(
-            [0, (lpost_star - lpost_store).ravel()[0]]
-        )  # log acceptance ratio
-        if U < alpha1:
-            weight[pos] = weight_star[pos]  # Accept W.star
-            lpost_store = lpost_star
-            accept_count += 1  # acceptance probability
-        else:
-            weight_star[pos] = weight[pos]  # reset proposal value
+        weight[pos], weight_star[pos], lpost_store, accept_count = _update_weights(
+            sigma, weight[pos], pos, args, lpost_store, accept_count, lnpost_fn
+        )
 
     accept_frac = accept_count / n_weight_columns
     return weight, weight_star, accept_frac, sigma  # return updated values
+
+
+
+
+
+def _update_weights(sigma, weight, widx, lpost_args, lpost_store, accept_count, lpost_fn:Callable):
+    Z = np.random.normal()
+    U = np.log(np.random.uniform())
+
+    weight_star = weight + sigma * Z
+    lpost_args[1][widx] = weight_star  # update V_star
+    lpost_star = lpost_fn(*lpost_args)
+
+    # is the proposed V_star better than the current V_store?
+    lnl_diff = (lpost_star - lpost_store).ravel()[0]
+    if U < np.min([0, lnl_diff]):
+        weight = weight_star  # Accept W.star
+        lpost_store = lpost_star
+        accept_count += 1  # acceptance probability
+    else:
+        weight_star = weight  # reset proposal value
+    return weight, weight_star, lpost_store, accept_count

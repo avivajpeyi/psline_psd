@@ -13,11 +13,11 @@ except ImportError:
 import os
 
 
-def create_gif(image_regex, gif_path, duration=1):
-    image_filepaths = sorted(glob.glob(image_regex))
+def create_gif(image_regex, gif_path, duration=2):
+    image_filepaths = sorted(glob.glob(image_regex), key=lambda x: int(re.findall(r"\d+", x)[-1]))
     if len(image_filepaths) > 3:
         images = [iio.imread(filepath) for filepath in image_filepaths]
-        iio.imwrite(gif_path, images, duration=duration)
+        iio.imwrite(gif_path, images, duration=duration, loop=0)
         if os.path.isfile(gif_path) and PYGIFSICLE_INSTALLED:
             try:
                 optimize(gif_path)

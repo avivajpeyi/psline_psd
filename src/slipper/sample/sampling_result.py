@@ -15,6 +15,7 @@ class Result:
     def __init__(self, idata):
         self.idata = idata
 
+
     @classmethod
     def load(cls, fname: str):
         return cls(az.from_netcdf(fname))
@@ -74,6 +75,11 @@ class Result:
         basis_idx = np.arange(n_basis)
         grid_point_idx = np.arange(n_gridpoints)
 
+        logged_splines = 1
+        if n_weight_cols==n_basis-1:
+            logged_splines = 0
+
+
         posterior = az.dict_to_dataset(
             dict(
                 phi=posterior_samples[0, :],
@@ -81,7 +87,7 @@ class Result:
                 tau=posterior_samples[2, :],
                 weight=weight_samples,
             ),
-            coords=dict(v_idx=weight_idx, draws=draw_idx),
+            coords=dict(weight_idx=weight_idx, draws=draw_idx),
             dims=dict(
                 phi=["draws"],
                 delta=["draws"],
@@ -89,7 +95,9 @@ class Result:
                 weight=["draws", "weight_idx"],
             ),
             default_dims=[],
-            attrs={},
+            attrs=dict(
+                logged_splines=logged_splines,
+            ),
         )
         sample_stats = az.dict_to_dataset(
             dict(
@@ -171,7 +179,7 @@ class Result:
 
     @property
     def weights(self):
-        return self.__posterior["weights"]
+        return self.__posterior["weight"]
 
 
     def all_samples(self):
@@ -197,7 +205,7 @@ class Result:
         return self.idata.constant_data["knots"]
 
     @property
-    def k(self):
+    def k(self)->int:
         # umber of basis functions
         return len(self.basis.T)
 
@@ -206,8 +214,12 @@ class Result:
         return self.idata.observed_data["data"]
 
     @property
-    def data_length(self):
+    def data_length(self)->int:
         return len(self.data)
+
+    @property
+    def logged_splines(self)->bool:
+        return self.idata.posterior.attrs["logged_splines"]==1
 
     def make_summary_plot(self, fn: str = "", use_cached=True, max_it=None):
         max_it = max_it if max_it else self.n_steps
@@ -225,10 +237,12 @@ class Result:
         return plot_metadata(
             all_samples[["phi", "delta", "tau"]].values,
             all_samples.acceptance_rate.values,
+            lpost_trace=all_samples.lp.values,
             model_quants=psd_quants,
             data=data,
             db_list=self.basis,
             knots=self.knots,
+            weights=self.idata.posterior.weight.values,
             burn_in=self.burn_in,
             fname=fn,
             max_it=max_it,
@@ -248,7 +262,7 @@ class Result:
         tau_samples = tau_samples[plot_idx]
         weight_samples = weight_samples[plot_idx]
         return generate_spline_quantiles(
-            self.data_length, self.basis, tau_samples, weight_samples
+            self.data_length, self.basis, tau_samples, weight_samples, logged_splines=self.logged_splines
         )
 
     @property
@@ -263,6 +277,6 @@ class Result:
     def psd_posterior(self):
         if not hasattr(self, "_psds"):
             self._psds = generate_spline_posterior(
-                self.data_length, self.basis, self.post_samples[:, 2], self.weights
+                self.data_length, self.basis, self.post_samples[:, 2], self.weights, logged=self.logged_splines
             )
         return self._psds

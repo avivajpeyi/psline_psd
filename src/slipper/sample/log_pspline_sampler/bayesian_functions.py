@@ -1,31 +1,24 @@
 import numpy as np
-from bilby.core.prior import ConditionalPriorDict, Gamma
-
+from bilby.core.prior import ConditionalPriorDict, Gamma, ConditionalGamma
+from scipy.stats import gamma, norm
 
 def _wPw(w, P):
     return np.dot(np.dot(w.T, P), w)
 
-
-def lprior(k, w, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, P):
-    # TODO: Move to using bilby priors
-
+def lprior(k, w, τ, φ, φα, φβ, δ, δα, δβ, P):
     wTPw = _wPw(w, P)
-    logφ = np.log(φ)
-    logδ = np.log(δ)
-    logτ = np.log(τ)
-
-    lnpri_weights = k * logφ * 0.5 - φ * wTPw * 0.5
-    lnpri_φ = φα * logδ + (φα - 1) * logφ - φβ * δ * φ
-    lnpri_δ = (δα - 1) * logδ - δβ * δ
-    lnpri_τ = -(τα + 1) * logτ - τβ / τ
+    lnpri_weights = k * 0.5* (np.log(φ) - φ * wTPw)
+    lnpri_φ = gamma.logpdf(φ, φα, scale=δ * φβ)
+    lnpri_δ = gamma.logpdf(δ, δα, scale=δβ)
+    lnpri_τ = norm.logpdf(τ, 0, 100)
     log_prior = lnpri_weights + lnpri_φ + lnpri_δ + lnpri_τ
     return log_prior
 
 
 def φ_prior(k, w, P, φα, φβ, δ):
     wTPw = _wPw(w, P)
-    shape = k/2 + φα
-    rate = φβ * δ + wTPw / 2
+    shape = 0.5*k + φα
+    rate = φβ * δ + 0.5*wTPw
     return Gamma(k=shape, theta=1 / rate)
 
 
@@ -36,31 +29,10 @@ def δ_prior(φ, φα, φβ, δα, δβ):
     return Gamma(k=shape, theta=1 / rate)
 
 
-def inv_τ_prior(w, data, spline_model, τα, τβ):
-    """Inverse(?) prior for tau -- tau = 1/inv_tau_sample"""
-
-    # TODO: ask about the even/odd difference, and what 'bFreq' is
-
-    n = len(data)
-    _spline = spline_model(weights=w, n=n)
-    is_even = n % 2 == 0
-    if is_even:
-        spline_normed_data = data[1:-1] / _spline[1:-1]
-    else:
-        spline_normed_data = data[1:] / _spline[1:]
-
-    n = len(spline_normed_data)
-
-    shape = τα + n / 2
-    rate = τβ + np.sum(spline_normed_data) / (2 * np.pi) / 2
-    return Gamma(k=shape, theta=1 / rate)
-
-
-def sample_φδτ(k, w, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, data, spline_model):
+def sample_φδ(k, w, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, data, spline_model):
     φ = φ_prior(k, w, spline_model.penalty_matrix, φα, φβ, δ).sample().flat[0]
     δ = δ_prior(φ, φα, φβ, δα, δβ).sample().flat[0]
-    τ = 1 / inv_τ_prior(w, data, spline_model, τα, τβ).sample()
-    return φ, δ, τ
+    return φ, δ
 
 
 def llike(w, τ, data, spline_model):
@@ -71,7 +43,7 @@ def llike(w, τ, data, spline_model):
     # todo: V should be computed in here
 
     n = len(data)
-    _lnspline = spline_model(weights=w, n=n) * τ
+    _lnspline = spline_model(weights=w, n=n) + τ
 
 
     is_even = n % 2 == 0
@@ -83,7 +55,6 @@ def llike(w, τ, data, spline_model):
         data = data[1:-1]
     _spline = np.exp(_lnspline)
 
-
     integrand = _lnspline + np.exp(np.log(data) - _lnspline * 2 * np.pi)
     lnlike = -np.sum(integrand) / 2
     if not np.isfinite(lnlike):
@@ -92,16 +63,13 @@ def llike(w, τ, data, spline_model):
 
 
 def lpost(k, w, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, data, psline_model):
-    logprior = lprior(
-        k, w, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, psline_model.penalty_matrix
-    )
+    logprior = lprior(k, w, τ, φ, φα, φβ, δ, δα, δβ, psline_model.penalty_matrix)
     loglike = llike(w, τ, data, psline_model)
     logpost = logprior + loglike
     if not np.isfinite(logpost):
         raise ValueError(
             f"logpost is not finite: lnpri{logprior}, lnlike{loglike}, lnpost{logpost}"
         )
-
     return logpost
 
 

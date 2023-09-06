@@ -1,7 +1,6 @@
 import numpy as np
 from bilby.core.prior import ConditionalPriorDict, Gamma
 
-
 def _vPv(v, P):
     return np.dot(np.dot(v.T, P), v)
 
@@ -62,6 +61,13 @@ def sample_φδτ(k, v, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, data, sp
     τ = 1 / inv_τ_prior(v, data, spline_model, τα, τβ).sample()
     return φ, δ, τ
 
+
+# def get_prior(k, v, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, data, spline_model):
+#     return ConditionalPriorDict(dict(
+#         φ=φ_prior(k, v, spline_model.penalty_matrix, φα, φβ, δ),
+#         δ=δ_prior(φ, φα, φβ, δα, δβ),
+#         τ=inv_τ_prior(v, data, spline_model, τα, τβ),
+#     ))
 
 def llike(v, τ, data, spline_model):
     """Whittle log likelihood"""

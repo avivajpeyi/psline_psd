@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from .plot_spline_model_and_data import plot_spline_model_and_data
+from .utils import plot_xy_binned
 
 LATEX_LABELS = dict(
     φ=r"$\phi$",
@@ -15,10 +16,12 @@ LATEX_LABELS = dict(
 def plot_metadata(
     φδτ_samples: np.ndarray,
     frac_accepted: np.array,
+    lpost_trace: np.ndarray,
     model_quants: np.ndarray,
     data,
     db_list,
     knots,
+    weights,
     burn_in,
     fname=None,
     max_it=None,
@@ -26,8 +29,8 @@ def plot_metadata(
     φδτ_samples[φδτ_samples == 0] = np.nan
     frac_accepted[frac_accepted == 0] = np.nan
 
-    fig = plt.figure(figsize=(5, 8), layout="constrained")
-    gs = plt.GridSpec(5, 2, figure=fig)
+    fig = plt.figure(figsize=(7, 12), layout="constrained")
+    gs = plt.GridSpec(6, 2, figure=fig)
     draw_idx = np.arange(len(φδτ_samples))
     max_it = len(φδτ_samples) if max_it is None else max_it
     for i, p in enumerate(["φ", "δ", "τ"]):
@@ -57,19 +60,41 @@ def plot_metadata(
     ax.set_ylabel("Accepted %")
     ax.set_xlabel("Iteration")
     ax.set_xlim(0, max_it)
+
+    # LOG POSTERIOR TRACE
     ax = fig.add_subplot(gs[3, 1])
+    ax.plot(lpost_trace, color="C4")
+    ax.axvline(burn_in, color="k", linestyle="--")
+    ax.set_ylabel("LnPost")
+    ax.set_yticks([])
+    ax.set_xlabel("Iteration")
+    ax.set_xlim(0, max_it)
+
+    # splines
+    ax = fig.add_subplot(gs[4, 0])
     for i, db in enumerate(db_list.T):
         ax.plot(db, color=f"C{i}", alpha=0.3)
     # max db_val in each row
     spline_ymedian = float(np.median(np.max(db_list, axis=1)))
     ax.set_ylim(0, 1.1 * spline_ymedian)
-
     ax.set_yticks([])
     ax.set_xticks([])
     ax.set_xlabel("Splines")
-    ax = fig.add_subplot(gs[4, :])
+
+    # weights
+    ax = fig.add_subplot(gs[4, 1])
+    ax.set_xlabel("Iteration")
+    ax.set_ylabel("Spline")
+    ax.set_yticks([])
+    # fill with 0s if
+    # pcolor plot of weights with colorbar
+    cbar = ax.pcolor(weights.T, cmap="magma")
+    cbar = fig.colorbar(cbar, ax=ax)
+
+
 
     # plot the data and the posterior median and 90% CI
+    ax = fig.add_subplot(gs[5, :])
     plot_spline_model_and_data(
         data, model_quants, separarte_y_axis=True, ax=ax, knots=knots
     )
