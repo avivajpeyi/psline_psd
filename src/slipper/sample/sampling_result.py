@@ -42,7 +42,7 @@ class Result:
             ),
             lpost_trace=samples["lpost_trace"],
             frac_accept=samples["acceptance_fraction"],
-            v_samples=samples["V"],
+            weight_samples=samples["V"],
             basis=spline_model.basis,
             knots=spline_model.knots,
             data=data,
@@ -54,7 +54,7 @@ class Result:
     def compile_idata_from_sampling_results(
         cls,
         posterior_samples,
-        v_samples,
+        weight_samples,
         lpost_trace,
         frac_accept,
         basis,
@@ -63,14 +63,14 @@ class Result:
         burn_in,
         runtime,
     ) -> "Result":
-        nsamp, n_basis_minus_1 = v_samples.shape
+        nsamp, n_weight_cols = weight_samples.shape
 
         n_knots = len(knots)
         n_gridpoints, n_basis = basis.shape
 
         draw_idx = np.arange(nsamp)
         knots_idx = np.arange(n_knots)
-        v_idx = np.arange(n_basis_minus_1)
+        weight_idx = np.arange(n_weight_cols)
         basis_idx = np.arange(n_basis)
         grid_point_idx = np.arange(n_gridpoints)
 
@@ -79,14 +79,14 @@ class Result:
                 phi=posterior_samples[0, :],
                 delta=posterior_samples[1, :],
                 tau=posterior_samples[2, :],
-                v=v_samples,
+                weight=weight_samples,
             ),
-            coords=dict(v_idx=v_idx, draws=draw_idx),
+            coords=dict(v_idx=weight_idx, draws=draw_idx),
             dims=dict(
                 phi=["draws"],
                 delta=["draws"],
                 tau=["draws"],
-                v=["draws", "v_idx"],
+                weight=["draws", "weight_idx"],
             ),
             default_dims=[],
             attrs={},
@@ -170,8 +170,9 @@ class Result:
         ).T
 
     @property
-    def v(self):
-        return self.__posterior["v"]
+    def weights(self):
+        return self.__posterior["weights"]
+
 
     def all_samples(self):
         # samples without burn in cuttoff
@@ -241,13 +242,13 @@ class Result:
             end = self.n_steps
         post = self.idata.posterior.sel(draws=slice(start, end))
         tau_samples = post.tau.values
-        v_samples = post.v.values
+        weight_samples = post.weight.values
         # get rows where tau is not 0
         plot_idx = np.where(tau_samples != 0)[0]
         tau_samples = tau_samples[plot_idx]
-        v_samples = v_samples[plot_idx]
+        weight_samples = weight_samples[plot_idx]
         return generate_spline_quantiles(
-            self.data_length, self.basis, tau_samples, v_samples
+            self.data_length, self.basis, tau_samples, weight_samples
         )
 
     @property
@@ -262,6 +263,6 @@ class Result:
     def psd_posterior(self):
         if not hasattr(self, "_psds"):
             self._psds = generate_spline_posterior(
-                self.data_length, self.basis, self.post_samples[:, 2], self.v
+                self.data_length, self.basis, self.post_samples[:, 2], self.weights
             )
         return self._psds

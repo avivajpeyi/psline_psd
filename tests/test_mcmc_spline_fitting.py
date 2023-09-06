@@ -5,7 +5,7 @@ import numpy as np
 from slipper.plotting.plot_spline_model_and_data import plot_spline_model_and_data
 from slipper.sample.spline_model_sampler import fit_data_with_pspline_model
 
-NTOTAL = 100
+NTOTAL = 1000
 
 
 def test_simple_example(test_pdgrm: np.ndarray, tmpdir: str):
@@ -19,7 +19,8 @@ def test_simple_example(test_pdgrm: np.ndarray, tmpdir: str):
         eqSpaced=False,
         outdir=outdir,
         k=10,
-        n_checkpoint_plts=1,
+        n_checkpoint_plts=5,
+
     )
     assert os.path.exists(fn)
 

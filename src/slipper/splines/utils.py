@@ -32,9 +32,9 @@ def unroll_list_to_new_length(old_list, n):
     return q
 
 
-def build_spline_model(v: np.ndarray, db_list: np.ndarray, n: int):
+def build_spline_model(db_list: np.ndarray, n: int, v: np.ndarray=None, weights=None):
     """Build a spline model from a vector of spline coefficients and a list of B-spline basis functions"""
-    unorm_spline = __get_unscaled_spline(v, db_list)
+    unorm_spline = __get_unscaled_spline(db_list, v=v, weights=weights)
     return unroll_list_to_new_length(unorm_spline, n)
 
 
@@ -73,7 +73,7 @@ def convert_v_to_weights(v: np.ndarray):
     return weight
 
 
-def __get_unscaled_spline(v: np.ndarray, db_list: np.ndarray, epsilon=1e-20):
+def __get_unscaled_spline(db_list: np.ndarray, epsilon=1e-20, v: np.ndarray=None, weights=None):
     """Compute unscaled spline using mixture of B-splines with weights from v
 
     Parameters
@@ -89,6 +89,7 @@ def __get_unscaled_spline(v: np.ndarray, db_list: np.ndarray, epsilon=1e-20):
     psd : np.ndarray
 
     """
-    weights = convert_v_to_weights(v)
+    if weights is None:
+        weights = convert_v_to_weights(v)
     combined = density_mixture(densities=db_list.T, weights=weights)
     return np.maximum(combined, epsilon)

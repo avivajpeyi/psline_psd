@@ -1,12 +1,109 @@
 from slipper.sample.base_sampler import BaseSampler
+import numpy as np
 
+from slipper.sample.base_sampler import BaseSampler, _tune_proposal_distribution
+from slipper.splines.initialisation import knot_locator
+from slipper.splines.p_splines import PSplines
+
+from .bayesian_functions import lpost, sample_φδτ
 
 class LogPsplineSampler(BaseSampler):
     def _init_mcmc(self) -> None:
-        pass
+        """Initialises the self.samples with the itial values of the MCMC"""
+
+        # init spline model
+        sk = self.spline_kwargs
+        knots = knot_locator(self.data, self.n_basis, sk["degree"], sk["eqSpaced"])
+        self.spline_model = PSplines(
+            knots=knots,
+            degree=sk["degree"],
+            diffMatrixOrder=sk["diffMatrixOrder"],
+            all_knots_penalty_matrix=True,
+        )
+
+        # init samples
+        self.samples = dict(
+            w=np.zeros((self.n_steps, self.n_basis)),
+            φ=np.zeros(self.n_steps),
+            δ=np.zeros(self.n_steps),
+            τ=np.zeros(self.n_steps),
+            proposal_sigma=np.zeros(self.n_steps),
+            acceptance_fraction=np.zeros(self.n_steps),
+        )
+
+        sk = self.sampler_kwargs
+        self.samples["τ"][0] = np.var(self.data) / (2 * np.pi)
+        self.samples["δ"][0] = sk["δα"] / sk["δβ"]
+        self.samples["φ"][0] = sk["φα"] / (sk["φβ"] * self.samples["δ"][0])
+        self.samples["w"][0, :] = self.spline_model.guess_weights(self.data).ravel()
+        self.samples["proposal_sigma"][0] = 1
+        self.samples["acceptance_fraction"][0] = 0.4
+        self.samples["lpost_trace"] = np.zeros(self.n_steps)
+
+        self.args = [
+            self.n_basis,
+            self.samples["w"][0],
+            self.samples["τ"][0],
+            self.sampler_kwargs["τα"],
+            self.sampler_kwargs["τβ"],
+            self.samples["φ"][0],
+            self.sampler_kwargs["φα"],
+            self.sampler_kwargs["φβ"],
+            self.samples["δ"][0],
+            self.sampler_kwargs["δα"],
+            self.sampler_kwargs["δβ"],
+            self.data,
+            self.spline_model,
+        ]
 
     def _mcmc_step(self, itr):
-        pass
+        k = self.n_basis
+        aux = np.arange(0, k)
+        np.random.shuffle(aux)
+        accept_frac = self.samples["acceptance_fraction"][itr - 1]
+        sigma = self.samples["proposal_sigma"][itr - 1]
+
+        self.args = [
+            self.n_basis,
+            self.samples["w"][itr - 1, :],
+            self.samples["τ"][itr - 1],
+            self.sampler_kwargs["τα"],
+            self.sampler_kwargs["τβ"],
+            self.samples["φ"][itr - 1],
+            self.sampler_kwargs["φα"],
+            self.sampler_kwargs["φβ"],
+            self.samples["δ"][itr - 1],
+            self.sampler_kwargs["δα"],
+            self.sampler_kwargs["δβ"],
+            self.data,
+            self.spline_model,
+        ]
+
+        w, τ, φ, δ = self.args[1], self.args[2], self.args[5], self.args[8]
+        w_star = self.args[1].copy()
+        for _ in range(self.thin):
+            lpost_store = lpost(*self.args)
+            # 1. explore the parameter space for new V
+            w, w_star, accept_frac, sigma = _tune_proposal_distribution(
+                aux, accept_frac, sigma, w, w_star, lpost_store, self.args, lpost
+            )
+
+            # 2. sample new values for φ, δ, τ
+            φ, δ, τ = sample_φδτ(*self.args)
+            self.args[1] = w
+            self.args[2] = τ
+            self.args[5] = φ
+            self.args[8] = δ
+
+        # 3. store the new values
+        self.samples["φ"][itr] = φ
+        self.samples["δ"][itr] = δ
+        self.samples["τ"][itr] = τ
+        self.samples["w"][itr, :] = w
+        self.samples["proposal_sigma"][itr] = sigma
+        self.samples["acceptance_fraction"][itr] = accept_frac
+        self.samples["lpost_trace"][itr] = lpost_store
+
 
 
 # Metropolis-within-Gibbs sampler

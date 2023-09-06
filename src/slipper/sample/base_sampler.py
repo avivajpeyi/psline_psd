@@ -2,7 +2,7 @@ import os
 import time
 from abc import ABC, abstractmethod
 from pprint import pformat
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union, Callable
 
 import numpy as np
 from tqdm.auto import trange
@@ -85,6 +85,12 @@ class BaseSampler(ABC):
 
     def _comile_sampling_result(self):
         idx = np.where(self.samples["τ"] != 0)[0]
+        if "V" in self.samples:
+            weights = self.samples["V"][idx]
+        elif "w" in self.samples:
+            weights = self.samples["w"][idx]
+        else:
+            raise ValueError("No weights found")
         self.result = Result.compile_idata_from_sampling_results(
             posterior_samples=np.array(
                 [
@@ -95,7 +101,7 @@ class BaseSampler(ABC):
             ),
             lpost_trace=self.samples["lpost_trace"][idx],
             frac_accept=self.samples["acceptance_fraction"][idx],
-            v_samples=self.samples["V"][idx],
+            weight_samples=weights,
             basis=self.spline_model.basis,
             knots=self.spline_model.knots,
             data=self.data,
@@ -175,3 +181,50 @@ def _mkdir(d):
 
 def _timestamp():
     return time.strftime("%Y%m%d_%H%M%S")
+
+
+def _tune_proposal_distribution(
+        aux: np.array,
+        accept_frac: float,
+        sigma: float,
+        weight: np.array,
+        weight_star: np.array,
+        lpost_store,
+        args,
+        lnlike_fn: Callable,
+):
+    n_weight_columns = len(weight)
+
+    # tunning proposal distribution
+    if accept_frac < 0.30:  # increasing acceptance pbb
+        sigma = sigma * 0.90  # decreasing proposal moves
+    elif accept_frac > 0.50:  # decreasing acceptance pbb
+        sigma = sigma * 1.1  # increasing proposal moves
+
+    ## TUNE tau??
+
+    accept_count = 0  # ACCEPTANCE PROBABILITY
+
+    # Update weights
+    for g in range(0, n_weight_columns):
+        Z = np.random.normal()
+        U = np.log(np.random.uniform())
+
+        pos = aux[g]
+        weight_star[pos] = weight[pos] + sigma * Z
+        args[1] = weight_star  # update V_star
+        lpost_star = lnlike_fn(*args)
+
+        # is the proposed V_star better than the current V_store?
+        alpha1 = np.min(
+            [0, (lpost_star - lpost_store).ravel()[0]]
+        )  # log acceptance ratio
+        if U < alpha1:
+            weight[pos] = weight_star[pos]  # Accept W.star
+            lpost_store = lpost_star
+            accept_count += 1  # acceptance probability
+        else:
+            weight_star[pos] = weight[pos]  # reset proposal value
+
+    accept_frac = accept_count / n_weight_columns
+    return weight, weight_star, accept_frac, sigma  # return updated values

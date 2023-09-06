@@ -28,7 +28,7 @@ def tmpdir() -> str:
 
 @pytest.fixture
 def test_pdgrm(tmpdir) -> str:
-    fname = f"{tmpdir}/ar_3.csv"
+    fname = f"{tmpdir}/ar_periodogram_3.csv"
     regenerate = True if not os.path.exists(fname) else CLEAN
     if regenerate:
         from slipper.example_datasets.ar_data import get_ar_periodogram
