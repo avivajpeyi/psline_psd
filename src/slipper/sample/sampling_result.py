@@ -7,14 +7,13 @@ import pandas as pd
 from arviz import InferenceData
 from scipy.fft import fft
 
-from ..plotting import plot_metadata
+from ..plotting import plot_metadata, plot_spline_model_and_data
 from .post_processing import generate_spline_posterior, generate_spline_quantiles
 
 
 class Result:
     def __init__(self, idata):
         self.idata = idata
-
 
     @classmethod
     def load(cls, fname: str):
@@ -27,11 +26,11 @@ class Result:
 
     @classmethod
     def create_idata(
-        cls,
-        samples: Dict[str, np.ndarray],
-        spline_model,
-        data: np.ndarray,
-        sampler_stats: Dict,
+            cls,
+            samples: Dict[str, np.ndarray],
+            spline_model,
+            data: np.ndarray,
+            sampler_stats: Dict,
     ):
         return cls.compile_idata_from_sampling_results(
             posterior_samples=np.array(
@@ -53,16 +52,16 @@ class Result:
 
     @classmethod
     def compile_idata_from_sampling_results(
-        cls,
-        posterior_samples,
-        weight_samples,
-        lpost_trace,
-        frac_accept,
-        basis,
-        knots,
-        data,
-        burn_in,
-        runtime,
+            cls,
+            posterior_samples,
+            weight_samples,
+            lpost_trace,
+            frac_accept,
+            basis,
+            knots,
+            data,
+            burn_in,
+            runtime,
     ) -> "Result":
         nsamp, n_weight_cols = weight_samples.shape
 
@@ -76,9 +75,8 @@ class Result:
         grid_point_idx = np.arange(n_gridpoints)
 
         logged_splines = 1
-        if n_weight_cols==n_basis-1:
+        if n_weight_cols == n_basis - 1:
             logged_splines = 0
-
 
         posterior = az.dict_to_dataset(
             dict(
@@ -117,7 +115,7 @@ class Result:
             index_origin=None,
         )
         observed_data = az.dict_to_dataset(
-            dict(data=data[0 : len(data)]),
+            dict(data=data[0: len(data)]),
             library=None,
             coords=dict(idx=np.arange(len(data))),
             dims=dict(data=["idx"]),
@@ -181,7 +179,6 @@ class Result:
     def weights(self):
         return self.__posterior["weight"]
 
-
     def all_samples(self):
         # samples without burn in cuttoff
         post = self.idata.posterior
@@ -205,7 +202,7 @@ class Result:
         return self.idata.constant_data["knots"]
 
     @property
-    def k(self)->int:
+    def k(self) -> int:
         # umber of basis functions
         return len(self.basis.T)
 
@@ -214,12 +211,12 @@ class Result:
         return self.idata.observed_data["data"]
 
     @property
-    def data_length(self)->int:
+    def data_length(self) -> int:
         return len(self.data)
 
     @property
-    def logged_splines(self)->bool:
-        return self.idata.posterior.attrs["logged_splines"]==1
+    def logged_splines(self) -> bool:
+        return self.idata.posterior.attrs["logged_splines"] == 1
 
     def make_summary_plot(self, fn: str = "", use_cached=True, max_it=None):
         max_it = max_it if max_it else self.n_steps
@@ -246,6 +243,7 @@ class Result:
             burn_in=self.burn_in,
             fname=fn,
             max_it=max_it,
+            logged_splines=self.logged_splines,
         )
 
     def get_model_quantiles(self, start=None, end=None):
@@ -263,6 +261,20 @@ class Result:
         weight_samples = weight_samples[plot_idx]
         return generate_spline_quantiles(
             self.data_length, self.basis, tau_samples, weight_samples, logged_splines=self.logged_splines
+        )
+
+    def plot_model_and_data(self, i=None):
+        if i is None:
+            start, end = None, None
+        elif i == 0:
+            start, end = 0, 0
+        elif i == -1 or i == self.n_steps - 1:
+            start, end = self.n_steps - 1, self.n_steps - 1
+        else:
+            start, end = i, i + 1
+        model_qantiles = self.get_model_quantiles(start, end)
+        return plot_spline_model_and_data(
+            self.data, model_qantiles, knots=self.knots, logged_axes=self.logged_splines
         )
 
     @property

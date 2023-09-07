@@ -43,12 +43,12 @@ def main():
     plot_data_and_fits(AR4_PSD)
     plt.savefig(f"{OUTDIR}/data_and_fits.png")
 
-    kwargs = dict(data=AR4_PSD, Ntotal=2000, degree=3, eqSpaced=False,n_checkpoint_plts=10)
+    kwargs = dict(data=AR4_PSD, Ntotal=200, degree=3, eqSpaced=False,n_checkpoint_plts=2)
 
     ln_spline_mcmc = fit_data_with_log_spline_model(**kwargs,outdir=OUTDIR+"/log_spline")
-    spline_mcmc = fit_data_with_pspline_model(**kwargs,outdir=OUTDIR+"/spline")
+    # spline_mcmc = fit_data_with_pspline_model(**kwargs,outdir=OUTDIR+"/spline")
     plot_data_and_fits(AR4_PSD, fits={
-        "Linear-Spline": spline_mcmc.psd_quantiles,
+        # "Linear-Spline": spline_mcmc.psd_quantiles,
         "Log-Spline": ln_spline_mcmc.psd_quantiles
     })
     plt.savefig(f"{OUTDIR}/spline_fit.png")

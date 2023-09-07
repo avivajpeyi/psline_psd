@@ -8,6 +8,8 @@ import numpy as np
 from tqdm.auto import trange
 
 from slipper.plotting.gif_creator import create_gif
+from slipper.plotting import plot_spline_model_and_data
+
 from slipper.sample.sampling_result import Result
 
 from ..logger import logger
@@ -15,11 +17,11 @@ from ..logger import logger
 
 class BaseSampler(ABC):
     def __init__(
-        self,
-        data: np.ndarray,
-        outdir: str = ".",
-        sampler_kwargs: Optional[dict] = {},
-        spline_kwargs: Optional[dict] = {},
+            self,
+            data: np.ndarray,
+            outdir: str = ".",
+            sampler_kwargs: Optional[dict] = {},
+            spline_kwargs: Optional[dict] = {},
     ):
         self.data = data
         self.outdir = _mkdir(outdir)
@@ -39,6 +41,11 @@ class BaseSampler(ABC):
             )
         return n_plts > 0 and step_num in self._checkpoint_plt_idx
 
+    def _plot_model_and_data(self, i=None, label="model_and_data"):
+        self._compile_sampling_result()
+        fig = self.result.plot_model_and_data(i=i)
+        fig.savefig(f"{self.outdir}/{label}.png")
+
     def run(self, verbose: bool = True):
         msg = f"Running sampler with the following arguments:\n"
         msg += f"Sampler arguments:\n{pformat(self.sampler_kwargs)}\n"
@@ -47,14 +54,16 @@ class BaseSampler(ABC):
 
         self.t0 = time.process_time()
         self._init_mcmc()
+        self._plot_model_and_data(i=0, label="initial_fit")
         for itr in trange(1, self.n_steps, desc="MCMC sampling", disable=not verbose):
             self._mcmc_step(itr)
             if self.__check_to_make_chkpt_plt(itr):
                 logger.info("<<Plotting checkpoint>>")
                 self.__plot_checkpoint(itr)
-        self._comile_sampling_result()
+        self._compile_sampling_result()
         self.samples = None
         self.save()
+        self._plot_model_and_data(i=self.n_steps - 1, label="final_fit")
         if self.sampler_kwargs["n_checkpoint_plts"]:
             logger.info("<<Creating gif>>")
             create_gif(
@@ -80,10 +89,10 @@ class BaseSampler(ABC):
 
     def __plot_checkpoint(self, i: int):
         fname = f"{self.outdir}/checkpoint_{i}.png"
-        self._comile_sampling_result()
+        self._compile_sampling_result()
         self.result.make_summary_plot(fn=fname, use_cached=False, max_it=self.n_steps)
 
-    def _comile_sampling_result(self):
+    def _compile_sampling_result(self):
         idx = np.where(self.samples["τ"] != 0)[0]
         if "V" in self.samples:
             weights = self.samples["V"][idx]
@@ -183,7 +192,6 @@ def _timestamp():
     return time.strftime("%Y%m%d_%H%M%S")
 
 
-
 def _tune_proposal_distribution(
         aux: np.array,
         accept_frac: float,
@@ -192,7 +200,7 @@ def _tune_proposal_distribution(
         weight_star: np.array,
         lpost_store,
         args,
-        lnpost_fn:Callable,
+        lnpost_fn: Callable,
 ):
     n_weight_columns = len(weight)
 
@@ -215,10 +223,7 @@ def _tune_proposal_distribution(
     return weight, weight_star, accept_frac, sigma  # return updated values
 
 
-
-
-
-def _update_weights(sigma, weight, widx, lpost_args, lpost_store, accept_count, lpost_fn:Callable):
+def _update_weights(sigma, weight, widx, lpost_args, lpost_store, accept_count, lpost_fn: Callable):
     Z = np.random.normal()
     U = np.log(np.random.uniform())
 

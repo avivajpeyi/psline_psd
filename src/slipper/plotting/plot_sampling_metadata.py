@@ -25,6 +25,7 @@ def plot_metadata(
     burn_in,
     fname=None,
     max_it=None,
+    logged_splines=False,
 ):
     φδτ_samples[φδτ_samples == 0] = np.nan
     frac_accepted[frac_accepted == 0] = np.nan
@@ -96,7 +97,7 @@ def plot_metadata(
     # plot the data and the posterior median and 90% CI
     ax = fig.add_subplot(gs[5, :])
     plot_spline_model_and_data(
-        data, model_quants, separarte_y_axis=True, ax=ax, knots=knots
+        data, model_quants, separarte_y_axis=True, ax=ax, knots=knots, logged_axes=logged_splines
     )
     if fname:
         basedir = os.path.dirname(fname)

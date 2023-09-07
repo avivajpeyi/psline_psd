@@ -13,6 +13,7 @@ def plot_spline_model_and_data(
     ax=None,
     colors=dict(Data="black", Splines="tab:orange", Knots="tab:red"),
     add_legend=False,
+    logged_axes=False,
 ) -> plt.Axes:
     # prepare axes + figure
     if ax is None:
@@ -53,6 +54,10 @@ def plot_spline_model_and_data(
         ax_knots.vlines(knots, 0, 0.1, color="tab:red", alpha=0.5)
         ax_knots.set_ylim(0, 1)
         hide_axes_spines(ax_knots)
+
+    if logged_axes:
+        ax_model.set_yscale("log")
+        ax.set_yscale("log")
 
     if add_legend:
         for label, color in colors.items():
