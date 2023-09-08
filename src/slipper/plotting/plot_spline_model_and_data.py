@@ -58,6 +58,9 @@ def plot_spline_model_and_data(
     if logged_axes:
         ax_model.set_yscale("log")
         ax.set_yscale("log")
+        # turn off y axes for log scale
+        ax.get_yaxis().set_visible(False)
+        ax_model.get_yaxis().set_visible(False)
 
     if add_legend:
         for label, color in colors.items():

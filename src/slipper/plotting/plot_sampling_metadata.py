@@ -2,102 +2,58 @@ import os
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 from .plot_spline_model_and_data import plot_spline_model_and_data
 from .utils import plot_xy_binned
+from slipper.splines.utils import  convert_v_to_weights
 
-LATEX_LABELS = dict(
-    φ=r"$\phi$",
-    δ=r"$\delta$",
-    τ=r"$\tau$",
+from xarray import Dataset
+
+LABELS = dict(
+    phi=r"$\phi$",
+    delta=r"$\delta$",
+    tau=r"$\tau$",
+    acceptance_rate="Accep %",
+    lp="LnP($\theta$|d)",
 )
 
 
 def plot_metadata(
-    φδτ_samples: np.ndarray,
-    frac_accepted: np.array,
-    lpost_trace: np.ndarray,
-    model_quants: np.ndarray,
-    data,
-    db_list,
-    knots,
-    weights,
-    burn_in,
-    fname=None,
-    max_it=None,
-    logged_splines=False,
+        posterior: pd.DataFrame,
+        model_quants: np.ndarray,
+        data,
+        spline_model: "PSplines",
+        weights,
+        burn_in,
+        fname=None,
+        max_it=None,
 ):
-    φδτ_samples[φδτ_samples == 0] = np.nan
-    frac_accepted[frac_accepted == 0] = np.nan
+    posterior[posterior == 0] = np.nan
+    n_rows = len(posterior.columns) + 2
+    max_it = len(posterior) if max_it is None else max_it
+    fig = plt.figure(figsize=(7, 3 *n_rows), layout="constrained")
+    gs = plt.GridSpec(n_rows, 2, figure=fig)
+    row_num = 0
+    for i, p in enumerate(posterior.columns):
+        ax_trace = fig.add_subplot(gs[i, 0])
+        ax_hist = fig.add_subplot(gs[i, 1])
+        __plot_trace_and_hist(
+            posterior[p], LABELS[p], ax_trace, ax_hist,
+            burn_in, max_it, color=f"C{i}",
+        )
+        row_num += 1
 
-    fig = plt.figure(figsize=(7, 12), layout="constrained")
-    gs = plt.GridSpec(6, 2, figure=fig)
-    draw_idx = np.arange(len(φδτ_samples))
-    max_it = len(φδτ_samples) if max_it is None else max_it
-    for i, p in enumerate(["φ", "δ", "τ"]):
-        # TRACE
-        ax = fig.add_subplot(gs[i, 0])
-        ax.plot(draw_idx[1:], φδτ_samples[1:, i], color=f"C{i}")
-        ax.axvline(burn_in, color="k", linestyle="--")
-        ax.set_ylabel(LATEX_LABELS[p])
-        ax.set_xlabel("Iteration")
-        ax.set_xlim(0, max_it)
-
-        # HISTOGRAM
-        ax = fig.add_subplot(gs[i, 1])
-        samps = φδτ_samples[:, i]
-        samps = samps[~np.isnan(samps)]
-        if len(samps[burn_in:]) > 0:
-            ax.hist(samps[burn_in:], bins=50, color=f"C{i}", density=True)
-        else:
-            ax.hist(samps[0:], bins=50, color=f"C{i}", density=True)
-        ax.set_yticks([])
-        ax.set_xlabel(LATEX_LABELS[p])
-
-    # FRAC ACCEPTED TRACE
-    ax = fig.add_subplot(gs[3, 0])
-    ax.plot(frac_accepted, color="C3")
-    ax.axvline(burn_in, color="k", linestyle="--")
-    ax.set_ylabel("Accepted %")
-    ax.set_xlabel("Iteration")
-    ax.set_xlim(0, max_it)
-
-    # LOG POSTERIOR TRACE
-    ax = fig.add_subplot(gs[3, 1])
-    ax.plot(lpost_trace, color="C4")
-    ax.axvline(burn_in, color="k", linestyle="--")
-    ax.set_ylabel("LnPost")
-    ax.set_yticks([])
-    ax.set_xlabel("Iteration")
-    ax.set_xlim(0, max_it)
-
-    # splines
-    ax = fig.add_subplot(gs[4, 0])
-    for i, db in enumerate(db_list.T):
-        ax.plot(db, color=f"C{i}", alpha=0.3)
-    # max db_val in each row
-    spline_ymedian = float(np.median(np.max(db_list, axis=1)))
-    ax.set_ylim(0, 1.1 * spline_ymedian)
-    ax.set_yticks([])
-    ax.set_xticks([])
-    ax.set_xlabel("Splines")
-
-    # weights
-    ax = fig.add_subplot(gs[4, 1])
-    ax.set_xlabel("Iteration")
-    ax.set_ylabel("Spline")
-    ax.set_yticks([])
-    # fill with 0s if
-    # pcolor plot of weights with colorbar
-    cbar = ax.pcolor(weights.T, cmap="magma")
-    cbar = fig.colorbar(cbar, ax=ax)
-
-
+    # spline axes
+    ax_basis = fig.add_subplot(gs[row_num, 0])
+    ax_weights = fig.add_subplot(gs[row_num, 1])
+    __plot_spline_data(spline_model, weights, max_it, ax_basis, ax_weights)
+    row_num += 1
 
     # plot the data and the posterior median and 90% CI
-    ax = fig.add_subplot(gs[5, :])
+    ax = fig.add_subplot(gs[row_num, :])
     plot_spline_model_and_data(
-        data, model_quants, separarte_y_axis=True, ax=ax, knots=knots, logged_axes=logged_splines
+        data, model_quants, separarte_y_axis=True, ax=ax, knots=spline_model.knots, logged_axes=spline_model.logged
     )
     if fname:
         basedir = os.path.dirname(fname)
@@ -106,3 +62,67 @@ def plot_metadata(
         plt.close(fig)
     else:
         return fig
+
+
+def __plot_trace_and_hist(data, label, ax_trace, ax_hist, burn_in, max_it, color):
+    samps = data[~np.isnan(data)]
+    low, med, high = np.quantile(samps, [0.05, 0.5, 0.95])
+    l, h = med - low, high - med
+    txt = f"${med:.2f}^{{+{h:.2f}}}_{{-{l:.2f}}}$"
+
+    ax_trace.tick_params(axis='both', which='both', direction='in', pad=-15, zorder=10)
+    ax_hist.tick_params(axis='both', which='both', direction='in', pad=-15, zorder=10)
+
+    ax_trace.axvline(burn_in, color="k", linestyle="--", zorder=10)
+    ax_trace.axhline(med, color=color, linestyle="--", alpha=0.5)
+    ax_trace.axhline(low, color=color, linestyle="--", alpha=0.2)
+    ax_trace.axhline(high, color=color, linestyle="--", alpha=0.2)
+    ax_trace.plot(data[1:], color=color)
+    ax_trace.set_xlim(0, max_it)
+    ax_trace.set_yticks([med])
+    ax_trace.tick_params(axis="y", direction="in", pad=-15)
+    ax_trace.tick_params(axis="x", direction="in")
+    ax_trace.set_ylabel(label)
+    ax_trace.set_xlabel("Iteration", labelpad=0, fontsize=10)
+    # add txtbox with txt at bottom left
+    ax_trace.text(
+        0.05,
+        0.95,
+        txt,
+        transform=ax_trace.transAxes,
+        fontsize=12,
+        verticalalignment="top",
+        bbox=dict(facecolor="white", alpha=0.8),
+    )
+
+    if len(samps[burn_in:]) > 0:
+        ax_hist.hist(samps[burn_in:], bins=50, color=color, density=True)
+    else:
+        ax_hist.hist(samps[0:], bins=50, color=color, density=True)
+    ax_hist.axvline(med, color=color, linestyle="--", alpha=0.5)
+    ax_hist.axvline(low, color=color, linestyle="--", alpha=0.2)
+    ax_hist.axvline(high, color=color, linestyle="--", alpha=0.2)
+    ax_hist.tick_params(axis="x", direction="in")
+    ax_hist.set_xticks([low, high])
+    ax_hist.set_yticks([])
+
+
+def __plot_spline_data(spline_model: "PSplines", weights, max_it, ax_basis, ax_weights):
+    w = weights[-1, :]
+    if not spline_model.logged:
+        w = convert_v_to_weights(w)
+    spline_model.plot_basis(ax=ax_basis, weights=w)
+    ax_basis.set_xlabel("")
+    ax_basis.set_ylabel("Basis")
+    ax_basis.tick_params(axis="x", direction="in", pad=-15, labelsize=0, )
+    ax_basis.set_yticks([])
+    ax_basis.set_title("")
+
+    # weights
+    ax_weights.set_xlabel("Iteration")
+    ax_weights.set_ylabel("Weights")
+    ax_weights.set_yticks([])
+    cbar = ax_weights.pcolor(weights.T, cmap="magma")
+    fig = ax_weights.get_figure()
+    fig.colorbar(cbar, ax=ax_weights)
+    ax_weights.set_xlim(0, max_it)

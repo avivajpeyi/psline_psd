@@ -25,7 +25,7 @@ class PSplines:
     """
 
     def __init__(
-            self, knots: np.array, degree: int, diffMatrixOrder: int = 2, n_grid_points=None, all_knots_penalty_matrix=False
+            self, knots: np.array, degree: int, diffMatrixOrder: int = 2, n_grid_points=None, logged=False
     ):
         """Initialise the PSplines class
 
@@ -41,7 +41,7 @@ class PSplines:
             The number of points to evaluate the basis functions at
             If None, then the number of grid points is set to the maximum
             between 501 and 10 times the number of basis elements.
-        all_knots_penalty_matrix : bool
+        logged : bool
             If True, the penalty matrix is calculated using all the knots
             If False, the penalty matrix is calculated using all the knots except the last one
         """
@@ -57,8 +57,19 @@ class PSplines:
             n_grid_points  # number of points to evaluate the basis functions at
         )
         self.diffMatrixOrder: int = diffMatrixOrder
-        self.penalty_matrix: np.ndarray = self.__generate_penalty_matrix(all_knots=all_knots_penalty_matrix)
+        # basically if log-splines, we use all knots for the penalty matrix, otherwise we use all knots except the last one
+        self.penalty_matrix: np.ndarray = self.__generate_penalty_matrix(all_knots=True if logged else False)
         self.basis: np.ndarray = self.__generate_basis_matrix()
+        self.logged = logged
+
+    def __str__(self):
+        str = f"PSplines(n_basis={self.n_basis}, n_knots={self.n_knots}, degree={self.degree})"
+        if self.logged:
+            str = f"logged {str}"
+        return str
+
+    def __repr__(self):
+        return self.__str__()
 
     @property
     def n_grid_points(self) -> int:
@@ -288,9 +299,11 @@ class PSplines:
         ax.set_title("Penalty matrix")
         return fig, ax
 
-    def plot(self, weights=None):
+    def plot(self, weights=None, V=None):
         """Plot the basis functions and the penalty matrix"""
         fig, ax = plt.subplots(1, 2, figsize=(8, 4))
+        if V is not None:
+            weights = convert_v_to_weights(V)
         self.plot_basis(ax=ax[0], weights=weights)
         self.plot_penalty_matrix(ax=ax[1])
         plt.tight_layout()

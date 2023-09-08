@@ -113,7 +113,7 @@ from slipper.example_datasets.ar_data import get_ar_periodogram
 if __name__ == '__main__':
     np.random.seed(0)
     k = 10
-    spline_model = PSplines(knots=np.linspace(0,1,k), degree=3, diffMatrixOrder=2, all_knots_penalty_matrix=False)
+    spline_model = PSplines(knots=np.linspace(0,1,k), degree=3, diffMatrixOrder=2, logged=False)
     data = get_ar_periodogram(order=4)
     v = spline_model.guess_initial_v(data)
     kwargs = dict(k=k, v=v, τ=1, τα=1, τβ=1, φ=1, φα=1, φβ=1, δ=1, δα=1, δβ=1,  )

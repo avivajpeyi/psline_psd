@@ -11,8 +11,28 @@ from slipper.plotting.gif_creator import create_gif
 from slipper.plotting import plot_spline_model_and_data
 
 from slipper.sample.sampling_result import Result
+from slipper.splines.p_splines import PSplines
+from collections import namedtuple
 
 from ..logger import logger
+
+LnlArgs = namedtuple(
+    "LnlArgs",
+    [
+        "n_basis",
+        "w",
+        "τ",
+        "τα",
+        "τβ",
+        "φ",
+        "φα",
+        "φβ",
+        "δ",
+        "δα",
+        "δβ",
+        "data",
+        "spline_model"
+    ])
 
 
 class BaseSampler(ABC):
@@ -30,8 +50,9 @@ class BaseSampler(ABC):
         self.spline_kwargs = spline_kwargs
 
         assert (self.n_steps - self.burnin) / self.thin > self.n_basis
-        self.spline_model = None
+        self.spline_model: PSplines = None
         self.samples = None
+        self.args:LnlArgs = None
 
     def __check_to_make_chkpt_plt(self, step_num) -> bool:
         n_plts = self.sampler_kwargs["n_checkpoint_plts"]
@@ -45,6 +66,13 @@ class BaseSampler(ABC):
         self._compile_sampling_result()
         fig = self.result.plot_model_and_data(i=i)
         fig.savefig(f"{self.outdir}/{label}.png")
+        w = self.result.idata.posterior.weight.values
+        if self.result.logged_splines:
+            kwgs = dict(weights=w[i, :])
+        else:
+            kwgs = dict(V=w[i, :])
+        fig, _ = self.spline_model.plot(**kwgs)
+        fig.savefig(f"{self.outdir}/{label}_spline.png")
 
     def run(self, verbose: bool = True):
         msg = f"Running sampler with the following arguments:\n"
@@ -55,15 +83,23 @@ class BaseSampler(ABC):
         self.t0 = time.process_time()
         self._init_mcmc()
         self._plot_model_and_data(i=0, label="initial_fit")
-        for itr in trange(1, self.n_steps, desc="MCMC sampling", disable=not verbose):
+
+        pbar = trange(1, self.n_steps, desc="MCMC sampling", disable=not verbose)
+        for itr in pbar:
             self._mcmc_step(itr)
             if self.__check_to_make_chkpt_plt(itr):
                 logger.info("<<Plotting checkpoint>>")
                 self.__plot_checkpoint(itr)
+            pbar.set_postfix(
+                dict(
+                    lnP=self.samples["lpost_trace"][itr - 1],
+                    accept=self.samples["acceptance_fraction"][itr - 1],
+                )
+            )
         self._compile_sampling_result()
+        self._plot_model_and_data(i=self.n_steps - 1, label="final_fit")
         self.samples = None
         self.save()
-        self._plot_model_and_data(i=self.n_steps - 1, label="final_fit")
         if self.sampler_kwargs["n_checkpoint_plts"]:
             logger.info("<<Creating gif>>")
             create_gif(
@@ -111,8 +147,13 @@ class BaseSampler(ABC):
             lpost_trace=self.samples["lpost_trace"][idx],
             frac_accept=self.samples["acceptance_fraction"][idx],
             weight_samples=weights,
-            basis=self.spline_model.basis,
-            knots=self.spline_model.knots,
+            spline_model_kwargs=dict(
+                knots=self.spline_model.knots,
+                degree=self.spline_model.degree,
+                diffMatrixOrder=self.spline_model.diffMatrixOrder,
+                logged=self.spline_model.logged,
+                basis=self.spline_model.basis,
+            ),
             data=self.data,
             runtime=time.process_time() - self.t0,
             burn_in=self.sampler_kwargs["burnin"],
@@ -197,9 +238,8 @@ def _tune_proposal_distribution(
         accept_frac: float,
         sigma: float,
         weight: np.array,
-        weight_star: np.array,
-        lpost_store,
-        args,
+        lpost_store:float,
+        args: LnlArgs,
         lnpost_fn: Callable,
 ):
     n_weight_columns = len(weight)
@@ -215,28 +255,25 @@ def _tune_proposal_distribution(
     # Update weights
     for g in range(0, n_weight_columns):
         pos = aux[g]
-        weight[pos], weight_star[pos], lpost_store, accept_count = _update_weights(
+        weight[pos], lpost_store, accept_count = _update_weights(
             sigma, weight[pos], pos, args, lpost_store, accept_count, lnpost_fn
         )
 
     accept_frac = accept_count / n_weight_columns
-    return weight, weight_star, accept_frac, sigma  # return updated values
+    return weight, accept_frac, sigma, lpost_store   # return updated values
 
 
 def _update_weights(sigma, weight, widx, lpost_args, lpost_store, accept_count, lpost_fn: Callable):
     Z = np.random.normal()
     U = np.log(np.random.uniform())
 
+    # Compute LnL using new value
     weight_star = weight + sigma * Z
     lpost_args[1][widx] = weight_star  # update V_star
     lpost_star = lpost_fn(*lpost_args)
 
-    # is the proposed V_star better than the current V_store?
+    # Return new value if accepted
     lnl_diff = (lpost_star - lpost_store).ravel()[0]
     if U < np.min([0, lnl_diff]):
-        weight = weight_star  # Accept W.star
-        lpost_store = lpost_star
-        accept_count += 1  # acceptance probability
-    else:
-        weight_star = weight  # reset proposal value
-    return weight, weight_star, lpost_store, accept_count
+        return weight_star, lpost_star, accept_count + 1
+    return weight, lpost_store, accept_count
