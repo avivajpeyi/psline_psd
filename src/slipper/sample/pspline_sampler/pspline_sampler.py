@@ -88,3 +88,6 @@ class PsplineSampler(BaseSampler):
         self.samples["proposal_sigma"][itr] = sigma
         self.samples["acceptance_fraction"][itr] = accept_frac
         self.samples["lpost_trace"][itr] = lpost_store
+        # TODO store the LnL, lnprior
+
+

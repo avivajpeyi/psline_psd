@@ -16,11 +16,7 @@ def generate_spline_posterior(
     n = len(tau_samples)
     splines = np.zeros((n, spline_len))
     kwargs = dict(db_list=db_list, n=spline_len)
-    n_basis = db_list.shape[1]
-    n_weight_cols = weight_samples.shape[1]
-    weight_key = "weights"
-    if n_basis-1 == n_weight_cols:
-        weight_key = "v"
+    weight_key = "weights" if logged else "v"
     for i in trange(n, desc="Generating Spline posterior", disable=not verbose):
         kwargs[weight_key] = weight_samples[i, :]
         if logged:

@@ -33,59 +33,108 @@ def mkdir(path):
     return path
 
 
-
 @pytest.mark.skipif(rpy2 is None, reason="rpy2 required for this test")
 def test_mcmc_posterior_psd_comparison():
-    nsteps = 5000
+    nsteps = 1000
+    nsplines = 30
     data = generate_ar_timeseries(order=3, n_samples=2000)
     pdgrm = get_periodogram(timeseries=data)
     pdgrm = pdgrm[1:]
     psd_x = np.linspace(0, 1, len(pdgrm))
-    fig,ax = plt.subplots(1,1, figsize=(8, 4))
+    fig, ax = plt.subplots(1, 1, figsize=(8, 4))
     plt.scatter(psd_x, pdgrm, color="k", label="Data", s=0.1)
     plot_xy_binned(psd_x, pdgrm, ax=ax, color="k", label="Data", ms=2, ls='--')
     plt.yscale("log")
     plt.show()
-    r_mcmc = __r_mcmc(data, nsteps)
-    py_mcmc = __py_mcmc(data, nsteps)
-    py_log_mcmc = __log_py_mcmc(data, nsteps)
+    r_mcmc = __r_mcmc(data, nsteps, nsplines)
+    py_mcmc = __py_mcmc(data, nsteps, nsplines)
+    py_log_mcmc = __log_py_mcmc(data, nsteps, nsplines)
+
+    outdir = mkdir(Path(__file__).parent / "out_compare_spline_and_log_spline")
+
+    fig, ax = plt.subplots(1, 1, figsize=(5, 4))
+    __plot_result(pdgrm, [('r', r_mcmc),
+                          ('py', py_mcmc),
+                          ('log-py', py_log_mcmc)
+                          ],
+                  ax)
+    fig.tight_layout()
+    fig.savefig(f"{outdir}/data_and_fits.png")
+
+    fig, ax = plt.subplots(3, 1, figsize=(5, 10))
+    __plot_sampled_params([
+        ('r', r_mcmc.samples),
+        ('py', py_mcmc.post_samples),
+        ('log-py', py_log_mcmc.post_samples)
+    ], ax)
+
+    fig.tight_layout()
+    fig.savefig(f"{outdir}/sampled_params.png")
+
+    fig, ax = plt.subplots(1, 1, figsize=(5, 4))
 
 
-    plt.figure(figsize=(8, 4))
-    plt.rcParams["font.family"] = "sans-serif"
-    plt.plot(figsize=(8, 4))
-    plt.scatter(psd_x, pdgrm, color="k", label="Data", s=0.1)
-    # plot_xy_binned(psd_x, pdgrm, ax=plt.gca(),color="k", label="Data", ms=1)
+    _plot_psd_samples([('r', r_mcmc.psd),
+                              ('py', py_mcmc.psd_posterior),
+                              ('log-py', py_log_mcmc.psd_posterior)
+                              ],
+                      ax)
+    fig.tight_layout()
+    fig.savefig(f"{outdir}/psd_samples.png")
 
-    for i, (label, mcmc) in enumerate(zip(['r', 'py', 'log-py'],[r_mcmc, py_mcmc, py_log_mcmc])):
+def __plot_sampled_params(mcmc_data, axes):
+    axlabels = [r"$\phi$", r"$\delta$", r"$\tau$"]
+    for param_id, ax in enumerate(axes):
+        ax.grid(False)
+        ax.set_xlabel(axlabels[param_id])
+        for i in range(len(mcmc_data)):
+            label, mcmc = mcmc_data[i]
+            ax.hist(mcmc[:, param_id], color=f"C{i}", alpha=0.5, label=label, histtype='step', density=True, bins=30)
+        ax.legend(markerscale=5, frameon=False)
+        ax.set_yscale("log")
+
+
+
+def _plot_psd_samples(psd_data, ax):
+    # plot last 90% of all samples
+
+    for i in range(len(psd_data)):
+        label, psds = psd_data[i]
+        x = np.linspace(0, 1, len(psds[0]))
+        start = int(0.1 * len(psds))
+        end = len(psds)
+        for j in range(start, end):
+            ax.plot(x, psds[j], color=f"C{i}", alpha=0.01)
+        ax.plot([],[], color=f"C{i}", alpha=1, label=label)
+    ax.grid(False)
+    ax.set_yscale("log")
+    ax.legend(markerscale=5, frameon=False)
+
+def __plot_lnl(lnl_vals, ax):
+    for i in range(len(lnl_vals)):
+        label, lnl = lnl_vals[i]
+        ax.plot(lnl, color=f"C{i}", alpha=0.5, label=label)
+    ax.grid(False)
+    ax.legend(markerscale=5, frameon=False)
+
+
+def __plot_result(pdgrm, mcmc_data, ax):
+    psd_x = np.linspace(0, 1, len(pdgrm))
+    ax.scatter(psd_x, pdgrm, color="k", label="Data", s=0.1)
+    for i in range(len(mcmc_data)):
+        label, mcmc = mcmc_data[i]
         x = np.linspace(0, 1, len(mcmc.psd_quantiles[0]))
-        plt.plot(
-            x[1:],
-            mcmc.psd_quantiles[0][1:],
-            color=f"C{i}",
-            alpha=0.5,
-            label=label,
-        )
-        plt.fill_between(
-            x[1:],
-            mcmc.psd_quantiles[1][1:],
-            mcmc.psd_quantiles[2][1:],
-            color=f"C{i}",
-            alpha=0.2,
-            linewidth=0.0,
-        )
+        ax.plot(x[1:], mcmc.psd_quantiles[0][1:], color=f"C{i}", alpha=0.5, label=label)
+        ax.fill_between(x[1:], mcmc.psd_quantiles[1][1:], mcmc.psd_quantiles[2][1:], color=f"C{i}", alpha=0.2,
+                        linewidth=0.0)
 
-    plt.grid(False)
-    plt.legend(markerscale=5, frameon=False)
-    plt.tight_layout()
-    plt.yscale("log")
-    # turn off minor ticks
-    plt.minorticks_off()
-    plt.show()
+    ax.grid(False)
+    ax.legend(markerscale=5, frameon=False)
+    ax.set_yscale("log")
+    ax.minorticks_off()
 
 
-
-def __r_mcmc(data, nsteps):
+def __r_mcmc(data, nsteps, nsplines):
     r_pspline = importr("psplinePsd")
 
     np_cv_rules = default_converter + numpy2ri.converter
@@ -93,14 +142,27 @@ def __r_mcmc(data, nsteps):
     burnin = int(0.5 * nsteps)
     with np_cv_rules.context():
         mcmc = r_pspline.gibbs_pspline(
-            data, burnin=burnin, Ntotal=nsteps, degree=3, eqSpaced=True
+            data, burnin=burnin, Ntotal=nsteps, degree=3, eqSpaced=True, k=nsplines
         )
     return MCMCdata.from_r(mcmc)
 
 
-def __py_mcmc(data, nsteps):
+def __r_mcmc(data, nsteps, nsplines):
+    r_pspline = importr("psplinePsd")
+
+    np_cv_rules = default_converter + numpy2ri.converter
+
     burnin = int(0.5 * nsteps)
-    pdgm =np.abs(get_fz(data))
+    with np_cv_rules.context():
+        mcmc = r_pspline.gibbs_pspline(
+            data, burnin=burnin, Ntotal=nsteps, degree=3, eqSpaced=True, k=nsplines
+        )
+    return MCMCdata.from_r(mcmc)
+
+
+def __py_mcmc(data, nsteps, nsplines):
+    burnin = int(0.5 * nsteps)
+    pdgm = np.abs(get_fz(data))
     mcmc = fit_data_with_pspline_model(
         pdgm,
         burnin=burnin,
@@ -108,14 +170,15 @@ def __py_mcmc(data, nsteps):
         degree=3,
         eqSpaced=True,
         outdir="py_mcmc",
+        k=nsplines
     )
 
     return mcmc
 
 
-def __log_py_mcmc(data, nsteps):
+def __log_py_mcmc(data, nsteps, nsplines):
     burnin = int(0.5 * nsteps)
-    pdgm =np.abs(get_fz(data))
+    pdgm = np.abs(get_fz(data))
     mcmc = fit_data_with_log_spline_model(
         pdgm,
         burnin=burnin,
@@ -123,6 +186,7 @@ def __log_py_mcmc(data, nsteps):
         degree=3,
         eqSpaced=True,
         outdir="py_mcmc_log",
+        k=nsplines
     )
 
     return mcmc
@@ -138,6 +202,8 @@ class MCMCdata:
         self.lnl = None
         self.samples = None
 
+
+
     @classmethod
     def from_r(cls, mcmc):
         obj = cls()
@@ -152,6 +218,6 @@ class MCMCdata:
                 np.array(mcmc["psd.u95"]),
             ]
         )
-        obj.lnl = None
+        obj.lnl = mcmc['ll.trace']
         obj.samples = np.array([mcmc["phi"], mcmc["delta"], mcmc["tau"]]).T
         return obj

@@ -186,7 +186,7 @@ class Result:
 
     @property
     def weights(self):
-        return self.__posterior["weight"]
+        return self.__posterior["weight"].values
 
     def all_samples(self):
         # samples without burn in cuttoff
@@ -204,7 +204,7 @@ class Result:
 
     @property
     def basis(self):
-        return self.idata.constant_data["basis"]
+        return self.idata.constant_data["basis"].values
 
     @property
     def knots(self):
