@@ -21,21 +21,21 @@ def lprior(k, v, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, P):
     return log_prior
 
 
-def φ_prior(k, v, P, φα, φβ, δ):
+def conditional_phi(k, v, P, φα, φβ, δ):
     vTPv = np.dot(np.dot(v.T, P), v)
     shape = (k - 1) / 2 + φα
     rate = φβ * δ + vTPv / 2
     return Gamma(k=shape, theta=1 / rate)
 
 
-def δ_prior(φ, φα, φβ, δα, δβ):
+def conditional_delta(φ, φα, φβ, δα, δβ):
     """Gamma prior for pi(δ|φ)"""
     shape = φα + δα
     rate = φβ * φ + δβ
     return Gamma(k=shape, theta=1 / rate)
 
 
-def inv_τ_prior(v, data, spline_model, τα, τβ):
+def conditional_tau(v, data, spline_model, τα, τβ):
     """Inverse(?) prior for tau -- tau = 1/inv_tau_sample"""
 
     # TODO: ask about the even/odd difference, and what 'bFreq' is
@@ -56,17 +56,17 @@ def inv_τ_prior(v, data, spline_model, τα, τβ):
 
 
 def sample_φδτ(k, v, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, data, spline_model):
-    φ = φ_prior(k, v, spline_model.penalty_matrix, φα, φβ, δ).sample().flat[0]
-    δ = δ_prior(φ, φα, φβ, δα, δβ).sample().flat[0]
-    τ = 1 / inv_τ_prior(v, data, spline_model, τα, τβ).sample()
+    φ = conditional_phi(k, v, spline_model.penalty_matrix, φα, φβ, δ).sample().flat[0]
+    δ = conditional_delta(φ, φα, φβ, δα, δβ).sample().flat[0]
+    τ = 1 / conditional_tau(v, data, spline_model, τα, τβ).sample()
     return φ, δ, τ
 
 
 # def get_prior(k, v, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, data, spline_model):
 #     return ConditionalPriorDict(dict(
-#         φ=φ_prior(k, v, spline_model.penalty_matrix, φα, φβ, δ),
-#         δ=δ_prior(φ, φα, φβ, δα, δβ),
-#         τ=inv_τ_prior(v, data, spline_model, τα, τβ),
+#         φ=conditional_phi(k, v, spline_model.penalty_matrix, φα, φβ, δ),
+#         δ=conditional_delta(φ, φα, φβ, δα, δβ),
+#         τ=conditional_tau(v, data, spline_model, τα, τβ),
 #     ))
 
 def llike(v, τ, data, spline_model):

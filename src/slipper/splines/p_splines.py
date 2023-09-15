@@ -162,18 +162,48 @@ class PSplines:
         penalty_matrix : np.ndarray of shape (n_basis_elements, n_basis_elements)
         """
 
-        if all_knots:
-            basis = self.__get_fda_bspline_basis(knots=self.knots)
+        if self.are_equidistant_knots:
+            # diffMatrix
+            """
+              out = diag(k);
+
+              for(i in 0:diffMatrixOrder-1){
+            
+                out = diff(out);
+            
+              }
+            """
+
+            if all_knots:
+                k = self.n_basis
+            else:
+                k = self.n_basis - 1
+
+            diffMatrix = np.diag(np.repeat(1, k)).T
+
+            for i in range(self.diffMatrixOrder):
+                diffMatrix = np.diff(diffMatrix)
+
+            # penalty matrix
+            p = np.matmul(diffMatrix, diffMatrix.T)
+
         else:
-            # exclude the last knot to avoid singular matrix
-            basis = self.__get_fda_bspline_basis(knots=self.knots[0:-1])
-        regularization = L2Regularization(
-            LinearDifferentialOperator(self.diffMatrixOrder)
-        )
-        p = regularization.penalty_matrix(basis)
-        p / np.max(p)
-        p = p + epsilon * np.eye(p.shape[1])  # P^(-1)=Sigma (Covariance matrix)
-        return p
+            if all_knots:
+                basis = self.__get_fda_bspline_basis(knots=self.knots)
+            else:
+                # exclude the last knot to avoid singular matrix
+                basis = self.__get_fda_bspline_basis(knots=self.knots[0:-1])
+            regularization = L2Regularization(
+                LinearDifferentialOperator(self.diffMatrixOrder)
+            )
+            p = regularization.penalty_matrix(basis)
+            p / np.max(p)
+
+        return p + epsilon * np.eye(p.shape[1])  # P^(-1)=Sigma (Covariance matrix)
+
+    @property
+    def are_equidistant_knots(self):
+        return np.allclose(np.diff(self.knots), np.diff(self.knots)[0])
 
     def __call__(
             self,

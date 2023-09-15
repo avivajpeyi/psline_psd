@@ -54,14 +54,28 @@ def convert_v_to_weights(v: np.ndarray):
     v = np.array(v)
     expV = np.exp(v)
 
+    """
+     expV   <- exp(v)
+      weight <- expV / (1+sum(expV));
+      weight <- c(weight, 1-sum(weight));
+    
+      psd <- densityMixture(weight, db.list)
+      epsilon <- 1e-20
+      psd <- pmax(psd, epsilon)
+      #psd <- psd[-c(1, length(psd))]
+      return(psd)
+    
+    """
+
+
     # converting to weights
     # Eq near 4, page 3.1
-    if np.any(np.isinf(expV)):
-        ls = np.logaddexp(0, v)
-        weight = np.exp(v - ls)
-    else:
-        ls = 1 + np.sum(expV)
-        weight = expV / ls
+    # if np.any(np.isinf(expV)):
+    #     ls = np.logaddexp(0, v)
+    #     weight = np.exp(v - ls)
+    # else:
+    ls = 1 + np.sum(expV)
+    weight = expV / ls
 
     s = 1 - np.sum(weight)
     # adding last element to weight

@@ -54,7 +54,7 @@ def llike(w, τ, data, spline_model):
         data = data[1:-1]
     _spline = np.exp(_lnspline)
 
-    integrand = _lnspline + np.exp(np.log(data) - _lnspline * 2 * np.pi)
+    integrand = _lnspline + np.exp(np.log(data) - _lnspline  - np.log(2 * np.pi))
     lnlike = -np.sum(integrand) / 2
     if not np.isfinite(lnlike):
         raise ValueError(f"lnlike is not finite: {lnlike}")

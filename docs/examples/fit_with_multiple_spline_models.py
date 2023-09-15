@@ -8,6 +8,10 @@ from slipper.plotting.utils import plot_xy_binned, set_plotting_style
 
 from slipper.sample.spline_model_sampler import fit_data_with_pspline_model
 from slipper.sample.spline_model_sampler import fit_data_with_log_spline_model
+from scipy.interpolate import UnivariateSpline
+
+
+
 
 set_plotting_style()
 
