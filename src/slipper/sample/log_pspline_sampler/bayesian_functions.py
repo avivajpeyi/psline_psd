@@ -7,11 +7,10 @@ def _wPw(w, P):
 
 def lprior(k, w, τ, φ, φα, φβ, δ, δα, δβ, P):
     wTPw = _wPw(w, P)
-    lnpri_weights = k * 0.5* (np.log(φ) - φ * wTPw)
-    lnpri_φ = gamma.logpdf(φ, φα, scale=δ * φβ)
-    lnpri_δ = gamma.logpdf(δ, δα, scale=δβ)
-    lnpri_τ = norm.logpdf(τ, 0, 100)
-    log_prior = lnpri_weights + lnpri_φ + lnpri_δ + lnpri_τ
+    log_prior = k * 0.5* np.log(φ) - 0.5*φ * wTPw
+    log_prior += gamma.logpdf(φ, a=φα, scale=1/ (δ * φβ))
+    log_prior += gamma.logpdf(δ, a=δα, scale=1/δβ)
+    log_prior += norm.logpdf(τ, 0, 100)
     return log_prior
 
 

@@ -7,14 +7,14 @@ import pandas as pd
 from arviz import InferenceData
 from scipy.fft import fft
 
-from ..plotting import plot_metadata
+from ..plotting import plot_metadata, plot_spline_model_and_data
 from .post_processing import generate_spline_posterior, generate_spline_quantiles
+from ..splines.p_splines import PSplines
 
 
 class Result:
     def __init__(self, idata):
         self.idata = idata
-
 
     @classmethod
     def load(cls, fname: str):
@@ -27,11 +27,11 @@ class Result:
 
     @classmethod
     def create_idata(
-        cls,
-        samples: Dict[str, np.ndarray],
-        spline_model,
-        data: np.ndarray,
-        sampler_stats: Dict,
+            cls,
+            samples: Dict[str, np.ndarray],
+            spline_model,
+            data: np.ndarray,
+            sampler_stats: Dict,
     ):
         return cls.compile_idata_from_sampling_results(
             posterior_samples=np.array(
@@ -44,8 +44,13 @@ class Result:
             lpost_trace=samples["lpost_trace"],
             frac_accept=samples["acceptance_fraction"],
             weight_samples=samples["V"],
-            basis=spline_model.basis,
-            knots=spline_model.knots,
+            spline_model_kwargs=dict(
+                knots=spline_model.knots,
+                degree=spline_model.degree,
+                diffMatrixOrder=spline_model.diffMatrixOrder,
+                logged=spline_model.logged,
+                basis=spline_model.basis,
+            ),
             data=data,
             runtime=sampler_stats["runtime"],
             burn_in=sampler_stats["burnin"],
@@ -53,18 +58,20 @@ class Result:
 
     @classmethod
     def compile_idata_from_sampling_results(
-        cls,
-        posterior_samples,
-        weight_samples,
-        lpost_trace,
-        frac_accept,
-        basis,
-        knots,
-        data,
-        burn_in,
-        runtime,
+            cls,
+            posterior_samples,
+            weight_samples,
+            lpost_trace,
+            frac_accept,
+            spline_model_kwargs,
+            data,
+            burn_in,
+            runtime,
     ) -> "Result":
         nsamp, n_weight_cols = weight_samples.shape
+
+        knots = spline_model_kwargs["knots"]
+        basis = spline_model_kwargs["basis"]
 
         n_knots = len(knots)
         n_gridpoints, n_basis = basis.shape
@@ -76,9 +83,8 @@ class Result:
         grid_point_idx = np.arange(n_gridpoints)
 
         logged_splines = 1
-        if n_weight_cols==n_basis-1:
+        if n_weight_cols == n_basis - 1:
             logged_splines = 0
-
 
         posterior = az.dict_to_dataset(
             dict(
@@ -95,9 +101,7 @@ class Result:
                 weight=["draws", "weight_idx"],
             ),
             default_dims=[],
-            attrs=dict(
-                logged_splines=logged_splines,
-            ),
+            attrs={},
         )
         sample_stats = az.dict_to_dataset(
             dict(
@@ -111,13 +115,12 @@ class Result:
             ),
             dims=dict(
                 acceptance_rate=["draws"],
-                lp=["draws"],
             ),
             default_dims=[],
             index_origin=None,
         )
         observed_data = az.dict_to_dataset(
-            dict(data=data[0 : len(data)]),
+            dict(data=data[0: len(data)]),
             library=None,
             coords=dict(idx=np.arange(len(data))),
             dims=dict(data=["idx"]),
@@ -136,7 +139,11 @@ class Result:
             },
             dims={"knots": ["location"], "basis": ["grid_point", "basis_idx"]},
             default_dims=[],
-            attrs={},
+            attrs=dict(
+                logged_splines=logged_splines,
+                degree=spline_model_kwargs["degree"],
+                diffMatrixOrder=spline_model_kwargs["diffMatrixOrder"],
+            ),
             index_origin=None,
         )
 
@@ -179,8 +186,7 @@ class Result:
 
     @property
     def weights(self):
-        return self.__posterior["weight"]
-
+        return self.__posterior["weight"].values
 
     def all_samples(self):
         # samples without burn in cuttoff
@@ -198,14 +204,14 @@ class Result:
 
     @property
     def basis(self):
-        return self.idata.constant_data["basis"]
+        return self.idata.constant_data["basis"].values
 
     @property
     def knots(self):
-        return self.idata.constant_data["knots"]
+        return self.idata.constant_data["knots"].values
 
     @property
-    def k(self)->int:
+    def k(self) -> int:
         # umber of basis functions
         return len(self.basis.T)
 
@@ -214,12 +220,25 @@ class Result:
         return self.idata.observed_data["data"]
 
     @property
-    def data_length(self)->int:
+    def data_length(self) -> int:
         return len(self.data)
 
     @property
-    def logged_splines(self)->bool:
-        return self.idata.posterior.attrs["logged_splines"]==1
+    def logged_splines(self) -> bool:
+        return self.idata.constant_data.attrs["logged_splines"] == 1
+
+    @property
+    def spline_model(self):
+        if not hasattr(self, "_spline_model"):
+            attrs = self.idata.constant_data.attrs
+            self._spline_model = PSplines(
+                knots=self.knots,
+                degree=attrs["degree"],
+                diffMatrixOrder=attrs["diffMatrixOrder"],
+                logged=self.logged_splines,
+            )
+        return self._spline_model
+
 
     def make_summary_plot(self, fn: str = "", use_cached=True, max_it=None):
         max_it = max_it if max_it else self.n_steps
@@ -233,16 +252,12 @@ class Result:
             else:
                 start = self.burn_in
             psd_quants = self.get_model_quantiles(start=start, end=end)
-        all_samples = self.all_samples()
         return plot_metadata(
-            all_samples[["phi", "delta", "tau"]].values,
-            all_samples.acceptance_rate.values,
-            lpost_trace=all_samples.lp.values,
+            posterior=self.all_samples(),
             model_quants=psd_quants,
             data=data,
-            db_list=self.basis,
-            knots=self.knots,
-            weights=self.idata.posterior.weight.values,
+            spline_model = self.spline_model,
+            weights=self.idata.posterior["weight"].values,
             burn_in=self.burn_in,
             fname=fn,
             max_it=max_it,
@@ -263,6 +278,20 @@ class Result:
         weight_samples = weight_samples[plot_idx]
         return generate_spline_quantiles(
             self.data_length, self.basis, tau_samples, weight_samples, logged_splines=self.logged_splines
+        )
+
+    def plot_model_and_data(self, i=None):
+        if i is None:
+            start, end = None, None
+        elif i == 0:
+            start, end = 0, 0
+        elif i == -1 or i == self.n_steps - 1:
+            start, end = self.n_steps - 1, self.n_steps - 1
+        else:
+            start, end = i, i + 1
+        model_qantiles = self.get_model_quantiles(start, end)
+        return plot_spline_model_and_data(
+            self.data, model_qantiles, knots=self.knots, logged_axes=self.logged_splines
         )
 
     @property
