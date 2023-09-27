@@ -25,7 +25,7 @@ class PSplines:
     """
 
     def __init__(
-        self, knots: np.array, degree: int, diffMatrixOrder: int = 2, n_grid_points=None
+            self, knots: np.array, degree: int, diffMatrixOrder: int = 2, n_grid_points=None, logged=False
     ):
         """Initialise the PSplines class
 
@@ -41,6 +41,9 @@ class PSplines:
             The number of points to evaluate the basis functions at
             If None, then the number of grid points is set to the maximum
             between 501 and 10 times the number of basis elements.
+        logged : bool
+            If True, the penalty matrix is calculated using all the knots
+            If False, the penalty matrix is calculated using all the knots except the last one
         """
         assert degree > diffMatrixOrder
         assert degree in [0, 1, 2, 3, 4, 5]
@@ -54,8 +57,19 @@ class PSplines:
             n_grid_points  # number of points to evaluate the basis functions at
         )
         self.diffMatrixOrder: int = diffMatrixOrder
-        self.penalty_matrix: np.ndarray = self.__generate_penalty_matrix()
+        # basically if log-splines, we use all knots for the penalty matrix, otherwise we use all knots except the last one
+        self.penalty_matrix: np.ndarray = self.__generate_penalty_matrix(all_knots=True if logged else False)
         self.basis: np.ndarray = self.__generate_basis_matrix()
+        self.logged = logged
+
+    def __str__(self):
+        str = f"PSplines(n_basis={self.n_basis}, n_knots={self.n_knots}, degree={self.degree})"
+        if self.logged:
+            str = f"logged {str}"
+        return str
+
+    def __repr__(self):
+        return self.__str__()
 
     @property
     def n_grid_points(self) -> int:
@@ -125,7 +139,7 @@ class PSplines:
             # normalize the basis functions
             knots_with_boundary = self.__get_knots_with_boundary()
             n_knots = len(knots_with_boundary)
-            mid_to_end_knots = knots_with_boundary[self.degree + 1 :]
+            mid_to_end_knots = knots_with_boundary[self.degree + 1:]
             start_to_mid_knots = knots_with_boundary[: (n_knots - self.degree - 1)]
             bs_int = (mid_to_end_knots - start_to_mid_knots) / (self.degree + 1)
             bs_int[bs_int == 0] = np.inf
@@ -140,28 +154,62 @@ class PSplines:
 
         return basis_matrix
 
-    def __generate_penalty_matrix(self, epsilon=1e-6) -> np.ndarray:
+    def __generate_penalty_matrix(self, epsilon=1e-6, all_knots=False) -> np.ndarray:
         """
         Generate a penalty matrix of any order
         Returns:
         --------
         penalty_matrix : np.ndarray of shape (n_basis_elements, n_basis_elements)
         """
-        # exclude the last knot to avoid singular matrix
-        basis = self.__get_fda_bspline_basis(knots=self.knots[0:-1])
-        regularization = L2Regularization(
-            LinearDifferentialOperator(self.diffMatrixOrder)
-        )
-        p = regularization.penalty_matrix(basis)
-        p / np.max(p)
-        p = p + epsilon * np.eye(p.shape[1])  # P^(-1)=Sigma (Covariance matrix)
-        return p
+
+        if self.are_equidistant_knots:
+            # diffMatrix
+            """
+              out = diag(k);
+
+              for(i in 0:diffMatrixOrder-1){
+            
+                out = diff(out);
+            
+              }
+            """
+
+            if all_knots:
+                k = self.n_basis
+            else:
+                k = self.n_basis - 1
+
+            diffMatrix = np.diag(np.repeat(1, k)).T
+
+            for i in range(self.diffMatrixOrder):
+                diffMatrix = np.diff(diffMatrix)
+
+            # penalty matrix
+            p = np.matmul(diffMatrix, diffMatrix.T)
+
+        else:
+            if all_knots:
+                basis = self.__get_fda_bspline_basis(knots=self.knots)
+            else:
+                # exclude the last knot to avoid singular matrix
+                basis = self.__get_fda_bspline_basis(knots=self.knots[0:-1])
+            regularization = L2Regularization(
+                LinearDifferentialOperator(self.diffMatrixOrder)
+            )
+            p = regularization.penalty_matrix(basis)
+            p / np.max(p)
+
+        return p + epsilon * np.eye(p.shape[1])  # P^(-1)=Sigma (Covariance matrix)
+
+    @property
+    def are_equidistant_knots(self):
+        return np.allclose(np.diff(self.knots), np.diff(self.knots)[0])
 
     def __call__(
-        self,
-        weights: np.ndarray = [],
-        v: np.ndarray = [],
-        n: int = None,
+            self,
+            weights: np.ndarray = [],
+            v: np.ndarray = [],
+            n: int = None,
     ) -> np.ndarray:
         """
         Generate a spline model from a vector of spline coefficients and a list of B-spline basis functions
@@ -185,11 +233,11 @@ class PSplines:
         return spline
 
     def plot_basis(
-        self,
-        ax=None,
-        weights=None,
-        basis_kwargs={},
-        spline_kwargs={},
+            self,
+            ax=None,
+            weights=None,
+            basis_kwargs={},
+            spline_kwargs={},
     ):
         """Plot the basis + knots.
 
@@ -281,16 +329,21 @@ class PSplines:
         ax.set_title("Penalty matrix")
         return fig, ax
 
-    def plot(self, weights=None):
+    def plot(self, weights=None, V=None):
         """Plot the basis functions and the penalty matrix"""
         fig, ax = plt.subplots(1, 2, figsize=(8, 4))
+        if V is not None:
+            weights = convert_v_to_weights(V)
         self.plot_basis(ax=ax[0], weights=weights)
         self.plot_penalty_matrix(ax=ax[1])
         plt.tight_layout()
         return fig, ax
 
-    def guess_weights(self, data, n_steps=10):
-        """Guess init 'v' weights for the P-spline model from the data and the knots"""
+    def guess_weights(self, data, n_optimization_steps=10):
+        """Guess init 'w' weights for the P-spline model from the data and the knots
+
+        NOTE: length of w is n_basis
+        """
         w = np.zeros(self.n_basis)
 
         # ignore the 1st aand last
@@ -302,7 +355,7 @@ class PSplines:
         res = minimize(
             lambda w: _mse(self(w), data),
             options=dict(
-                maxiter=self.n_basis * n_steps,
+                maxiter=self.n_basis * n_optimization_steps,
                 xatol=1e-30,
                 disp=False,
             ),
@@ -317,7 +370,9 @@ class PSplines:
         return w
 
     def guess_initial_v(self, data):
-        """Guess init 'v' weights for the P-spline model from the data and the knots"""
+        """Guess init 'v' weights for the P-spline model from the data and the knots
+        NOTE: length of v is n_basis - 1
+        """
         w0 = self.guess_weights(data)[:-1]
         w0[w0 <= 0] = 1e-20
         v = np.log(w0 / (1 - np.sum(w0)))

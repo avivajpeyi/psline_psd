@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from .utils import convert_axes_spines_to_arrows, hide_axes_spines
+from .utils import convert_axes_spines_to_arrows, hide_axes_spines, plot_xy_binned
 
 
 def plot_spline_model_and_data(
@@ -13,6 +13,7 @@ def plot_spline_model_and_data(
     ax=None,
     colors=dict(Data="black", Splines="tab:orange", Knots="tab:red"),
     add_legend=False,
+    logged_axes=False,
 ) -> plt.Axes:
     # prepare axes + figure
     if ax is None:
@@ -40,7 +41,11 @@ def plot_spline_model_and_data(
     model_x = np.linspace(0, 1, len(model_med))
 
     # plot data
-    ax.scatter(x, data, color=colors["Data"], s=0.75)
+
+    data_bins = min(30, len(data) // 10)
+    if data_bins > 10:
+        plot_xy_binned(x, data, ax, bins=data_bins, label="Data", ls='--', ms=0.5)
+    ax.scatter(x, data, color=colors["Data"], marker='.', alpha=0.1, s=0.6)
     ax_model.plot(model_x, model_med, color=colors["Splines"], alpha=0.5)
     ax_model.fill_between(
         model_x, model_p05, model_p95, color=colors["Splines"], alpha=0.2, linewidth=0.0
@@ -49,6 +54,13 @@ def plot_spline_model_and_data(
         ax_knots.vlines(knots, 0, 0.1, color="tab:red", alpha=0.5)
         ax_knots.set_ylim(0, 1)
         hide_axes_spines(ax_knots)
+
+    if logged_axes:
+        ax_model.set_yscale("log")
+        ax.set_yscale("log")
+        # turn off y axes for log scale
+        ax.get_yaxis().set_visible(False)
+        ax_model.get_yaxis().set_visible(False)
 
     if add_legend:
         for label, color in colors.items():

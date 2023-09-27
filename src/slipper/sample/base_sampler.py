@@ -2,24 +2,46 @@ import os
 import time
 from abc import ABC, abstractmethod
 from pprint import pformat
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union, Callable
 
 import numpy as np
 from tqdm.auto import trange
 
 from slipper.plotting.gif_creator import create_gif
+from slipper.plotting import plot_spline_model_and_data
+
 from slipper.sample.sampling_result import Result
+from slipper.splines.p_splines import PSplines
+from collections import namedtuple
 
 from ..logger import logger
+
+LnlArgs = namedtuple(
+    "LnlArgs",
+    [
+        "n_basis",
+        "w",
+        "τ",
+        "τα",
+        "τβ",
+        "φ",
+        "φα",
+        "φβ",
+        "δ",
+        "δα",
+        "δβ",
+        "data",
+        "spline_model"
+    ])
 
 
 class BaseSampler(ABC):
     def __init__(
-        self,
-        data: np.ndarray,
-        outdir: str = ".",
-        sampler_kwargs: Optional[dict] = {},
-        spline_kwargs: Optional[dict] = {},
+            self,
+            data: np.ndarray,
+            outdir: str = ".",
+            sampler_kwargs: Optional[dict] = {},
+            spline_kwargs: Optional[dict] = {},
     ):
         self.data = data
         self.outdir = _mkdir(outdir)
@@ -28,8 +50,9 @@ class BaseSampler(ABC):
         self.spline_kwargs = spline_kwargs
 
         assert (self.n_steps - self.burnin) / self.thin > self.n_basis
-        self.spline_model = None
+        self.spline_model: PSplines = None
         self.samples = None
+        self.args:LnlArgs = None
 
     def __check_to_make_chkpt_plt(self, step_num) -> bool:
         n_plts = self.sampler_kwargs["n_checkpoint_plts"]
@@ -39,6 +62,18 @@ class BaseSampler(ABC):
             )
         return n_plts > 0 and step_num in self._checkpoint_plt_idx
 
+    def _plot_model_and_data(self, i=None, label="model_and_data"):
+        self._compile_sampling_result()
+        fig = self.result.plot_model_and_data(i=i)
+        fig.savefig(f"{self.outdir}/{label}.png")
+        w = self.result.idata.posterior.weight.values
+        if self.result.logged_splines:
+            kwgs = dict(weights=w[i, :])
+        else:
+            kwgs = dict(V=w[i, :])
+        fig, _ = self.spline_model.plot(**kwgs)
+        fig.savefig(f"{self.outdir}/{label}_spline.png")
+
     def run(self, verbose: bool = True):
         msg = f"Running sampler with the following arguments:\n"
         msg += f"Sampler arguments:\n{pformat(self.sampler_kwargs)}\n"
@@ -47,12 +82,22 @@ class BaseSampler(ABC):
 
         self.t0 = time.process_time()
         self._init_mcmc()
-        for itr in trange(1, self.n_steps, desc="MCMC sampling", disable=not verbose):
+        self._plot_model_and_data(i=0, label="initial_fit")
+
+        pbar = trange(1, self.n_steps, desc="MCMC sampling", disable=not verbose)
+        for itr in pbar:
             self._mcmc_step(itr)
             if self.__check_to_make_chkpt_plt(itr):
                 logger.info("<<Plotting checkpoint>>")
                 self.__plot_checkpoint(itr)
-        self._comile_sampling_result()
+            pbar.set_postfix(
+                dict(
+                    lnP=self.samples["lpost_trace"][itr - 1],
+                    accept=self.samples["acceptance_fraction"][itr - 1],
+                )
+            )
+        self._compile_sampling_result()
+        self._plot_model_and_data(i=self.n_steps - 1, label="final_fit")
         self.samples = None
         self.save()
         if self.sampler_kwargs["n_checkpoint_plts"]:
@@ -80,11 +125,17 @@ class BaseSampler(ABC):
 
     def __plot_checkpoint(self, i: int):
         fname = f"{self.outdir}/checkpoint_{i}.png"
-        self._comile_sampling_result()
+        self._compile_sampling_result()
         self.result.make_summary_plot(fn=fname, use_cached=False, max_it=self.n_steps)
 
-    def _comile_sampling_result(self):
+    def _compile_sampling_result(self):
         idx = np.where(self.samples["τ"] != 0)[0]
+        if "V" in self.samples:
+            weights = self.samples["V"][idx]
+        elif "w" in self.samples:
+            weights = self.samples["w"][idx]
+        else:
+            raise ValueError("No weights found")
         self.result = Result.compile_idata_from_sampling_results(
             posterior_samples=np.array(
                 [
@@ -95,9 +146,14 @@ class BaseSampler(ABC):
             ),
             lpost_trace=self.samples["lpost_trace"][idx],
             frac_accept=self.samples["acceptance_fraction"][idx],
-            v_samples=self.samples["V"][idx],
-            basis=self.spline_model.basis,
-            knots=self.spline_model.knots,
+            weight_samples=weights,
+            spline_model_kwargs=dict(
+                knots=self.spline_model.knots,
+                degree=self.spline_model.degree,
+                diffMatrixOrder=self.spline_model.diffMatrixOrder,
+                logged=self.spline_model.logged,
+                basis=self.spline_model.basis,
+            ),
             data=self.data,
             runtime=time.process_time() - self.t0,
             burn_in=self.sampler_kwargs["burnin"],
@@ -175,3 +231,49 @@ def _mkdir(d):
 
 def _timestamp():
     return time.strftime("%Y%m%d_%H%M%S")
+
+
+def _tune_proposal_distribution(
+        aux: np.array,
+        accept_frac: float,
+        sigma: float,
+        weight: np.array,
+        lpost_store:float,
+        args: LnlArgs,
+        lnpost_fn: Callable,
+):
+    n_weight_columns = len(weight)
+
+    # tuning proposal distribution
+    if accept_frac < 0.30:  # increasing acceptance pbb
+        sigma = sigma * 0.90  # decreasing proposal moves
+    elif accept_frac > 0.50:  # decreasing acceptance pbb
+        sigma = sigma * 1.1  # increasing proposal moves
+
+    accept_count = 0  # ACCEPTANCE PROBABILITY
+
+    # Update weights
+    for g in range(0, n_weight_columns):
+        pos = aux[g]
+        weight[pos], lpost_store, accept_count = _update_weights(
+            sigma, weight[pos], pos, args, lpost_store, accept_count, lnpost_fn
+        )
+
+    accept_frac = accept_count / n_weight_columns
+    return weight, accept_frac, sigma, lpost_store   # return updated values
+
+
+def _update_weights(sigma, weight, widx, lpost_args, lpost_store, accept_count, lpost_fn: Callable):
+    Z = np.random.normal()
+    U = np.log(np.random.uniform())
+
+    # Compute LnL using new value
+    weight_star = weight + sigma * Z
+    lpost_args[1][widx] = weight_star  # update V_star
+    lpost_star = lpost_fn(*lpost_args)
+
+    # Return new value if accepted
+    lnl_diff = (lpost_star - lpost_store).ravel()[0]
+    if U < np.min([0, lnl_diff]):
+        return weight_star, lpost_star, accept_count + 1
+    return weight, lpost_store, accept_count

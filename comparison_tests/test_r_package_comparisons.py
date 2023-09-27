@@ -5,10 +5,13 @@ from scipy.fft import fft
 
 from slipper.fourier_methods import get_fz
 from slipper.sample.post_processing import generate_spline_quantiles
-from slipper.sample.pspline_sampler.bayesian_functions import llike
-from slipper.sample.spline_model_sampler import fit_data_with_pspline_model
-from slipper.splines.initialisation import _generate_initial_weights, knot_locator
-from slipper.splines.utils import get_unscaled_spline
+# from slipper.sample.pspline_sampler.bayesian_functions import llike
+from slipper.sample.spline_model_sampler import fit_data_with_pspline_model, fit_data_with_log_spline_model
+from slipper.splines.initialisation import knot_locator
+from slipper.plotting.utils import plot_xy_binned
+import os
+from pathlib import Path
+from slipper.example_datasets.ar_data import get_ar_periodogram, generate_ar_timeseries, get_periodogram
 
 plt.style.use("default")
 # import gridspec from matplotlib
@@ -23,233 +26,123 @@ except ImportError:
 np.random.seed(0)
 
 
-@pytest.mark.skipif(rpy2 is None, reason="rpy2 required for this test")
-def test_piecewise_comparison(helpers):
-    """Check that the r package and py package have the same
-    - fz
-    - db_list
-    - tau_vals
-    - lnl
-    - psd
-
-    """
-    data = helpers.load_raw_data()
-    n = len(data)
-    omega = np.linspace(0, 1, n // 2 + 1)
-    degree = 3
-    k = 32
-
-    r_data = __collect_r_psline_data(data, k, degree, omega)
-    py_data = __collect_py_pspline_data(data, k, degree, omega)
-
-    fig = __make_comparison_plot(r_data, py_data)
-    fig.savefig(f"{helpers.OUTDIR}/r_package_comparison.png")
-    plt.show()
-
-    assert np.allclose(r_data["dblist"], py_data["dblist"])
-    assert np.allclose(r_data["psd"], py_data["psd"], atol=0.025)
-
-    rel_lnl_diff = (r_data["lnl"] - py_data["lnl"]) / py_data["lnl"]
-    assert np.allclose(rel_lnl_diff, 0, atol=0.5)
-
-    # The following will fail:
-    # assert np.allclose(r_data["psd"], py_data["psd"], atol=0.001)
-    # assert np.allclose(r_data["fz"], py_data["fz"])
+def mkdir(path):
+    path = str(path)
+    if not os.path.exists(path):
+        os.makedirs(path)
+    return path
 
 
 @pytest.mark.skipif(rpy2 is None, reason="rpy2 required for this test")
-def test_psd_postproc_comparision(helpers):
-    data = helpers.load_raw_data()
+def test_mcmc_posterior_psd_comparison():
     nsteps = 1000
-    r_data = __r_mcmc(data, nsteps)
-    py_data = __py_mcmc(data, nsteps)
-    omega = np.linspace(0, np.pi, len(r_data.psd[:, 0]))
-    py_post = generate_spline_quantiles(
-        omega, r_data.dblist.T, r_data.samples[:, 2], r_data.v.T
-    )
+    nsplines = 40
+    eqSpaced = True
 
-    py_data.make_summary_plot("test.png")
-    plt.rcParams["hatch.linewidth"] = 2.0
-    plt.fill_between(
-        omega, py_data.psd_quantiles[1, :], py_data.psd_quantiles[2, :], alpha=0.5
-    )
-    # plt.fill_between(omega, py_post[1, :], py_post[2, :], alpha=0.1,  lw=3, hatch="/", edgecolor='tab:orange', color='tab:orange')
-    plt.fill_between(
-        omega,
-        r_data.psd_quantiles[1, :],
-        r_data.psd_quantiles[2, :],
-        alpha=0.2,
-        edgecolor="tab:orange",
-        color="tab:orange",
-    )
-    plt.legend(["Python", "R"])
-    plt.xlim(omega[1], omega[-2])
-    plt.xlabel("Freq")
-    plt.ylabel("PSD")
+    data = generate_ar_timeseries(order=3, n_samples=1000)
+    rescale = np.std(data)
+    data = data / rescale
+    pdgrm = get_periodogram(timeseries=data)
+    pdgrm = pdgrm[1:]
+    psd_x = np.linspace(0, 1, len(pdgrm))
+    fig, ax = plt.subplots(1, 1, figsize=(8, 4))
+    plt.scatter(psd_x, pdgrm*rescale**2, color="k", label="Data", s=0.1)
+    plot_xy_binned(psd_x, pdgrm*rescale**2, ax=ax, color="k", label="Data", ms=2, ls='--')
     plt.yscale("log")
-    plt.savefig(f"{helpers.OUTDIR}/r_package_posterior_psd_comparison.png")
     plt.show()
 
+    py_mcmc = __py_mcmc(data, nsteps, nsplines, eqSpaced)
+    r_mcmc = __r_mcmc(data, nsteps, nsplines, eqSpaced)
+    py_log_mcmc = __log_py_mcmc(data, nsteps, nsplines, eqSpaced)
 
-@pytest.mark.skipif(rpy2 is None, reason="rpy2 required for this test")
-def test_mcmc_posterior_psd_comparison(helpers):
-    nsteps = 100
-    data = helpers.load_raw_data()
-    r_mcmc = __r_mcmc(data, nsteps)
-    py_mcmc = __py_mcmc(data, nsteps)
-    n, newn = len(data), len(py_mcmc.psd_quantiles[0])
-    periodogram = np.abs(np.power(fft(data), 2) / (2 * np.pi * n))[0:newn]
-    psd_x = np.arange(0, newn)
-    plt.style.use(
-        "https://gist.githubusercontent.com/avivajpeyi/4d9839b1ceb7d3651cbb469bc6b0d69b/raw/4ee4a870126653d542572372ff3eee4e89abcab0/publication.mplstyle"
-    )
-    plt.rcParams["font.family"] = "sans-serif"
-    plt.plot(figsize=(8, 4))
-    plt.scatter(psd_x, periodogram, color="k", label="Data", s=0.75)
-    plt.plot(
-        psd_x,
-        py_mcmc.psd_quantiles[0],
-        color="tab:orange",
-        alpha=0.5,
-        label="Python (Uniform CI)",
-    )
-    plt.fill_between(
-        psd_x,
-        py_mcmc.psd_quantiles[1],
-        py_mcmc.psd_quantiles[2],
-        color="tab:orange",
-        alpha=0.2,
-        linewidth=0.0,
-    )
-    plt.plot(
-        psd_x,
-        r_mcmc.psd_quantiles[0],
-        color="tab:green",
-        alpha=0.5,
-        label="R (Uniform CI)",
-    )
-    plt.fill_between(
-        psd_x,
-        r_mcmc.psd_quantiles[1],
-        r_mcmc.psd_quantiles[2],
-        color="tab:green",
-        alpha=0.2,
-        linewidth=0.0,
-    )
-    # turn off grid
-    plt.grid(False)
-    # set font to sans-serif
-    # legend but increase size of markers
-    plt.legend(markerscale=5, frameon=False)
-    plt.ylabel("PSD")
-    plt.xlabel("IDX")
-    plt.tight_layout()
-    # turn off minor ticks
-    plt.minorticks_off()
-    plt.savefig(f"{helpers.OUTDIR}/psd_comparison.png", dpi=300)
-    plt.show()
+    outdir = mkdir(Path(__file__).parent / "out_compare_spline_and_log_spline")
+
+    fig, ax = plt.subplots(1, 1, figsize=(5, 4))
+    __plot_result(pdgrm, [('r', r_mcmc),
+                          ('py', py_mcmc),
+                          ('log-py', py_log_mcmc)
+                          ],
+                  ax)
+    fig.tight_layout()
+    fig.savefig(f"{outdir}/data_and_fits.png")
+
+    fig, ax = plt.subplots(3, 1, figsize=(5, 10))
+    __plot_sampled_params([
+        ('r', r_mcmc.samples),
+        ('py', py_mcmc.post_samples),
+        ('log-py', py_log_mcmc.post_samples)
+    ], ax)
+
+    fig.tight_layout()
+    fig.savefig(f"{outdir}/sampled_params.png")
+
+    fig, ax = plt.subplots(1, 1, figsize=(5, 4))
 
 
-def __collect_r_psline_data(data, k, degree, omega):
-    r_pspline = importr("psplinePsd")
-    np_cv_rules = default_converter + numpy2ri.converter
+    _plot_psd_samples([('r', r_mcmc.psd.T),
+                              ('py', py_mcmc.psd_posterior * rescale**2),
+                              ('log-py', py_log_mcmc.psd_posterior + np.log(rescale*2))
+                              ],
+                      ax)
+    fig.tight_layout()
+    fig.savefig(f"{outdir}/psd_samples.png")
 
-    with np_cv_rules.context():
-        fz = r_pspline.fast_ft(data)
-        pdgrm = np.power(fz, 2)
-        v = r_pspline.get_initial_weights(pdgrm, k)
-        knots = r_pspline.knotLoc(data=data, k=k, degree=degree, eqSpaced=True)
-        dblist = r_pspline.dbspline(omega, knots, degree)
-        psd = r_pspline.qpsd(omega, k, v, degree, dblist)
-
-        tau_vals = np.geomspace(0.01, 1, 100)
-        lnl = np.zeros(len(tau_vals))
-        for i, tau in enumerate(tau_vals):
-            lnl[i] = r_pspline.llike(
-                omega, fz, k, v, tau=tau, pdgrm=pdgrm, degree=degree, db_list=dblist
-            )
-
-    return {
-        "fz": fz,
-        "v": v,
-        "dblist": dblist,
-        "psd": psd,
-        "tau_vals": tau_vals,
-        "lnl": lnl,
-    }
+def __plot_sampled_params(mcmc_data, axes):
+    axlabels = [r"$\phi$", r"$\delta$", r"$\tau$"]
+    for param_id, ax in enumerate(axes):
+        ax.grid(False)
+        ax.set_xlabel(axlabels[param_id])
+        for i in range(len(mcmc_data)):
+            label, mcmc = mcmc_data[i]
+            ax.hist(mcmc[:, param_id], color=f"C{i}", alpha=0.5, label=label, histtype='step', density=True, bins=30)
+        ax.legend(markerscale=5, frameon=False)
+        ax.set_yscale("log")
 
 
-def __collect_py_pspline_data(data, k, degree, omega):
-    fz = get_fz(data)
-    pdgrm = np.power(np.abs(fz), 2)
-    v = _generate_initial_weights(pdgrm, k)
-    knots = knot_locator(pdgrm=pdgrm, k=k, degree=degree, eqSpaced=True)
-    dblist = dbspline(x=omega, knots=knots, degree=degree)
-    psd = get_unscaled_spline(v, dblist)
 
-    tau_vals = np.geomspace(0.01, 1, 100)
-    lnl = np.zeros(len(tau_vals))
-    for i, tau in enumerate(tau_vals):
-        lnl[i] = llike(v, τ=tau, pdgrm=pdgrm, db_list=dblist)
+def _plot_psd_samples(psd_data, ax):
+    # plot last 90% of all samples
 
-    return {
-        "fz": fz,
-        "v": v,
-        "dblist": dblist.T,
-        "psd": psd,
-        "tau_vals": tau_vals,
-        "lnl": lnl,
-    }
+    for i in range(len(psd_data)):
+        label, psds = psd_data[i]
+        x = np.linspace(0, 1, len(psds[0]))
+        start = int(0.1 * len(psds))
+        end = len(psds)
+        for j in range(start, end):
+            ax.plot(x, psds[j], color=f"C{i}", alpha=0.01)
+        ax.plot(x,psds[-1], color=f"C{i}", alpha=1, label=label)
 
 
-def __make_comparison_plot(r_data, py_data):
-    fig, axes = plt.subplots(7, 1, figsize=(6, 12))
-    rkwgs = dict(color="tab:red", alpha=0.5, lw=4, zorder=-10, label="r")
-    pykwgs = dict(color="tab:blue", alpha=1, ls="--", lw=2, label="py")
-    difkwgs = dict(color="tab:green", alpha=1, lw=2, label="diff")
+    ax.grid(False)
+    ax.set_yscale("log")
+    ax.legend(markerscale=5, frameon=False)
 
-    # plot fz
-    axes[0].plot(r_data["fz"], **rkwgs)
-    axes[0].plot(py_data["fz"], **pykwgs)
-    axes[0].set_ylabel("fz")
-    axes[0].legend()
-
-    # plot v
-    axes[1].plot(r_data["v"], **rkwgs)
-    axes[1].plot(py_data["v"], **pykwgs)
-    axes[1].set_yscale("log")
-    axes[1].set_ylabel("v")
-
-    # plot dblist
-    for i in range(len(r_data["dblist"])):
-        axes[2].plot(r_data["dblist"][i], **rkwgs)
-        axes[2].plot(py_data["dblist"][i], **pykwgs)
-    axes[2].set_ylabel("dblist")
-
-    # plot psd
-    # relative difference bw psd
-    rel_diff = np.abs(r_data["psd"] - py_data["psd"]) / np.abs(r_data["psd"])
-    axes[3].plot(rel_diff[1:-3], **difkwgs)
-    axes[3].set_ylabel(r"$\frac{|S_{\rm r} - S_{\rm py} |}{|S_{r}|}$")
-    axes[4].hist(rel_diff[1:-3], density=True, color="tab:green")
-    axes[4].set_xlabel("Hist of relative difference bw psd")
-
-    # plot lnl
-    # relative difference bw lnl
-    rel_diff = np.abs(r_data["lnl"] - py_data["lnl"]) / np.abs(r_data["lnl"])
-    axes[5].plot(r_data["tau_vals"], rel_diff, **difkwgs)
-    # axes[4].plot(py_data['tau_vals'], py_data['lnl'], **pykwgs)
-    axes[5].set_ylabel(r"$\frac{|lnl_{\rm r} - lnl_{\rm py} |}{|lnl_{r}|}$")
-    axes[5].set_xlabel("tau")
-    axes[5].set_xscale("log")
-    axes[6].hist(rel_diff, density=True, color="tab:green")
-    axes[6].set_xlabel("Hist of relative difference bw lnl")
-
-    plt.tight_layout()
-    return fig
+def __plot_lnl(lnl_vals, ax):
+    for i in range(len(lnl_vals)):
+        label, lnl = lnl_vals[i]
+        ax.plot(lnl, color=f"C{i}", alpha=0.5, labelTrue=label)
+    ax.grid(False)
+    ax.legend(markerscale=5, frameon=False)
 
 
-def __r_mcmc(data, nsteps):
+def __plot_result(pdgrm, mcmc_data, ax):
+    psd_x = np.linspace(0, 1, len(pdgrm))
+    # ax.scatter(psd_x, pdgrm, color="k", label="Data", s=0.1)
+    plot_xy_binned(psd_x, pdgrm, ax=ax, color="k", label="Data", ms=0, ls='--')
+    for i in range(len(mcmc_data)):
+        label, mcmc = mcmc_data[i]
+        x = np.linspace(0, 1, len(mcmc.psd_quantiles[0]))
+        ax.plot(x[1:], mcmc.psd_quantiles[0][1:], color=f"C{i}", alpha=0.5, label=label)
+        ax.fill_between(x[1:], mcmc.psd_quantiles[1][1:], mcmc.psd_quantiles[2][1:], color=f"C{i}", alpha=0.2,
+                        linewidth=0.0)
+
+    ax.grid(False)
+    ax.legend(markerscale=5, frameon=False)
+    ax.set_yscale("log")
+    ax.minorticks_off()
+
+
+def __r_mcmc(data, nsteps, nsplines, eqSpaced):
     r_pspline = importr("psplinePsd")
 
     np_cv_rules = default_converter + numpy2ri.converter
@@ -257,20 +150,50 @@ def __r_mcmc(data, nsteps):
     burnin = int(0.5 * nsteps)
     with np_cv_rules.context():
         mcmc = r_pspline.gibbs_pspline(
-            data, burnin=burnin, Ntotal=nsteps, degree=3, eqSpaced=True
+            data, burnin=burnin, Ntotal=nsteps, degree=3, eqSpaced=eqSpaced, k=nsplines
         )
     return MCMCdata.from_r(mcmc)
 
 
-def __py_mcmc(data, nsteps):
+# def __r_mcmc(data, nsteps, nsplines):
+#     r_pspline = importr("psplinePsd")
+#
+#     np_cv_rules = default_converter + numpy2ri.converter
+#
+#     burnin = int(0.5 * nsteps)
+#     with np_cv_rules.context():
+#         mcmc = r_pspline.gibbs_pspline(
+#             data, burnin=burnin, Ntotal=nsteps, degree=3, eqSpaced=True, k=nsplines
+#         )
+#     return MCMCdata.from_r(mcmc)
+
+
+def __py_mcmc(data, nsteps, nsplines, eqSpaced):
     burnin = int(0.5 * nsteps)
+    pdgm = np.abs(get_fz(data))
     mcmc = fit_data_with_pspline_model(
-        data,
+        pdgm,
         burnin=burnin,
         Ntotal=nsteps,
         degree=3,
-        eqSpaced=True,
-        outdir="py_mcmc.png",
+        eqSpaced=eqSpaced,
+        outdir="py_mcmc",
+        k=nsplines
+    )
+    return mcmc
+
+
+def __log_py_mcmc(data, nsteps, nsplines, eqSpaced):
+    burnin = int(0.5 * nsteps)
+    pdgm = np.abs(get_fz(data))
+    mcmc = fit_data_with_log_spline_model(
+        pdgm,
+        burnin=burnin,
+        Ntotal=nsteps,
+        degree=3,
+        eqSpaced=eqSpaced,
+        outdir="py_mcmc_log",
+        k=nsplines
     )
 
     return mcmc
@@ -286,6 +209,8 @@ class MCMCdata:
         self.lnl = None
         self.samples = None
 
+
+
     @classmethod
     def from_r(cls, mcmc):
         obj = cls()
@@ -300,6 +225,6 @@ class MCMCdata:
                 np.array(mcmc["psd.u95"]),
             ]
         )
-        obj.lnl = None
+        obj.lnl = mcmc['ll.trace']
         obj.samples = np.array([mcmc["phi"], mcmc["delta"], mcmc["tau"]]).T
         return obj

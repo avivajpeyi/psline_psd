@@ -128,3 +128,4 @@ test_output
 *.png
 *gist*
 *.ttf
+/docs/examples/lisa_wd_strain

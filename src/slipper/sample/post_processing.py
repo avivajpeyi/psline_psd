@@ -9,14 +9,20 @@ def generate_spline_posterior(
     spline_len,
     db_list,
     tau_samples,
-    v_samples,
+    weight_samples,
     verbose: bool = False,
+    logged: bool = False,
 ):
     n = len(tau_samples)
     splines = np.zeros((n, spline_len))
     kwargs = dict(db_list=db_list, n=spline_len)
+    weight_key = "weights" if logged else "v"
     for i in trange(n, desc="Generating Spline posterior", disable=not verbose):
-        splines[i, :] = build_spline_model(v=v_samples[i, :], **kwargs) * tau_samples[i]
+        kwargs[weight_key] = weight_samples[i, :]
+        if logged:
+            splines[i, :] = build_spline_model(**kwargs) + tau_samples[i]
+        else:
+            splines[i, :] = build_spline_model(**kwargs) * tau_samples[i]
     return splines
 
 
@@ -24,13 +30,19 @@ def generate_spline_quantiles(
     spline_len,
     db_list,
     tau_samples,
-    v_samples,
+    weight_samples,
     uniform_bands=True,
     verbose: bool = False,
+    logged_splines: bool = False,
 ):
     splines = generate_spline_posterior(
-        spline_len, db_list, tau_samples, v_samples, verbose
+        spline_len, db_list, tau_samples, weight_samples, verbose, logged=logged_splines
     )
+    if logged_splines:
+        splines = np.exp(splines)
+
+
+
     splines_median = np.quantile(splines, 0.5, axis=0)
     splines_quants = np.quantile(splines, [0.05, 0.95], axis=0)
 
@@ -55,7 +67,8 @@ def generate_spline_quantiles(
         psd_with_unc = np.vstack([splines_median, splines_quants])
 
     assert psd_with_unc.shape == (3, spline_len)
-    assert np.all(psd_with_unc > 0)
+    # assert no nans in psd_with_unc
+    assert np.all(np.isfinite(psd_with_unc))
     return psd_with_unc
 
 

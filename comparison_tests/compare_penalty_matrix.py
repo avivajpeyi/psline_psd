@@ -6,7 +6,7 @@ from matplotlib.colors import TwoSlopeNorm
 from rpy2.robjects.packages import importr
 
 
-def get_r_penalty_matrix(k, degree, diffMatrixOrder):
+def get_r_penalty_matrix(k, degree, diffMatrixOrder, knots):
     """
     library(fda)
     knots = seq(from = 0, to = 1, length = k - degree + 1);
@@ -20,7 +20,8 @@ def get_r_penalty_matrix(k, degree, diffMatrixOrder):
     robjects.r(f"k <- {k}")
     robjects.r(f"degree <- {degree}")
     robjects.r(f"diffMatrixOrder <- {diffMatrixOrder}")
-    robjects.r("knots <- seq(from = 0, to = 1, length = k - degree + 1)")
+    robjects.r(f"knots <- c({','.join(map(str, knots))})")
+    # robjects.r("knots <- seq(from = 0, to = 1, length = k - degree + 1)")
     robjects.r("nknots <- length(knots)")
     robjects.r(
         "basisobj <- fda::create.bspline.basis(c(0, knots[nknots-1]), norder = degree + 1, nbasis = k - 1, breaks = knots[-nknots])"
@@ -34,8 +35,8 @@ def get_r_penalty_matrix(k, degree, diffMatrixOrder):
     return p / np.max(p)
 
 
-def get_py_penalty_matrix(k, degree, diffMatrixOrder):
-    knots = np.linspace(0, 1, k - degree)
+def get_py_penalty_matrix(k, degree, diffMatrixOrder, knots):
+    # knots = np.linspace(0, 1, k - degree)
     basis = skfda.representation.basis.BSplineBasis(knots=knots, order=degree + 1)
     basis.plot()
     plt.gcf().suptitle(f"Num basis = {len(basis)}")
@@ -50,8 +51,12 @@ def test_penalty_matrix():
     k = 10
     degree = 3
     diffMatrixOrder = 1
-    r_p = get_r_penalty_matrix(k, degree, diffMatrixOrder)
-    py_p = get_py_penalty_matrix(k, degree, diffMatrixOrder)
+    knots = sorted(np.random.uniform(0, 1, k - degree-1))
+    # prepend and postpend boundary knots
+    knots = np.r_[0, knots, 1]
+    print(knots)
+    r_p = get_r_penalty_matrix(k, degree, diffMatrixOrder, knots)
+    py_p = get_py_penalty_matrix(k, degree, diffMatrixOrder, knots)
     fig, ax = plt.subplots(1, 2)
     for i, (label, matrix) in enumerate(zip(("r", "python"), (r_p, py_p))):
         matrix = matrix / np.max(matrix)
