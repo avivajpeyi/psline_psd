@@ -1,23 +1,25 @@
 import numpy as np
-from bilby.core.prior import ConditionalPriorDict, Gamma, ConditionalGamma
+from bilby.core.prior import ConditionalGamma, ConditionalPriorDict, Gamma
 from scipy.stats import gamma, norm
+
 
 def _wPw(w, P):
     return np.dot(np.dot(w.T, P), w)
 
+
 def lprior(k, w, τ, φ, φα, φβ, δ, δα, δβ, P):
     wTPw = _wPw(w, P)
-    log_prior = k * 0.5* np.log(φ) - 0.5*φ * wTPw
-    log_prior += gamma.logpdf(φ, a=φα, scale=1/ (δ * φβ))
-    log_prior += gamma.logpdf(δ, a=δα, scale=1/δβ)
+    log_prior = k * 0.5 * np.log(φ) - 0.5 * φ * wTPw
+    log_prior += gamma.logpdf(φ, a=φα, scale=1 / (δ * φβ))
+    log_prior += gamma.logpdf(δ, a=δα, scale=1 / δβ)
     log_prior += norm.logpdf(τ, 0, 100)
     return log_prior
 
 
 def φ_prior(k, w, P, φα, φβ, δ):
     wTPw = _wPw(w, P)
-    shape = 0.5*k + φα
-    rate = φβ * δ + 0.5*wTPw
+    shape = 0.5 * k + φα
+    rate = φβ * δ + 0.5 * wTPw
     return Gamma(k=shape, theta=1 / rate)
 
 
@@ -42,8 +44,8 @@ def llike(w, τ, data, spline_model):
     # todo: V should be computed in here
 
     n = len(data)
-    _lnspline = spline_model(weights=w, n=n) + τ
-
+    # _lnspline = spline_model(weights=w, n=n) + τ
+    _lnspline = spline_model(weights=w, n=n)
 
     is_even = n % 2 == 0
     if is_even:
@@ -54,7 +56,7 @@ def llike(w, τ, data, spline_model):
         data = data[1:-1]
     _spline = np.exp(_lnspline)
 
-    integrand = _lnspline + np.exp(np.log(data) - _lnspline  - np.log(2 * np.pi))
+    integrand = _lnspline + np.exp(np.log(data) - _lnspline - np.log(2 * np.pi))
     lnlike = -np.sum(integrand) / 2
     if not np.isfinite(lnlike):
         raise ValueError(f"lnlike is not finite: {lnlike}")
@@ -70,7 +72,6 @@ def lpost(k, w, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, data, psline_mod
             f"logpost is not finite: lnpri{logprior}, lnlike{loglike}, lnpost{logpost}"
         )
     return logpost
-
 
 
 #
