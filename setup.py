@@ -30,6 +30,7 @@ if sys.version_info == python_version:
 
 INSTALL_REQUIRES = [
     "arviz",
+    "spec"
     "scikit-fda",
     "matplotlib",
     "logging",

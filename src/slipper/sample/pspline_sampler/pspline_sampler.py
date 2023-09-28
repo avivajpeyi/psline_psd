@@ -32,7 +32,7 @@ class PsplineSampler(BaseSampler):
         )
 
         sk = self.sampler_kwargs
-        self.samples["τ"][0] = np.var(self.data) / (2 * np.pi)
+        self.samples["τ"][0] = 1 / (2 * np.pi)
         self.samples["δ"][0] = sk["δα"] / sk["δβ"]
         self.samples["φ"][0] = sk["φα"] / (sk["φβ"] * self.samples["δ"][0])
         self.samples["V"][0, :] = self.spline_model.guess_initial_v(self.data).ravel()

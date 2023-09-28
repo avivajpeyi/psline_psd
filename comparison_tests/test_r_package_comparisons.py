@@ -35,25 +35,26 @@ def mkdir(path):
 
 @pytest.mark.skipif(rpy2 is None, reason="rpy2 required for this test")
 def test_mcmc_posterior_psd_comparison():
-    nsteps = 1000
+    nsteps = 5000
     nsplines = 40
     eqSpaced = True
 
     data = generate_ar_timeseries(order=3, n_samples=1000)
+    data = data - np.mean(data)
     rescale = np.std(data)
     data = data / rescale
     pdgrm = get_periodogram(timeseries=data)
-    pdgrm = pdgrm[1:]
+    # pdgrm = pdgrm[1:]
     psd_x = np.linspace(0, 1, len(pdgrm))
     fig, ax = plt.subplots(1, 1, figsize=(8, 4))
-    plt.scatter(psd_x, pdgrm*rescale**2, color="k", label="Data", s=0.1)
-    plot_xy_binned(psd_x, pdgrm*rescale**2, ax=ax, color="k", label="Data", ms=2, ls='--')
+    plt.scatter(psd_x[1:], pdgrm[1:]*rescale**2, color="k", label="Data", s=0.1)
+    plot_xy_binned(psd_x[1:], pdgrm[1:]*rescale**2, ax=ax, color="k", label="Data", ms=2, ls='--')
     plt.yscale("log")
     plt.show()
 
-    py_mcmc = __py_mcmc(data, nsteps, nsplines, eqSpaced)
+    py_mcmc = __py_mcmc(pdgrm, nsteps, nsplines, eqSpaced)
     r_mcmc = __r_mcmc(data, nsteps, nsplines, eqSpaced)
-    py_log_mcmc = __log_py_mcmc(data, nsteps, nsplines, eqSpaced)
+    py_log_mcmc = __log_py_mcmc(pdgrm, nsteps, nsplines, eqSpaced)
 
     outdir = mkdir(Path(__file__).parent / "out_compare_spline_and_log_spline")
 
@@ -70,7 +71,7 @@ def test_mcmc_posterior_psd_comparison():
     __plot_sampled_params([
         ('r', r_mcmc.samples),
         ('py', py_mcmc.post_samples),
-        ('log-py', py_log_mcmc.post_samples)
+        # ('log-py', py_log_mcmc.post_samples)
     ], ax)
 
     fig.tight_layout()
@@ -128,7 +129,8 @@ def __plot_lnl(lnl_vals, ax):
 def __plot_result(pdgrm, mcmc_data, ax):
     psd_x = np.linspace(0, 1, len(pdgrm))
     # ax.scatter(psd_x, pdgrm, color="k", label="Data", s=0.1)
-    plot_xy_binned(psd_x, pdgrm, ax=ax, color="k", label="Data", ms=0, ls='--')
+    # plot_xy_binned(psd_x, pdgrm, ax=ax, color="k", label="Data", ms=0, ls='--')
+    plt.scatter(psd_x[1:], pdgrm[1:], color="k", label="Data", marker=',', alpha=0.5, s=1)
     for i in range(len(mcmc_data)):
         label, mcmc = mcmc_data[i]
         x = np.linspace(0, 1, len(mcmc.psd_quantiles[0]))
@@ -150,7 +152,7 @@ def __r_mcmc(data, nsteps, nsplines, eqSpaced):
     burnin = int(0.5 * nsteps)
     with np_cv_rules.context():
         mcmc = r_pspline.gibbs_pspline(
-            data, burnin=burnin, Ntotal=nsteps, degree=3, eqSpaced=eqSpaced, k=nsplines
+            data, burnin=burnin, Ntotal=nsteps, degree=3, eqSpacedKnots=eqSpaced, k=nsplines
         )
     return MCMCdata.from_r(mcmc)
 
@@ -170,9 +172,8 @@ def __r_mcmc(data, nsteps, nsplines, eqSpaced):
 
 def __py_mcmc(data, nsteps, nsplines, eqSpaced):
     burnin = int(0.5 * nsteps)
-    pdgm = np.abs(get_fz(data))
     mcmc = fit_data_with_pspline_model(
-        pdgm,
+        data,
         burnin=burnin,
         Ntotal=nsteps,
         degree=3,
@@ -185,9 +186,8 @@ def __py_mcmc(data, nsteps, nsplines, eqSpaced):
 
 def __log_py_mcmc(data, nsteps, nsplines, eqSpaced):
     burnin = int(0.5 * nsteps)
-    pdgm = np.abs(get_fz(data))
     mcmc = fit_data_with_log_spline_model(
-        pdgm,
+        data,
         burnin=burnin,
         Ntotal=nsteps,
         degree=3,
@@ -221,8 +221,8 @@ class MCMCdata:
         obj.psd_quantiles = np.array(
             [
                 np.array(mcmc["psd.median"]),
-                np.array(mcmc["psd.u05"]),
-                np.array(mcmc["psd.u95"]),
+                np.array(mcmc["psd.p05"]),
+                np.array(mcmc["psd.p95"]),
             ]
         )
         obj.lnl = mcmc['ll.trace']

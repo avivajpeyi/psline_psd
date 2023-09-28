@@ -44,8 +44,8 @@ def llike(w, τ, data, spline_model):
     # todo: V should be computed in here
 
     n = len(data)
-    # _lnspline = spline_model(weights=w, n=n) + τ
-    _lnspline = spline_model(weights=w, n=n)
+    _lnspline = spline_model(weights=w, n=n) + τ
+    # _lnspline = spline_model(weights=w, n=n)
 
     is_even = n % 2 == 0
     if is_even:
