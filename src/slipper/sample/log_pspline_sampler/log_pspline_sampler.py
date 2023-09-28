@@ -35,7 +35,7 @@ class LogPsplineSampler(BaseSampler):
 
         # init spline model
         sk = self.spline_kwargs
-        knots = knot_locator(self.data, self.n_basis, sk["degree"], sk["eqSpaced"])
+        knots = knot_locator(self.data, self.n_basis, **sk)
         self.spline_model = PSplines(
             knots=knots,
             degree=sk["degree"],
