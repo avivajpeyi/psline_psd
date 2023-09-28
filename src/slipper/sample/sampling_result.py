@@ -22,6 +22,7 @@ class Result:
 
     def save(self, fname: str):
         outdir = os.path.dirname(fname)
+        outdir = outdir if outdir else "."
         self.make_summary_plot(os.path.join(outdir, "summary.png"))
         self.idata.to_netcdf(fname)
 

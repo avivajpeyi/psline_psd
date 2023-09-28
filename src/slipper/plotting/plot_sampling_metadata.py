@@ -57,7 +57,8 @@ def plot_metadata(
     )
     if fname:
         basedir = os.path.dirname(fname)
-        os.makedirs(basedir, exist_ok=True)
+        if basedir:
+            os.makedirs(basedir, exist_ok=True)
         fig.savefig(fname)
         plt.close(fig)
     else:

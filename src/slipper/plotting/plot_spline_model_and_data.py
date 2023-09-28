@@ -41,11 +41,10 @@ def plot_spline_model_and_data(
     model_x = np.linspace(0, 1, len(model_med))
 
     # plot data
-
     data_bins = min(30, len(data) // 10)
     if data_bins > 10:
-        plot_xy_binned(x, data, ax, bins=data_bins, label="Data", ls='--', ms=0.5)
-    ax.scatter(x, data, color=colors["Data"], marker='.', alpha=0.1, s=0.6)
+        plot_xy_binned(x[1:], data[1:], ax, bins=data_bins, label="Data", ls='--', ms=0.5)
+    ax.scatter(x[1:], data[1:], color=colors["Data"], marker='.', alpha=0.1, s=0.6)
     ax_model.plot(model_x, model_med, color=colors["Splines"], alpha=0.5)
     ax_model.fill_between(
         model_x, model_p05, model_p95, color=colors["Splines"], alpha=0.2, linewidth=0.0

@@ -3,6 +3,8 @@
 .AppleDouble
 .LSOverride
 
+*.netcdf
+
 *.gif
 
 # Byte-compiled / optimized / DLL files
