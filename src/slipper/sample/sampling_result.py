@@ -319,7 +319,15 @@ class Result:
                 self.data_length,
                 self.basis,
                 self.post_samples[:, 2],
-                self.weights,
+                weight_samples=self.weights,
                 logged=self.logged_splines,
             )
         return self._psds
+
+    # def __str__(self):
+    #     retu
+    # def __repr__(self):
+    #     return "Result(
+
+    def __repr__(self):
+        return f"Result(n_steps={self.n_steps}, burn_in={self.burn_in}, data_length={self.data_length}, k={self.k}, logged_splines={self.logged_splines})"

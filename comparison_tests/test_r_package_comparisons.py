@@ -71,9 +71,9 @@ def test_mcmc_posterior_psd_comparison():
     plt.yscale("log")
     plt.show()
 
+    py_log_mcmc = __log_py_mcmc(pdgrm, nsteps, nsplines, eqSpaced)
     py_mcmc = __py_mcmc(pdgrm, nsteps, nsplines, eqSpaced)
     r_mcmc = __r_mcmc(data, nsteps, nsplines, eqSpaced)
-    py_log_mcmc = __log_py_mcmc(pdgrm, nsteps, nsplines, eqSpaced)
 
     outdir = mkdir(Path(__file__).parent / "out_compare_spline_and_log_spline")
 
@@ -249,6 +249,7 @@ def __log_py_mcmc(data, nsteps, nsplines, eqSpaced):
         eqSpaced=eqSpaced,
         outdir="py_mcmc_log",
         k=nsplines,
+        n_checkpoint_plts=10,
     )
 
     return mcmc

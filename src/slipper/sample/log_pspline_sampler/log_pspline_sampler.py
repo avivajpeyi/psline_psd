@@ -175,9 +175,9 @@ def _tune_proposal_distribution(
         weight[pos], lpost_store, accept_count = _update_weights(
             sigma, weight[pos], pos, args, lpost_store, accept_count, lnpost_fn
         )
-        τ, lpost_store, accept_count_tau = _update_tau(
-            sigma_tau, τ, args, lpost_store, accept_count_tau, lnpost_fn
-        )
+        # τ, lpost_store, accept_count_tau = _update_tau(
+        #     sigma_tau, τ, args, lpost_store, accept_count_tau, lnpost_fn
+        # )
 
     accept_frac = accept_count / n_weight_columns
     accept_frac_tau = accept_count_tau / n_weight_columns

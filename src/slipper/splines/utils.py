@@ -17,7 +17,7 @@ def density_mixture(
             f"weights ({weights.shape}) and densities ({densities.shape}) must have the same length",
         )
     res = np.sum(weights[:, None] * densities, axis=0)
-    res = np.maximum(res, epsilon)  # dont allow values below epsilon
+    # res = np.maximum(res, epsilon)  # dont allow values below epsilon
 
     return res
 
@@ -28,7 +28,7 @@ def unroll_list_to_new_length(old_list, n):
     oldx = np.linspace(0, 1, len(old_list))
     f = interp1d(oldx, old_list, kind="nearest")
     q = f(newx)
-    assert np.all(q >= 0), f"q must be positive, but got {q}"
+    # assert np.all(q >= 0), f"q must be positive, but got {q}"
     return q
 
 
@@ -111,4 +111,5 @@ def __get_unscaled_spline(
     if weights is None:
         weights = convert_v_to_weights(v)
     combined = density_mixture(densities=db_list.T, weights=weights)
-    return np.maximum(combined, epsilon)
+    # return np.maximum(combined, epsilon)
+    return combined

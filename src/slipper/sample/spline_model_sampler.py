@@ -60,13 +60,15 @@ def fit_data_with_log_spline_model(
     φβ: float = 1,
     δα: float = 1e-04,
     δβ: float = 1e-04,
-    k: int = 30,
-    eqSpaced: bool = False,
-    degree: int = 3,
-    diffMatrixOrder: int = 2,
+    # k: int = 30,
+    # eqSpaced: bool = False,
+    # degree: int = 3,
+    # diffMatrixOrder: int = 2,
     outdir: str = ".",
     n_checkpoint_plts: int = 0,
+    spline_kwargs: dict = None,
 ) -> Result:
+
     sampler = LogPsplineSampler(
         data=data,
         outdir=outdir,
@@ -82,12 +84,13 @@ def fit_data_with_log_spline_model(
             δβ=δβ,
             n_checkpoint_plts=n_checkpoint_plts,
         ),
-        spline_kwargs=dict(
-            k=k,
-            eqSpaced=eqSpaced,
-            degree=degree,
-            diffMatrixOrder=diffMatrixOrder,
-        ),
+        # spline_kwargs=dict(
+        #     k=k,
+        #     eqSpaced=eqSpaced,
+        #     degree=degree,
+        #     diffMatrixOrder=diffMatrixOrder,
+        # ),
+        spline_kwargs=spline_kwargs,
     )
     sampler.run()
     return sampler.result

@@ -22,7 +22,7 @@ def generate_spline_posterior(
     ):
         kwargs[weight_key] = weight_samples[i, :]
         if logged:
-            splines[i, :] = build_spline_model(**kwargs) + tau_samples[i]
+            splines[i, :] = build_spline_model(**kwargs)  # + tau_samples[i]
         else:
             splines[i, :] = build_spline_model(**kwargs) * tau_samples[i]
     return splines

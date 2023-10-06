@@ -12,7 +12,7 @@ def lprior(k, w, τ, φ, φα, φβ, δ, δα, δβ, P):
     log_prior = k * 0.5 * np.log(φ) - 0.5 * φ * wTPw
     log_prior += gamma.logpdf(φ, a=φα, scale=1 / (δ * φβ))
     log_prior += gamma.logpdf(δ, a=δα, scale=1 / δβ)
-    log_prior += norm.logpdf(τ, 0, 100)
+    # log_prior += norm.logpdflogpdf(τ, 0, 100)
     return log_prior
 
 
@@ -44,8 +44,8 @@ def llike(w, τ, data, spline_model):
     # todo: V should be computed in here
 
     n = len(data)
-    _lnspline = spline_model(weights=w, n=n) + τ
-    # _lnspline = spline_model(weights=w, n=n)
+    # _lnspline = spline_model(weights=w, n=n) + τ
+    _lnspline = spline_model(weights=w, n=n)
 
     is_even = n % 2 == 0
     if is_even:
