@@ -56,7 +56,9 @@ def llike(w, τ, data, spline_model):
         data = data[1:-1]
     _spline = np.exp(_lnspline)
 
-    integrand = _lnspline + np.exp(np.log(data) - _lnspline - np.log(2 * np.pi))
+    integrand = _lnspline + np.exp(
+        np.log(data) - _lnspline - np.log(2 * np.pi)
+    )
     lnlike = -np.sum(integrand) / 2
     if not np.isfinite(lnlike):
         raise ValueError(f"lnlike is not finite: {lnlike}")
@@ -64,7 +66,9 @@ def llike(w, τ, data, spline_model):
 
 
 def lpost(k, w, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, data, psline_model):
-    logprior = lprior(k, w, τ, φ, φα, φβ, δ, δα, δβ, psline_model.penalty_matrix)
+    logprior = lprior(
+        k, w, τ, φ, φα, φβ, δ, δα, δβ, psline_model.penalty_matrix
+    )
     loglike = llike(w, τ, data, psline_model)
     logpost = logprior + loglike
     if not np.isfinite(logpost):

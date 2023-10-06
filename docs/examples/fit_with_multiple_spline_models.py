@@ -42,7 +42,9 @@ def plot_data_and_fits(data, fits={}):
         )
         spline_x = np.linspace(0, 1, len(spline_med))
         ax_t.semilogy(spline_x, spline_med, label=name, color=f"C{i}")
-        ax_t.fill_between(spline_x, spline_p05, spline_p95, color=f"C{i}", alpha=0.2)
+        ax_t.fill_between(
+            spline_x, spline_p05, spline_p95, color=f"C{i}", alpha=0.2
+        )
         ax.plot([], [], color=f"C{i}", label=name)
     ax.legend()
     ax.set_xticks([])
@@ -58,9 +60,15 @@ def main():
     plt.savefig(f"{OUTDIR}/data_and_fits.png")
 
     kwargs = dict(
-        data=AR4_PSD, Ntotal=2000, degree=3, eqSpaced=False, n_checkpoint_plts=5
+        data=AR4_PSD,
+        Ntotal=2000,
+        degree=3,
+        eqSpaced=False,
+        n_checkpoint_plts=5,
     )
-    spline_mcmc = fit_data_with_pspline_model(**kwargs, outdir=OUTDIR + "/spline")
+    spline_mcmc = fit_data_with_pspline_model(
+        **kwargs, outdir=OUTDIR + "/spline"
+    )
     ln_spline_mcmc = fit_data_with_log_spline_model(
         **kwargs, outdir=OUTDIR + "/log_spline"
     )

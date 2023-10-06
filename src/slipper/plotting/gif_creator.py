@@ -14,7 +14,9 @@ import os
 
 
 def create_gif(image_regex, gif_path, duration=2):
-    image_filepaths = sorted(glob.glob(image_regex), key=lambda x: int(re.findall(r"\d+", x)[-1]))
+    image_filepaths = sorted(
+        glob.glob(image_regex), key=lambda x: int(re.findall(r"\d+", x)[-1])
+    )
     if len(image_filepaths) > 3:
         images = [iio.imread(filepath) for filepath in image_filepaths]
         iio.imwrite(gif_path, images, duration=duration, loop=0)

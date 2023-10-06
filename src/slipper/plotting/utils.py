@@ -52,7 +52,6 @@ def convert_axes_spines_to_arrows(ax):
     ax.plot(0, 1, "^k", transform=ax.get_xaxis_transform(), clip_on=False)
 
 
-
 def plot_xy_binned(
     x,
     y,
@@ -61,7 +60,9 @@ def plot_xy_binned(
     **kwgs,
 ):
     # set some default kwargs
-    defaults = dict(ms=6.0, yerr=[], fmt=",", color="k", zorder=-1000, alpha=0.5, ls='-')
+    defaults = dict(
+        ms=6.0, yerr=[], fmt=",", color="k", zorder=-1000, alpha=0.5, ls="-"
+    )
     for key, value in defaults.items():
         if key not in kwgs:
             kwgs[key] = value
@@ -74,7 +75,6 @@ def plot_xy_binned(
     if len(yerr) == 0:
         yerr = np.zeros(len(x))
 
-
     err, _ = np.histogram(x, bins, weights=yerr)
     # std of y in each x-bin
     std = np.zeros(len(num))
@@ -85,13 +85,10 @@ def plot_xy_binned(
         else:
             std[i] = 0
 
-
-
-
     denom[num == 0] = 1.0
     new_x = 0.5 * (bins[1:] + bins[:-1])
     new_y = num / denom
-    new_yerr = err / denom if np.any(err) else std/np.sqrt(denom)
+    new_yerr = err / denom if np.any(err) else std / np.sqrt(denom)
 
     idx = np.nonzero(new_y)
     ax.errorbar(

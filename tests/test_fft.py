@@ -18,7 +18,11 @@ def test_fft(tmpdir):
     f, scipy_per = periodogram(test_pdgrm, fs=1)
     psd = welch(test_pdgrm, fs=1, nperseg=50)[1]
     plt.plot(
-        np.linspace(0, 1, len(py_fz)), py_fz, label="Our Fz", alpha=0.5, marker=","
+        np.linspace(0, 1, len(py_fz)),
+        py_fz,
+        label="Our Fz",
+        alpha=0.5,
+        marker=",",
     )
     plt.plot(
         np.linspace(0, 1, len(py_pdgm)),

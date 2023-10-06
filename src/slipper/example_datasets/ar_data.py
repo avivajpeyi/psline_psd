@@ -53,7 +53,9 @@ def get_ar_periodogram(
     order=None,
     n_samples=2000,
 ):
-    data = generate_ar_timeseries(ar_coefs=ar_coefs, order=order, n_samples=n_samples)
+    data = generate_ar_timeseries(
+        ar_coefs=ar_coefs, order=order, n_samples=n_samples
+    )
     return get_periodogram(timeseries=data)
 
 
@@ -71,8 +73,12 @@ def plot_ar_spectrogram_psd(timeseries, title=None):
     ax2.set_xlabel("Frequency [Hz]")
     ax2.set_ylabel("Power/Frequency")
 
-    f, t, Sxx = spectrogram(timeseries, fs=1.0, window="hann", nperseg=64, noverlap=32)
-    cbar = ax3.pcolormesh(t, f, 10 * np.log10(Sxx), shading="auto", cmap="viridis")
+    f, t, Sxx = spectrogram(
+        timeseries, fs=1.0, window="hann", nperseg=64, noverlap=32
+    )
+    cbar = ax3.pcolormesh(
+        t, f, 10 * np.log10(Sxx), shading="auto", cmap="viridis"
+    )
     ax3.set_ylabel("Frequency [Hz]")
     ax3.set_xlabel("Time [sec]")
     cbar.set_label("Power/Frequency [dB/Hz]")

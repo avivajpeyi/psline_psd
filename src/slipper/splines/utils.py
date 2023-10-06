@@ -32,7 +32,9 @@ def unroll_list_to_new_length(old_list, n):
     return q
 
 
-def build_spline_model(db_list: np.ndarray, n: int, v: np.ndarray=None, weights=None):
+def build_spline_model(
+    db_list: np.ndarray, n: int, v: np.ndarray = None, weights=None
+):
     """Build a spline model from a vector of spline coefficients and a list of B-spline basis functions"""
     unorm_spline = __get_unscaled_spline(db_list, v=v, weights=weights)
     return unroll_list_to_new_length(unorm_spline, n)
@@ -58,15 +60,14 @@ def convert_v_to_weights(v: np.ndarray):
      expV   <- exp(v)
       weight <- expV / (1+sum(expV));
       weight <- c(weight, 1-sum(weight));
-    
+
       psd <- densityMixture(weight, db.list)
       epsilon <- 1e-20
       psd <- pmax(psd, epsilon)
       #psd <- psd[-c(1, length(psd))]
       return(psd)
-    
-    """
 
+    """
 
     # converting to weights
     # Eq near 4, page 3.1
@@ -82,12 +83,16 @@ def convert_v_to_weights(v: np.ndarray):
     weight = np.append(weight, 0 if s < 0 else s).ravel()
 
     if len(weight) != len(v) + 1:
-        raise ValueError("Length of weight vector is not equal to length of v + 1")
+        raise ValueError(
+            "Length of weight vector is not equal to length of v + 1"
+        )
 
     return weight
 
 
-def __get_unscaled_spline(db_list: np.ndarray, epsilon=1e-20, v: np.ndarray=None, weights=None):
+def __get_unscaled_spline(
+    db_list: np.ndarray, epsilon=1e-20, v: np.ndarray = None, weights=None
+):
     """Compute unscaled spline using mixture of B-splines with weights from v
 
     Parameters

@@ -8,8 +8,11 @@ from arviz import InferenceData
 from scipy.fft import fft
 
 from ..plotting import plot_metadata, plot_spline_model_and_data
-from .post_processing import generate_spline_posterior, generate_spline_quantiles
 from ..splines.p_splines import PSplines
+from .post_processing import (
+    generate_spline_posterior,
+    generate_spline_quantiles,
+)
 
 
 class Result:
@@ -28,11 +31,11 @@ class Result:
 
     @classmethod
     def create_idata(
-            cls,
-            samples: Dict[str, np.ndarray],
-            spline_model,
-            data: np.ndarray,
-            sampler_stats: Dict,
+        cls,
+        samples: Dict[str, np.ndarray],
+        spline_model,
+        data: np.ndarray,
+        sampler_stats: Dict,
     ):
         return cls.compile_idata_from_sampling_results(
             posterior_samples=np.array(
@@ -59,15 +62,15 @@ class Result:
 
     @classmethod
     def compile_idata_from_sampling_results(
-            cls,
-            posterior_samples,
-            weight_samples,
-            lpost_trace,
-            frac_accept,
-            spline_model_kwargs,
-            data,
-            burn_in,
-            runtime,
+        cls,
+        posterior_samples,
+        weight_samples,
+        lpost_trace,
+        frac_accept,
+        spline_model_kwargs,
+        data,
+        burn_in,
+        runtime,
     ) -> "Result":
         nsamp, n_weight_cols = weight_samples.shape
 
@@ -121,7 +124,7 @@ class Result:
             index_origin=None,
         )
         observed_data = az.dict_to_dataset(
-            dict(data=data[0: len(data)]),
+            dict(data=data[0 : len(data)]),
             library=None,
             coords=dict(idx=np.arange(len(data))),
             dims=dict(data=["idx"]),
@@ -240,7 +243,6 @@ class Result:
             )
         return self._spline_model
 
-
     def make_summary_plot(self, fn: str = "", use_cached=True, max_it=None):
         max_it = max_it if max_it else self.n_steps
         data = self.idata.observed_data["data"].values
@@ -257,7 +259,7 @@ class Result:
             posterior=self.all_samples(),
             model_quants=psd_quants,
             data=data,
-            spline_model = self.spline_model,
+            spline_model=self.spline_model,
             weights=self.idata.posterior["weight"].values,
             burn_in=self.burn_in,
             fname=fn,
@@ -278,7 +280,11 @@ class Result:
         tau_samples = tau_samples[plot_idx]
         weight_samples = weight_samples[plot_idx]
         return generate_spline_quantiles(
-            self.data_length, self.basis, tau_samples, weight_samples, logged_splines=self.logged_splines
+            self.data_length,
+            self.basis,
+            tau_samples,
+            weight_samples,
+            logged_splines=self.logged_splines,
         )
 
     def plot_model_and_data(self, i=None):
@@ -292,7 +298,10 @@ class Result:
             start, end = i, i + 1
         model_qantiles = self.get_model_quantiles(start, end)
         return plot_spline_model_and_data(
-            self.data, model_qantiles, knots=self.knots, logged_axes=self.logged_splines
+            self.data,
+            model_qantiles,
+            knots=self.knots,
+            logged_axes=self.logged_splines,
         )
 
     @property
@@ -307,6 +316,10 @@ class Result:
     def psd_posterior(self):
         if not hasattr(self, "_psds"):
             self._psds = generate_spline_posterior(
-                self.data_length, self.basis, self.post_samples[:, 2], self.weights, logged=self.logged_splines
+                self.data_length,
+                self.basis,
+                self.post_samples[:, 2],
+                self.weights,
+                logged=self.logged_splines,
             )
         return self._psds

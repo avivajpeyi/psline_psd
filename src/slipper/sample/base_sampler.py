@@ -1,18 +1,17 @@
 import os
 import time
 from abc import ABC, abstractmethod
+from collections import namedtuple
 from pprint import pformat
-from typing import Dict, List, Optional, Tuple, Union, Callable
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from tqdm.auto import trange
 
-from slipper.plotting.gif_creator import create_gif
 from slipper.plotting import plot_spline_model_and_data
-
+from slipper.plotting.gif_creator import create_gif
 from slipper.sample.sampling_result import Result
 from slipper.splines.p_splines import PSplines
-from collections import namedtuple
 
 from ..logger import logger
 
@@ -31,17 +30,18 @@ LnlArgs = namedtuple(
         "δα",
         "δβ",
         "data",
-        "spline_model"
-    ])
+        "spline_model",
+    ],
+)
 
 
 class BaseSampler(ABC):
     def __init__(
-            self,
-            data: np.ndarray,
-            outdir: str = ".",
-            sampler_kwargs: Optional[dict] = {},
-            spline_kwargs: Optional[dict] = {},
+        self,
+        data: np.ndarray,
+        outdir: str = ".",
+        sampler_kwargs: Optional[dict] = {},
+        spline_kwargs: Optional[dict] = {},
     ):
         self.data = data
         self.outdir = _mkdir(outdir)
@@ -52,7 +52,7 @@ class BaseSampler(ABC):
         assert (self.n_steps - self.burnin) / self.thin > self.n_basis
         self.spline_model: PSplines = None
         self.samples = None
-        self.args:LnlArgs = None
+        self.args: LnlArgs = None
 
     def __check_to_make_chkpt_plt(self, step_num) -> bool:
         n_plts = self.sampler_kwargs["n_checkpoint_plts"]
@@ -84,7 +84,9 @@ class BaseSampler(ABC):
         self._init_mcmc()
         self._plot_model_and_data(i=0, label="initial_fit")
 
-        pbar = trange(1, self.n_steps, desc="MCMC sampling", disable=not verbose)
+        pbar = trange(
+            1, self.n_steps, desc="MCMC sampling", disable=not verbose
+        )
         for itr in pbar:
             self._mcmc_step(itr)
             if self.__check_to_make_chkpt_plt(itr):
@@ -103,7 +105,8 @@ class BaseSampler(ABC):
         if self.sampler_kwargs["n_checkpoint_plts"]:
             logger.info("<<Creating gif>>")
             create_gif(
-                f"{self.outdir}/checkpoint*.png", f"{self.outdir}/checkpoint.gif"
+                f"{self.outdir}/checkpoint*.png",
+                f"{self.outdir}/checkpoint.gif",
             )
 
     @abstractmethod
@@ -126,7 +129,9 @@ class BaseSampler(ABC):
     def __plot_checkpoint(self, i: int):
         fname = f"{self.outdir}/checkpoint_{i}.png"
         self._compile_sampling_result()
-        self.result.make_summary_plot(fn=fname, use_cached=False, max_it=self.n_steps)
+        self.result.make_summary_plot(
+            fn=fname, use_cached=False, max_it=self.n_steps
+        )
 
     def _compile_sampling_result(self):
         idx = np.where(self.samples["τ"] != 0)[0]
@@ -234,13 +239,13 @@ def _timestamp():
 
 
 def _tune_proposal_distribution(
-        aux: np.array,
-        accept_frac: float,
-        sigma: float,
-        weight: np.array,
-        lpost_store:float,
-        args: LnlArgs,
-        lnpost_fn: Callable,
+    aux: np.array,
+    accept_frac: float,
+    sigma: float,
+    weight: np.array,
+    lpost_store: float,
+    args: LnlArgs,
+    lnpost_fn: Callable,
 ):
     n_weight_columns = len(weight)
 
@@ -260,10 +265,18 @@ def _tune_proposal_distribution(
         )
 
     accept_frac = accept_count / n_weight_columns
-    return weight, accept_frac, sigma, lpost_store   # return updated values
+    return weight, accept_frac, sigma, lpost_store  # return updated values
 
 
-def _update_weights(sigma, weight, widx, lpost_args, lpost_store, accept_count, lpost_fn: Callable):
+def _update_weights(
+    sigma,
+    weight,
+    widx,
+    lpost_args,
+    lpost_store,
+    accept_count,
+    lpost_fn: Callable,
+):
     Z = np.random.normal()
     U = np.log(np.random.uniform())
 

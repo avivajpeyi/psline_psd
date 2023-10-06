@@ -1,7 +1,7 @@
 import numpy as np
 
-from .pspline_sampler import PsplineSampler
 from .log_pspline_sampler import LogPsplineSampler
+from .pspline_sampler import PsplineSampler
 from .sampling_result import Result
 
 
@@ -39,7 +39,10 @@ def fit_data_with_pspline_model(
             n_checkpoint_plts=n_checkpoint_plts,
         ),
         spline_kwargs=dict(
-            k=k, eqSpaced=eqSpaced, degree=degree, diffMatrixOrder=diffMatrixOrder
+            k=k,
+            eqSpaced=eqSpaced,
+            degree=degree,
+            diffMatrixOrder=diffMatrixOrder,
         ),
     )
     sampler.run()
@@ -80,7 +83,10 @@ def fit_data_with_log_spline_model(
             n_checkpoint_plts=n_checkpoint_plts,
         ),
         spline_kwargs=dict(
-            k=k, eqSpaced=eqSpaced, degree=degree, diffMatrixOrder=diffMatrixOrder
+            k=k,
+            eqSpaced=eqSpaced,
+            degree=degree,
+            diffMatrixOrder=diffMatrixOrder,
         ),
     )
     sampler.run()

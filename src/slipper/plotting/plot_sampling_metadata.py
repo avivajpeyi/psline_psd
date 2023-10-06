@@ -3,12 +3,12 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from xarray import Dataset
+
+from slipper.splines.utils import convert_v_to_weights
 
 from .plot_spline_model_and_data import plot_spline_model_and_data
 from .utils import plot_xy_binned
-from slipper.splines.utils import  convert_v_to_weights
-
-from xarray import Dataset
 
 LABELS = dict(
     phi=r"$\phi$",
@@ -20,27 +20,32 @@ LABELS = dict(
 
 
 def plot_metadata(
-        posterior: pd.DataFrame,
-        model_quants: np.ndarray,
-        data,
-        spline_model: "PSplines",
-        weights,
-        burn_in,
-        fname=None,
-        max_it=None,
+    posterior: pd.DataFrame,
+    model_quants: np.ndarray,
+    data,
+    spline_model: "PSplines",
+    weights,
+    burn_in,
+    fname=None,
+    max_it=None,
 ):
     posterior[posterior == 0] = np.nan
     n_rows = len(posterior.columns) + 2
     max_it = len(posterior) if max_it is None else max_it
-    fig = plt.figure(figsize=(7, 3 *n_rows), layout="constrained")
+    fig = plt.figure(figsize=(7, 3 * n_rows), layout="constrained")
     gs = plt.GridSpec(n_rows, 2, figure=fig)
     row_num = 0
     for i, p in enumerate(posterior.columns):
         ax_trace = fig.add_subplot(gs[i, 0])
         ax_hist = fig.add_subplot(gs[i, 1])
         __plot_trace_and_hist(
-            posterior[p], LABELS[p], ax_trace, ax_hist,
-            burn_in, max_it, color=f"C{i}",
+            posterior[p],
+            LABELS[p],
+            ax_trace,
+            ax_hist,
+            burn_in,
+            max_it,
+            color=f"C{i}",
         )
         row_num += 1
 
@@ -53,7 +58,12 @@ def plot_metadata(
     # plot the data and the posterior median and 90% CI
     ax = fig.add_subplot(gs[row_num, :])
     plot_spline_model_and_data(
-        data, model_quants, separarte_y_axis=True, ax=ax, knots=spline_model.knots, logged_axes=spline_model.logged
+        data,
+        model_quants,
+        separarte_y_axis=True,
+        ax=ax,
+        knots=spline_model.knots,
+        logged_axes=spline_model.logged,
     )
     if fname:
         basedir = os.path.dirname(fname)
@@ -65,14 +75,20 @@ def plot_metadata(
         return fig
 
 
-def __plot_trace_and_hist(data, label, ax_trace, ax_hist, burn_in, max_it, color):
+def __plot_trace_and_hist(
+    data, label, ax_trace, ax_hist, burn_in, max_it, color
+):
     samps = data[~np.isnan(data)]
     low, med, high = np.quantile(samps, [0.05, 0.5, 0.95])
     l, h = med - low, high - med
     txt = f"${med:.2f}^{{+{h:.2f}}}_{{-{l:.2f}}}$"
 
-    ax_trace.tick_params(axis='both', which='both', direction='in', pad=-15, zorder=10)
-    ax_hist.tick_params(axis='both', which='both', direction='in', pad=-15, zorder=10)
+    ax_trace.tick_params(
+        axis="both", which="both", direction="in", pad=-15, zorder=10
+    )
+    ax_hist.tick_params(
+        axis="both", which="both", direction="in", pad=-15, zorder=10
+    )
 
     ax_trace.axvline(burn_in, color="k", linestyle="--", zorder=10)
     ax_trace.axhline(med, color=color, linestyle="--", alpha=0.5)
@@ -108,14 +124,21 @@ def __plot_trace_and_hist(data, label, ax_trace, ax_hist, burn_in, max_it, color
     ax_hist.set_yticks([])
 
 
-def __plot_spline_data(spline_model: "PSplines", weights, max_it, ax_basis, ax_weights):
+def __plot_spline_data(
+    spline_model: "PSplines", weights, max_it, ax_basis, ax_weights
+):
     w = weights[-1, :]
     if not spline_model.logged:
         w = convert_v_to_weights(w)
     spline_model.plot_basis(ax=ax_basis, weights=w)
     ax_basis.set_xlabel("")
     ax_basis.set_ylabel("Basis")
-    ax_basis.tick_params(axis="x", direction="in", pad=-15, labelsize=0, )
+    ax_basis.tick_params(
+        axis="x",
+        direction="in",
+        pad=-15,
+        labelsize=0,
+    )
     ax_basis.set_yticks([])
     ax_basis.set_title("")
 

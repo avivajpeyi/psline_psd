@@ -1,6 +1,7 @@
-import urllib.request
-import shutil
 import os
+import shutil
+import urllib.request
+
 import numpy as np
 
 DIR = os.path.dirname(os.path.realpath(__file__))
@@ -34,14 +35,10 @@ def __load_data(url, fname):
 def lisa_noise_periodogram():
     """Download the noise periodogram data from the LISA Data Challenge."""
     return __load_data(
-        NOISE_PDGRM,
-        os.path.join(DIR, "lisa_noise_periodogram.txt")
+        NOISE_PDGRM, os.path.join(DIR, "lisa_noise_periodogram.txt")
     )
 
 
 def lisa_wd_strain():
     """Download the white dwarf strain data from the LISA Data Challenge."""
-    return __load_data(
-        WD_TIME_SERIES,
-        os.path.join(DIR, "lisa_wd_strain.txt")
-    )
+    return __load_data(WD_TIME_SERIES, os.path.join(DIR, "lisa_wd_strain.txt"))

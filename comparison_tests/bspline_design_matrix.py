@@ -51,8 +51,12 @@ def generate_bspline_basis(
 
 
     """
-    knots_with_boundary = np.r_[[knots[0]] * degree, knots, [knots[-1]] * degree]
-    n_knots = len(knots_with_boundary)  # number of knots (including the external knots)
+    knots_with_boundary = np.r_[
+        [knots[0]] * degree, knots, [knots[-1]] * degree
+    ]
+    n_knots = len(
+        knots_with_boundary
+    )  # number of knots (including the external knots)
     assert n_knots == degree * 2 + len(knots)
 
     B = BSpline.design_matrix(x, knots_with_boundary, degree)
@@ -86,7 +90,9 @@ def main():
         plt.plot(db, color=f"C{i}", alpha=0.3)
     plt.show()
 
-    basis = skfda.representation.basis.BSplineBasis(order=degree + 1, knots=knots)
+    basis = skfda.representation.basis.BSplineBasis(
+        order=degree + 1, knots=knots
+    )
     plt.figure()
     basis.plot()
     plt.show()

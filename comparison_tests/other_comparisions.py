@@ -50,7 +50,9 @@ def test_basis_same_as_r_package_basis(helpers):
         plt.savefig(f"{helpers.OUTDIR}/basis_comparison.png")
 
     residuals = np.sum(
-        np.array([np.sum(np.abs(true_db_list[i] - db_list[i])) for i in range(k)])
+        np.array(
+            [np.sum(np.abs(true_db_list[i] - db_list[i])) for i in range(k)]
+        )
     )
     assert residuals < 1e-5
 
@@ -106,7 +108,9 @@ def test_periodogram(helpers):
     py_pdgm = np.append(py_pdgm, 0)
 
     fig = helpers.plot_comparison(
-        expected_pdgm / np.sum(expected_pdgm), py_pdgm / np.sum(py_pdgm), "pdgrm"
+        expected_pdgm / np.sum(expected_pdgm),
+        py_pdgm / np.sum(py_pdgm),
+        "pdgrm",
     )
     fig.show()
     assert np.allclose(expected_pdgm, py_pdgm, atol=1e-5)
@@ -199,7 +203,10 @@ from slipper.sample.spline_model_sampler import (
     _get_initial_values,
 )
 from slipper.splines.generator import unroll_list_to_new_length
-from slipper.splines.initialisation import _generate_initial_weights, knot_locator
+from slipper.splines.initialisation import (
+    _generate_initial_weights,
+    knot_locator,
+)
 from slipper.splines.p_splines import PSplines
 
 MAKE_PLOTS = True

@@ -2,19 +2,20 @@
 from typing import Tuple
 
 import numpy as np
+import scipy
 from scipy.interpolate import interp1d
 
 from .p_splines import PSplines
-import scipy
 
 
 def knot_locator(
-        data: np.ndarray,
-        k: int, degree: int,
-        eqSpaced: bool = False,
-        nfreqbin=None,
-        wfreqbin=None,
-        **kwargs
+    data: np.ndarray,
+    k: int,
+    degree: int,
+    eqSpaced: bool = False,
+    nfreqbin=None,
+    wfreqbin=None,
+    **kwargs
 ) -> np.array:
     """Determines the knot locations for a B-spline basis of degree `degree` and `k` knots.
 
@@ -40,7 +41,9 @@ def knot_locator(
         dens = dens / np.sum(dens)
         cumf = np.cumsum(dens)
 
-        df = interp1d(np.linspace(0, 1, num=n), cumf, kind="linear", fill_value=(0, 1))
+        df = interp1d(
+            np.linspace(0, 1, num=n), cumf, kind="linear", fill_value=(0, 1)
+        )
 
         invDf = interp1d(
             df(np.linspace(0, 1, num=n)),
@@ -65,14 +68,16 @@ def knot_locator(
         wfreqbin = np.ones(n_wfreqbin) / n_wfreqbin
     else:
         if (len(nfreqbin) + 1) != len(wfreqbin):
-            return ('length of nfreqbin is incorrect')
+            return "length of nfreqbin is incorrect"
         wfreqbin = wfreqbin / np.sum(wfreqbin)
         n_wfreqbin = len(wfreqbin)
 
     nfreqbin = np.sort(nfreqbin)
     # eqval = np.concatenate(([0], nfreqbin / (fs / 2), [1]))
     eqval = np.concatenate(([0], nfreqbin, [1]))  # Interval [0,1]
-    eqval = np.column_stack((eqval[:-1], eqval[1:]))  # Each row represents the bin
+    eqval = np.column_stack(
+        (eqval[:-1], eqval[1:])
+    )  # Each row represents the bin
     j = np.linspace(0, 1, num=N)
     s = np.arange(1, N + 1)
     index = []
@@ -96,7 +101,7 @@ def knot_locator(
     knots = []
 
     for i in range(Nindex):
-        aux = data[index[i][0]:index[i][1]]
+        aux = data[index[i][0] : index[i][1]]
 
         # aux = np.sqrt(aux) in case using pdgrm
         dens = np.abs(aux - np.mean(aux)) / np.std(aux)
@@ -110,7 +115,13 @@ def knot_locator(
         # Distribution function
         df = interp1d(x, cumf, bounds_error=False, fill_value=(0, 1))
         dfvec = df(x)
-        invDf = interp1d(dfvec, x, kind='linear', fill_value=(x[0], x[-1]), bounds_error=False)
+        invDf = interp1d(
+            dfvec,
+            x,
+            kind="linear",
+            fill_value=(x[0], x[-1]),
+            bounds_error=False,
+        )
         v = np.linspace(0, 1, num=kvec[i] + 2)
         v = v[1:-1]
         knots = np.concatenate((knots, invDf(v)))
@@ -120,9 +131,11 @@ def knot_locator(
 
 
 def _get_initial_spline_data(
-        data: np.ndarray, k: int, degree: int, diffMatrixOrder: int, eqSpaced: bool
+    data: np.ndarray, k: int, degree: int, diffMatrixOrder: int, eqSpaced: bool
 ) -> Tuple[np.ndarray, np.ndarray, PSplines]:
     knots = knot_locator(data, k, degree, eqSpaced)
-    psplines = PSplines(knots=knots, degree=degree, diffMatrixOrder=diffMatrixOrder)
+    psplines = PSplines(
+        knots=knots, degree=degree, diffMatrixOrder=diffMatrixOrder
+    )
     V = psplines.guess_initial_v(data)
     return V, knots, psplines

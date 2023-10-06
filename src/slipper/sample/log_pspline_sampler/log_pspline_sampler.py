@@ -1,14 +1,13 @@
-from slipper.sample.base_sampler import BaseSampler
-import numpy as np
+from collections import namedtuple
 from typing import Callable
+
+import numpy as np
 
 from slipper.sample.base_sampler import BaseSampler, _update_weights
 from slipper.splines.initialisation import knot_locator
 from slipper.splines.p_splines import PSplines
 
 from .bayesian_functions import lpost, sample_φδ
-
-from collections import namedtuple
 
 LnlArgs = namedtuple(
     "LnlArgs",
@@ -25,8 +24,9 @@ LnlArgs = namedtuple(
         "δα",
         "δβ",
         "data",
-        "spline_model"
-    ])
+        "spline_model",
+    ],
+)
 
 
 class LogPsplineSampler(BaseSampler):
@@ -35,7 +35,7 @@ class LogPsplineSampler(BaseSampler):
 
         # init spline model
         sk = self.spline_kwargs
-        knots = knot_locator(self.data, self.n_basis, **sk)
+        knots = knot_locator(data=self.data, **sk)
         self.spline_model = PSplines(
             knots=knots,
             degree=sk["degree"],
@@ -60,7 +60,9 @@ class LogPsplineSampler(BaseSampler):
         self.samples["τ"][0] = 1 / (2 * np.pi)
         self.samples["δ"][0] = sk["δα"] / sk["δβ"]
         self.samples["φ"][0] = sk["φα"] / (sk["φβ"] * self.samples["δ"][0])
-        self.samples["w"][0, :] = self.spline_model.guess_weights(self.data).ravel()
+        self.samples["w"][0, :] = self.spline_model.guess_weights(
+            self.data
+        ).ravel()
         self.samples["proposal_sigma"][0] = 1
         self.samples["acceptance_fraction"][0] = 0.4
         self.samples["sigma_tau"][0] = 1
@@ -102,13 +104,25 @@ class LogPsplineSampler(BaseSampler):
         for _ in range(self.thin):
             lpost_store = lpost(*self.args)
             # 1. explore the parameter space for new V
-            w, τ, accept_frac, accept_frac_tau, sigma, sigma_tau, lpost_store = _tune_proposal_distribution(
+            (
+                w,
+                τ,
+                accept_frac,
+                accept_frac_tau,
+                sigma,
+                sigma_tau,
+                lpost_store,
+            ) = _tune_proposal_distribution(
                 aux,
-                accept_frac, accept_frac_tau,
-                sigma, sigma_tau,
+                accept_frac,
+                accept_frac_tau,
+                sigma,
+                sigma_tau,
                 self.args.w,
                 self.args.τ,
-                lpost_store, self.args, lpost
+                lpost_store,
+                self.args,
+                lpost,
             )
 
             # 2. sample new values for φ, δ, τ
@@ -128,16 +142,16 @@ class LogPsplineSampler(BaseSampler):
 
 
 def _tune_proposal_distribution(
-        aux: np.array,
-        accept_frac: float,
-        accept_frac_tau,
-        sigma: float,
-        sigma_tau: float,
-        weight: np.array,
-        τ,
-        lpost_store,
-        args,
-        lnpost_fn: Callable,
+    aux: np.array,
+    accept_frac: float,
+    accept_frac_tau,
+    sigma: float,
+    sigma_tau: float,
+    weight: np.array,
+    τ,
+    lpost_store,
+    args,
+    lnpost_fn: Callable,
 ):
     n_weight_columns = len(weight)
 
@@ -167,7 +181,15 @@ def _tune_proposal_distribution(
 
     accept_frac = accept_count / n_weight_columns
     accept_frac_tau = accept_count_tau / n_weight_columns
-    return weight, τ, accept_frac, accept_frac_tau, sigma, sigma_tau, lpost_store  # return updated values
+    return (
+        weight,
+        τ,
+        accept_frac,
+        accept_frac_tau,
+        sigma,
+        sigma_tau,
+        lpost_store,
+    )  # return updated values
 
 
 def _update_tau(sigma, τ, lpost_args, lpost_store, accept_count, lnpost_fn):
@@ -182,5 +204,3 @@ def _update_tau(sigma, τ, lpost_args, lpost_store, accept_count, lnpost_fn):
     if U < np.min([0, lnl_diff]):
         return τ_star, lpost_star, accept_count + 1
     return τ, lpost_store, accept_count
-
-

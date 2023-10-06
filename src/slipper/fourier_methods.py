@@ -49,7 +49,9 @@ def get_fz(x: np.ndarray) -> np.ndarray:
     return FZ / sqrtn
 
 
-def get_periodogram(fz: np.ndarray = None, timeseries: np.ndarray = None) -> np.ndarray:
+def get_periodogram(
+    fz: np.ndarray = None, timeseries: np.ndarray = None
+) -> np.ndarray:
     """
     Function computes the data of fz
     (Assumes fz is already rescaled)

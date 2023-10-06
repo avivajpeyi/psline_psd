@@ -1,14 +1,26 @@
+import matplotlib.pyplot as plt
 import numpy as np
 from bilby.core.prior import Gamma, Prior
-import matplotlib.pyplot as plt
 from scipy.special import gammainc, gammaincinv, gammaln, xlogy
 
 
-
 class InverseGamma(Prior):
-    def __init__(self, alpha, beta, name=None, latex_label=None, unit=None, boundary=None):
-        super(InverseGamma, self).__init__(name=name, minimum=0., latex_label=latex_label,
-                                           unit=unit, boundary=boundary)
+    def __init__(
+        self,
+        alpha,
+        beta,
+        name=None,
+        latex_label=None,
+        unit=None,
+        boundary=None,
+    ):
+        super(InverseGamma, self).__init__(
+            name=name,
+            minimum=0.0,
+            latex_label=latex_label,
+            unit=unit,
+            boundary=boundary,
+        )
         self.alpha = alpha
         self.beta = beta
 
@@ -48,23 +60,34 @@ class InverseGamma(Prior):
             if val < self.minimum:
                 _ln_prob = -np.inf
             else:
-                _ln_prob = xlogy(self.k - 1, val) - val / self.theta - xlogy(self.k, self.theta) - gammaln(self.k)
+                _ln_prob = (
+                    xlogy(self.k - 1, val)
+                    - val / self.theta
+                    - xlogy(self.k, self.theta)
+                    - gammaln(self.k)
+                )
         else:
             _ln_prob = -np.inf * np.ones(val.size)
-            idx = (val >= self.minimum)
-            _ln_prob[idx] = xlogy(self.k - 1, val[idx]) - val[idx] / self.theta \
-                            - xlogy(self.k, self.theta) - gammaln(self.k)
+            idx = val >= self.minimum
+            _ln_prob[idx] = (
+                xlogy(self.k - 1, val[idx])
+                - val[idx] / self.theta
+                - xlogy(self.k, self.theta)
+                - gammaln(self.k)
+            )
         return _ln_prob
 
     def cdf(self, val):
         if isinstance(val, (float, int)):
             if val < self.minimum:
-                _cdf = 0.
+                _cdf = 0.0
             else:
                 _cdf = gammainc(self.k, val / self.theta)
         else:
             _cdf = np.zeros(val.size)
-            _cdf[val >= self.minimum] = gammainc(self.k, val[val >= self.minimum] / self.theta)
+            _cdf[val >= self.minimum] = gammainc(
+                self.k, val[val >= self.minimum] / self.theta
+            )
         return _cdf
 
 
@@ -73,11 +96,25 @@ inv_gamma_samples = 1 / gamma_samples
 dir_inv_gamma_samples = 1 / InverseGamma(k=3, theta=1 / 2).sample(100000)
 fig, ax = plt.subplots(2, 1)
 bins = np.geomspace(0.01, 5, 50)
-ax[0].hist(inv_gamma_samples, bins=bins, density=True, label="Inverse Gamma", histtype="step")
-ax[0].hist(dir_inv_gamma_samples, bins=bins, density=True, label="Direct Inverse Gamma", histtype="step")
+ax[0].hist(
+    inv_gamma_samples,
+    bins=bins,
+    density=True,
+    label="Inverse Gamma",
+    histtype="step",
+)
+ax[0].hist(
+    dir_inv_gamma_samples,
+    bins=bins,
+    density=True,
+    label="Direct Inverse Gamma",
+    histtype="step",
+)
 
 ax[0].set_xscale("log")
 ax[0].legend()
-ax[1].hist(gamma_samples, bins=50, density=True, label="Gamma", histtype="step")
+ax[1].hist(
+    gamma_samples, bins=50, density=True, label="Gamma", histtype="step"
+)
 plt.legend()
 plt.show()

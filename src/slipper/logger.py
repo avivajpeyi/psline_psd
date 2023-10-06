@@ -10,7 +10,11 @@ FMT = f"|{NAME}|{TIME}|" "{level}| <green>{message}</green>"
 
 logger.remove(0)
 logger.configure(
-    handlers=[dict(sink=lambda msg: tqdm.write(msg, end=""), format=FMT, colorize=True)]
+    handlers=[
+        dict(
+            sink=lambda msg: tqdm.write(msg, end=""), format=FMT, colorize=True
+        )
+    ]
 )
 #
 # logger.remove()

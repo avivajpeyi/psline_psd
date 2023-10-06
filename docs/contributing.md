@@ -1,6 +1,6 @@
 # Contributng
 
-How to contribute : 
+How to contribute :
 
 1. Install in developer mode
 
@@ -16,9 +16,8 @@ pre-commit install
 
 3. Make changes and run tests
 
-```bash 
+```bash
 pytest tests
 ```
 
 4. Make a pull request + get it reviewed + merge
-

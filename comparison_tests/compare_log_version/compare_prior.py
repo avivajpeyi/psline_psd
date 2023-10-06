@@ -1,8 +1,8 @@
+import numpy as np
 import rpy2.robjects as robjects
 from rpy2.robjects import numpy2ri
-from slipper.sample.log_pspline_sampler.bayesian_functions import lprior
-import numpy as np
 
+from slipper.sample.log_pspline_sampler.bayesian_functions import lprior
 
 # Load the R function
 r_source = """
@@ -40,10 +40,34 @@ P = np.array([[0.1, 0.2], [0.3, 0.4]])
 P = numpy2ri.numpy2rpy(P)
 
 # Call lprior function
-result = robjects.r['lprior'](k, v, tau, tau_alpha, tau_beta, phi, phi_alpha, phi_beta, delta, delta_alpha, delta_beta, P)
+result = robjects.r["lprior"](
+    k,
+    v,
+    tau,
+    tau_alpha,
+    tau_beta,
+    phi,
+    phi_alpha,
+    phi_beta,
+    delta,
+    delta_alpha,
+    delta_beta,
+    P,
+)
 
 
-py_res = lprior(k, np.array(v), tau, phi, phi_alpha, phi_beta, delta, delta_alpha, delta_beta, np.array(P))
+py_res = lprior(
+    k,
+    np.array(v),
+    tau,
+    phi,
+    phi_alpha,
+    phi_beta,
+    delta,
+    delta_alpha,
+    delta_beta,
+    np.array(P),
+)
 
 # Print the result
 print(result)

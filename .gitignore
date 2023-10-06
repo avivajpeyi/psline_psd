@@ -6,6 +6,7 @@
 *.netcdf
 
 *.gif
+htmlcov
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -131,3 +132,5 @@ test_output
 *gist*
 *.ttf
 /docs/examples/lisa_wd_strain
+
+_version.py

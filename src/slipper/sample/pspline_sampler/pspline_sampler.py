@@ -1,6 +1,10 @@
 import numpy as np
 
-from slipper.sample.base_sampler import BaseSampler, _tune_proposal_distribution, LnlArgs
+from slipper.sample.base_sampler import (
+    BaseSampler,
+    LnlArgs,
+    _tune_proposal_distribution,
+)
 from slipper.splines.initialisation import knot_locator
 from slipper.splines.p_splines import PSplines
 
@@ -13,7 +17,7 @@ class PsplineSampler(BaseSampler):
 
         # init model
         sk = self.spline_kwargs
-        knots = knot_locator(self.data, self.n_basis, **sk)
+        knots = knot_locator(data=self.data, **sk)
         self.spline_model = PSplines(
             knots=knots,
             degree=sk["degree"],
@@ -35,7 +39,9 @@ class PsplineSampler(BaseSampler):
         self.samples["τ"][0] = 1 / (2 * np.pi)
         self.samples["δ"][0] = sk["δα"] / sk["δβ"]
         self.samples["φ"][0] = sk["φα"] / (sk["φβ"] * self.samples["δ"][0])
-        self.samples["V"][0, :] = self.spline_model.guess_initial_v(self.data).ravel()
+        self.samples["V"][0, :] = self.spline_model.guess_initial_v(
+            self.data
+        ).ravel()
         self.samples["proposal_sigma"][0] = 1
         self.samples["acceptance_fraction"][0] = 0.4
         self.samples["lpost_trace"] = np.zeros(self.n_steps)
@@ -73,7 +79,13 @@ class PsplineSampler(BaseSampler):
             lpost_store = lpost(*self.args)
             # 1. explore the parameter space for new V
             V, accept_frac, sigma, lpost_store = _tune_proposal_distribution(
-                aux, accept_frac, sigma, self.args.w, lpost_store, self.args, lpost
+                aux,
+                accept_frac,
+                sigma,
+                self.args.w,
+                lpost_store,
+                self.args,
+                lpost,
             )
 
             # 2. sample new values for φ, δ, τ
@@ -89,5 +101,3 @@ class PsplineSampler(BaseSampler):
         self.samples["acceptance_fraction"][itr] = accept_frac
         self.samples["lpost_trace"][itr] = lpost_store
         # TODO store the LnL, lnprior
-
-

@@ -18,9 +18,19 @@ def test_psd_unroll():
             n=8,
             expected=np.array([1, 1, 2, 2, 3, 3, 4, 4]),
         ),
-        dict(old_list=np.array([1, 2, 3]), n=6, expected=np.array([1, 1, 2, 2, 3, 3])),
-        dict(old_list=np.array([1, 2, 3]), n=5, expected=np.array([1, 1, 2, 2, 3])),
-        dict(old_list=np.array([1, 2, 3]), n=4, expected=np.array([1, 2, 2, 3])),
+        dict(
+            old_list=np.array([1, 2, 3]),
+            n=6,
+            expected=np.array([1, 1, 2, 2, 3, 3]),
+        ),
+        dict(
+            old_list=np.array([1, 2, 3]),
+            n=5,
+            expected=np.array([1, 1, 2, 2, 3]),
+        ),
+        dict(
+            old_list=np.array([1, 2, 3]), n=4, expected=np.array([1, 2, 2, 3])
+        ),
     ]
 
     for test in test_args:
@@ -60,9 +70,15 @@ def test_llike(test_pdgrm, tmpdir):
     sampler = PsplineSampler(data=test_pdgrm)
     sampler._init_mcmc()
 
-    τ, δ, φ = sampler.samples["τ"][0], sampler.samples["δ"][0], sampler.samples["φ"][0]
+    τ, δ, φ = (
+        sampler.samples["τ"][0],
+        sampler.samples["δ"][0],
+        sampler.samples["φ"][0],
+    )
     V = sampler.samples["V"][0]
-    llike_val = llike(v=V, τ=τ, data=test_pdgrm, spline_model=sampler.spline_model)
+    llike_val = llike(
+        v=V, τ=τ, data=test_pdgrm, spline_model=sampler.spline_model
+    )
     assert not np.isnan(llike_val)
 
 

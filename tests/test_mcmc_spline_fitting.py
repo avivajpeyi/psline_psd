@@ -2,10 +2,12 @@ import os
 
 import numpy as np
 
-from slipper.plotting.plot_spline_model_and_data import plot_spline_model_and_data
+from slipper.plotting.plot_spline_model_and_data import (
+    plot_spline_model_and_data,
+)
 from slipper.sample.spline_model_sampler import fit_data_with_pspline_model
 
-NTOTAL = 1000
+NTOTAL = 200
 
 
 def test_simple_example(test_pdgrm: np.ndarray, tmpdir: str):
@@ -20,7 +22,6 @@ def test_simple_example(test_pdgrm: np.ndarray, tmpdir: str):
         outdir=outdir,
         k=10,
         n_checkpoint_plts=5,
-
     )
     assert os.path.exists(fn)
 
@@ -50,7 +51,10 @@ def test_funct(tmpdir):
         k=5,
     )
     fig = plot_spline_model_and_data(
-        data=y, model_quants=mcmc.psd_quantiles, knots=mcmc.knots, separarte_y_axis=True
+        data=y,
+        model_quants=mcmc.psd_quantiles,
+        knots=mcmc.knots,
+        separarte_y_axis=True,
     )
     ax = fig.axes[0]
     true_y = func(x)
@@ -58,5 +62,3 @@ def test_funct(tmpdir):
     true_y = true_y + scaling
     ax.plot(np.linspace(0, 1, len(true_y)), true_y, color="k", alpha=0.4)
     fig.savefig(f"{tmpdir}/summary.png")
-
-

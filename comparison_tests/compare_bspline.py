@@ -8,7 +8,9 @@ knots = np.linspace(0, 1, 5)
 knots_with_boundary = np.r_[[knots[0]] * degree, knots, [knots[-1]] * degree]
 x = np.linspace(0, 1, 50)
 
-scipy_matrix = scipy_BSpline.design_matrix(x, knots_with_boundary, degree).toarray()
+scipy_matrix = scipy_BSpline.design_matrix(
+    x, knots_with_boundary, degree
+).toarray()
 # no need to add boundary knots (they are added automatically)
 fda_basis = BSplineBasis(knots=knots, order=degree + 1)
 fda_matrix = fda_basis.to_basis().to_grid(grid_points=x).data_matrix.squeeze()

@@ -10,8 +10,13 @@ from scipy.signal import savgol_filter
 from tqdm.auto import trange
 
 from slipper.plotting import set_plotting_style
-from slipper.plotting.plot_spline_model_and_data import plot_spline_model_and_data
-from slipper.plotting.utils import convert_axes_spines_to_arrows, hide_axes_spines
+from slipper.plotting.plot_spline_model_and_data import (
+    plot_spline_model_and_data,
+)
+from slipper.plotting.utils import (
+    convert_axes_spines_to_arrows,
+    hide_axes_spines,
+)
 from slipper.sample.spline_model_sampler import fit_data_with_pspline_model
 
 BODY_THRESH = 0.38
@@ -26,7 +31,9 @@ data = [0.0]
 
 
 def download_font():
-    github_url = "https://github.com/google/fonts/blob/main/ofl/zeyada/Zeyada.ttf"
+    github_url = (
+        "https://github.com/google/fonts/blob/main/ofl/zeyada/Zeyada.ttf"
+    )
     url = github_url + "?raw=true"  # You want the actual file, not some html
     response = urlopen(url)
     with open("Zeyada.ttf", "wb") as f:
@@ -76,8 +83,12 @@ def add_fits_from_body(ax, color="tab:green"):
         k=10,
         eqSpaced=False,
     )
-    mcmc1 = fit_data_with_pspline_model(above_region, **kgs, outdir="body_above.png")
-    mcmc2 = fit_data_with_pspline_model(below_region, **kgs, outdir="body_below.png")
+    mcmc1 = fit_data_with_pspline_model(
+        above_region, **kgs, outdir="body_above.png"
+    )
+    mcmc2 = fit_data_with_pspline_model(
+        below_region, **kgs, outdir="body_below.png"
+    )
     for mc in [mcmc1, mcmc2]:
         x = np.linspace(0, 1, len(mc.psd_quantiles[0]))
         # twin axes
@@ -134,7 +145,9 @@ def __gen_qtiles(df, reps=1000):
 
         # Linear length along the line:
         points = df1.values
-        distance = np.cumsum(np.sqrt(np.sum(np.diff(points, axis=0) ** 2, axis=1)))
+        distance = np.cumsum(
+            np.sqrt(np.sum(np.diff(points, axis=0) ** 2, axis=1))
+        )
         distance = np.insert(distance, 0, 0) / distance[-1]
         interpolator = interp1d(distance, points, kind="cubic", axis=0)
         alpha = np.linspace(0, 1, 75)

@@ -8,7 +8,11 @@ from skfda.representation.basis import BSplineBasis
 
 from slipper.plotting.utils import hide_axes_spines
 
-from .utils import convert_v_to_weights, density_mixture, unroll_list_to_new_length
+from .utils import (
+    convert_v_to_weights,
+    density_mixture,
+    unroll_list_to_new_length,
+)
 
 
 class PSplines:
@@ -25,7 +29,12 @@ class PSplines:
     """
 
     def __init__(
-            self, knots: np.array, degree: int, diffMatrixOrder: int = 2, n_grid_points=None, logged=False
+        self,
+        knots: np.array,
+        degree: int,
+        diffMatrixOrder: int = 2,
+        n_grid_points=None,
+        logged=False,
     ):
         """Initialise the PSplines class
 
@@ -53,12 +62,12 @@ class PSplines:
         self.knots: np.array = knots
         self.degree: int = degree
 
-        self.n_grid_points: int = (
-            n_grid_points  # number of points to evaluate the basis functions at
-        )
+        self.n_grid_points: int = n_grid_points  # number of points to evaluate the basis functions at
         self.diffMatrixOrder: int = diffMatrixOrder
         # basically if log-splines, we use all knots for the penalty matrix, otherwise we use all knots except the last one
-        self.penalty_matrix: np.ndarray = self.__generate_penalty_matrix(all_knots=True if logged else False)
+        self.penalty_matrix: np.ndarray = self.__generate_penalty_matrix(
+            all_knots=True if logged else False
+        )
         self.basis: np.ndarray = self.__generate_basis_matrix()
         self.logged = logged
 
@@ -139,9 +148,13 @@ class PSplines:
             # normalize the basis functions
             knots_with_boundary = self.__get_knots_with_boundary()
             n_knots = len(knots_with_boundary)
-            mid_to_end_knots = knots_with_boundary[self.degree + 1:]
-            start_to_mid_knots = knots_with_boundary[: (n_knots - self.degree - 1)]
-            bs_int = (mid_to_end_knots - start_to_mid_knots) / (self.degree + 1)
+            mid_to_end_knots = knots_with_boundary[self.degree + 1 :]
+            start_to_mid_knots = knots_with_boundary[
+                : (n_knots - self.degree - 1)
+            ]
+            bs_int = (mid_to_end_knots - start_to_mid_knots) / (
+                self.degree + 1
+            )
             bs_int[bs_int == 0] = np.inf
             basis_matrix = basis_matrix / bs_int
 
@@ -154,7 +167,9 @@ class PSplines:
 
         return basis_matrix
 
-    def __generate_penalty_matrix(self, epsilon=1e-6, all_knots=False) -> np.ndarray:
+    def __generate_penalty_matrix(
+        self, epsilon=1e-6, all_knots=False
+    ) -> np.ndarray:
         """
         Generate a penalty matrix of any order
         Returns:
@@ -165,13 +180,13 @@ class PSplines:
         if self.are_equidistant_knots:
             # diffMatrix
             """
-              out = diag(k);
+            out = diag(k);
 
-              for(i in 0:diffMatrixOrder-1){
-            
-                out = diff(out);
-            
-              }
+            for(i in 0:diffMatrixOrder-1){
+
+              out = diff(out);
+
+            }
             """
 
             if all_knots:
@@ -199,17 +214,19 @@ class PSplines:
             p = regularization.penalty_matrix(basis)
             p / np.max(p)
 
-        return p + epsilon * np.eye(p.shape[1])  # P^(-1)=Sigma (Covariance matrix)
+        return p + epsilon * np.eye(
+            p.shape[1]
+        )  # P^(-1)=Sigma (Covariance matrix)
 
     @property
     def are_equidistant_knots(self):
         return np.allclose(np.diff(self.knots), np.diff(self.knots)[0])
 
     def __call__(
-            self,
-            weights: np.ndarray = [],
-            v: np.ndarray = [],
-            n: int = None,
+        self,
+        weights: np.ndarray = [],
+        v: np.ndarray = [],
+        n: int = None,
     ) -> np.ndarray:
         """
         Generate a spline model from a vector of spline coefficients and a list of B-spline basis functions
@@ -233,11 +250,11 @@ class PSplines:
         return spline
 
     def plot_basis(
-            self,
-            ax=None,
-            weights=None,
-            basis_kwargs={},
-            spline_kwargs={},
+        self,
+        ax=None,
+        weights=None,
+        basis_kwargs={},
+        spline_kwargs={},
     ):
         """Plot the basis + knots.
 
@@ -320,7 +337,12 @@ class PSplines:
         matrix = self.penalty_matrix
         norm = TwoSlopeNorm(vmin=matrix.min(), vcenter=0, vmax=matrix.max())
         im = ax.pcolor(
-            matrix, ec="tab:gray", lw=0.005, cmap="bwr", norm=norm, antialiased=False
+            matrix,
+            ec="tab:gray",
+            lw=0.005,
+            cmap="bwr",
+            norm=norm,
+            antialiased=False,
         )
         ax.set_aspect("equal")
         ax.set_xlabel("Basis element")

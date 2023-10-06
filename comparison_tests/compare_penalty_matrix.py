@@ -37,7 +37,9 @@ def get_r_penalty_matrix(k, degree, diffMatrixOrder, knots):
 
 def get_py_penalty_matrix(k, degree, diffMatrixOrder, knots):
     # knots = np.linspace(0, 1, k - degree)
-    basis = skfda.representation.basis.BSplineBasis(knots=knots, order=degree + 1)
+    basis = skfda.representation.basis.BSplineBasis(
+        knots=knots, order=degree + 1
+    )
     basis.plot()
     plt.gcf().suptitle(f"Num basis = {len(basis)}")
     plt.savefig("python_basisobj.png")
@@ -51,7 +53,7 @@ def test_penalty_matrix():
     k = 10
     degree = 3
     diffMatrixOrder = 1
-    knots = sorted(np.random.uniform(0, 1, k - degree-1))
+    knots = sorted(np.random.uniform(0, 1, k - degree - 1))
     # prepend and postpend boundary knots
     knots = np.r_[0, knots, 1]
     print(knots)
@@ -63,7 +65,12 @@ def test_penalty_matrix():
         ax[i].set_title(label)
         norm = TwoSlopeNorm(vmin=matrix.min(), vcenter=0, vmax=matrix.max())
         im = ax[i].pcolor(
-            matrix, ec="tab:gray", lw=0.005, cmap="bwr", norm=norm, antialiased=False
+            matrix,
+            ec="tab:gray",
+            lw=0.005,
+            cmap="bwr",
+            norm=norm,
+            antialiased=False,
         )
         fig.colorbar(im, ax=ax[i], orientation="horizontal")
     plt.tight_layout()

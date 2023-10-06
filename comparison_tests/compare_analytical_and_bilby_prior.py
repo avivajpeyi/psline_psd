@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from bilby.core.prior import ConditionalPriorDict, Gamma, ConditionalGamma
+from bilby.core.prior import ConditionalGamma, ConditionalPriorDict, Gamma
+
 
 def _vPv(v, P):
     return np.dot(np.dot(v.T, P), v)
@@ -20,6 +21,7 @@ def lprior(k, v, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, P):
     lnpri_τ = -(τα + 1) * logτ - τβ / τ
     log_prior = lnpri_weights + lnpri_φ + lnpri_δ + lnpri_τ
     return log_prior
+
 
 def lprior2(k, v, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, P):
     # TODO: Move to using bilby priors
@@ -71,7 +73,6 @@ def inv_τ_prior(v, data, spline_model, τα, τβ):
     return Gamma(k=shape, theta=1 / rate)
 
 
-
 def plot_pri_samples(p):
     plt.hist(p.sample(1000), bins=50)
 
@@ -83,8 +84,6 @@ def sample_φδτ(k, v, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, data, sp
     return φ, δ, τ
 
 
-
-
 def delta_conditional():
     pass
 
@@ -92,31 +91,45 @@ def delta_conditional():
 def SplinePrior(k, v, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, data, spline_model):
     def delta_conditional(reference_params, φ):
         rate = φβ * φ + δβ
-        return dict(
-            k=reference_params['shape'],
-            theta=1/rate
+        return dict(k=reference_params["shape"], theta=1 / rate)
+
+    return ConditionalPriorDict(
+        dict(
+            φ=φ_prior(k, v, spline_model.penalty_matrix, φα, φβ, δ),
+            δ=ConditionalGamma(
+                k=φα + δα,
+                theta=1 / (φβ * φ + δβ),
+                condition_func=delta_conditional,
+            ),
+            τ=ConditionalGamma(),
         )
-
-    return ConditionalPriorDict(dict(
-        φ=φ_prior(k, v, spline_model.penalty_matrix, φα, φβ, δ),
-        δ=ConditionalGamma(k=φα + δα, theta=1/(φβ * φ + δβ), condition_func=delta_conditional),
-        τ=ConditionalGamma(),
-    ))
+    )
 
 
-from slipper.splines.p_splines import PSplines
 from slipper.example_datasets.ar_data import get_ar_periodogram
+from slipper.splines.p_splines import PSplines
 
-
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     np.random.seed(0)
     k = 10
-    spline_model = PSplines(knots=np.linspace(0,1,k), degree=3, diffMatrixOrder=2, logged=False)
+    spline_model = PSplines(
+        knots=np.linspace(0, 1, k), degree=3, diffMatrixOrder=2, logged=False
+    )
     data = get_ar_periodogram(order=4)
     v = spline_model.guess_initial_v(data)
-    kwargs = dict(k=k, v=v, τ=1, τα=1, τβ=1, φ=1, φα=1, φβ=1, δ=1, δα=1, δβ=1,  )
+    kwargs = dict(
+        k=k,
+        v=v,
+        τ=1,
+        τα=1,
+        τβ=1,
+        φ=1,
+        φα=1,
+        φβ=1,
+        δ=1,
+        δα=1,
+        δβ=1,
+    )
     sample = sample_φδτ(**kwargs, data=data, spline_model=spline_model)
     ln_prior = lprior(**kwargs, P=spline_model.penalty_matrix)
     # print(sample)
