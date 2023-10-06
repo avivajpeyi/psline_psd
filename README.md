@@ -28,3 +28,10 @@ pre-commit install
 ```
 
 Push to branches -- ensure the workflow passes, and then merge to main.
+
+
+To make a release:
+```bash
+git tag -a vX.Y.Z -m "Version X.Y.Z release: <description>"
+git push origin --tags
+```
