@@ -33,6 +33,7 @@ dependencies = [
     "pygifsicle",
     "bilby",
     "statsmodels",
+    "loguru"
 ]
 
 [project.optional-dependencies]
