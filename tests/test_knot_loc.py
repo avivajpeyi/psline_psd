@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from slipper.example_datasets.ar_data import get_ar_periodogram
-from slipper.splines.initialisation import knot_locator
+from slipper.splines.knot_locator import KnotLocatorType, knot_locator
 
 
 def test_binned_knots(tmpdir):
@@ -11,11 +11,13 @@ def test_binned_knots(tmpdir):
     data_bin_weights = [0.5, 0.05, 0.5, 0.005]
 
     knot_locations = knot_locator(
+        knot_locator_type=KnotLocatorType.binned_knots,
         data=pdgrm,
-        k=30,
+        n_knots=30,
         degree=3,
         data_bin_edges=data_bin_edges,
         data_bin_weights=data_bin_weights,
+        log_data=True,
     )
 
     x = np.linspace(0, 1, len(pdgrm))

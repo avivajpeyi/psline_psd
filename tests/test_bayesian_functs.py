@@ -67,7 +67,7 @@ def test_lprior():
 
 
 def test_llike(test_pdgrm, tmpdir):
-    sampler = PsplineSampler(data=test_pdgrm)
+    sampler = PsplineSampler(data=test_pdgrm, spline_kwargs=dict())
     sampler._init_mcmc()
 
     τ, δ, φ = (

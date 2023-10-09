@@ -227,7 +227,7 @@ class BaseSampler(ABC):
             k=min(round(len(self.data) / 4), 40),
             degree=3,
             diffMatrixOrder=2,
-            knot_type=KnotLocatorType.linearly_spaced,
+            knot_locator_type=KnotLocatorType.linearly_spaced,
             logged=False,
         )
 
