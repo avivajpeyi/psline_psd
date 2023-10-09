@@ -36,10 +36,14 @@ def plot_metadata(
     gs = plt.GridSpec(n_rows, 2, figure=fig)
     row_num = 0
     for i, p in enumerate(posterior.columns):
-        ax_trace = fig.add_subplot(gs[i, 0])
-        ax_hist = fig.add_subplot(gs[i, 1])
+        param_post = posterior[p]
+        if len(np.unique(param_post)) < 2:
+            continue
+
+        ax_trace = fig.add_subplot(gs[row_num, 0])
+        ax_hist = fig.add_subplot(gs[row_num, 1])
         __plot_trace_and_hist(
-            posterior[p],
+            param_post,
             LABELS[p],
             ax_trace,
             ax_hist,

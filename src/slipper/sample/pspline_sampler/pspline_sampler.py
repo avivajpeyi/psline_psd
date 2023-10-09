@@ -2,11 +2,10 @@ import numpy as np
 
 from slipper.sample.base_sampler import (
     BaseSampler,
-    LnlArgs,
     _tune_proposal_distribution,
 )
 
-from .bayesian_functions import lpost, sample_φδτ
+from .bayesian_functions import LnlArgs, lpost, sample_φδτ
 
 
 class PsplineSampler(BaseSampler):
@@ -33,7 +32,6 @@ class PsplineSampler(BaseSampler):
         self.samples["acceptance_fraction"][0] = 0.4
         self.samples["lpost_trace"] = np.zeros(self.n_steps)
         self.args = LnlArgs(
-            n_basis=self.n_basis,
             w=self.samples["V"][0],
             τ=self.samples["τ"][0],
             τα=self.sampler_kwargs["τα"],
@@ -62,8 +60,10 @@ class PsplineSampler(BaseSampler):
             δ=self.samples["δ"][itr - 1],
         )
 
+        # the values that will be updated
+        τ, φ, δ, V, lpost_store = None, None, None, None, None
         for _ in range(self.thin):
-            lpost_store = lpost(*self.args)
+            lpost_store = lpost(self.args)
             # 1. explore the parameter space for new V
             V, accept_frac, sigma, lpost_store = _tune_proposal_distribution(
                 aux,
@@ -76,7 +76,7 @@ class PsplineSampler(BaseSampler):
             )
 
             # 2. sample new values for φ, δ, τ
-            φ, δ, τ = sample_φδτ(*self.args)
+            φ, δ, τ = sample_φδτ(self.args)
             self.args = self.args._replace(w=V, τ=τ, φ=φ, δ=δ)
 
         # 3. store the new values
@@ -87,4 +87,3 @@ class PsplineSampler(BaseSampler):
         self.samples["proposal_sigma"][itr] = sigma
         self.samples["acceptance_fraction"][itr] = accept_frac
         self.samples["lpost_trace"][itr] = lpost_store
-        # TODO store the LnL, lnprior

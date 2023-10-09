@@ -5,23 +5,7 @@ import numpy as np
 
 from slipper.sample.base_sampler import BaseSampler, _update_weights
 
-from .bayesian_functions import lpost, sample_φδ
-
-LnlArgs = namedtuple(
-    "LnlArgs",
-    [
-        "n_basis",
-        "w",
-        "φ",
-        "φα",
-        "φβ",
-        "δ",
-        "δα",
-        "δβ",
-        "data",
-        "spline_model",
-    ],
-)
+from .bayesian_functions import LnlArgs, lpost, sample_φδ
 
 
 class LogPsplineSampler(BaseSampler):
@@ -48,7 +32,6 @@ class LogPsplineSampler(BaseSampler):
         self.samples["lpost_trace"] = np.zeros(self.n_steps)
 
         self.args = LnlArgs(
-            n_basis=self.n_basis,
             w=self.samples["w"][0],
             φ=self.samples["φ"][0],
             φα=self.sampler_kwargs["φα"],
@@ -76,7 +59,7 @@ class LogPsplineSampler(BaseSampler):
         # the values that will be updated
         φ, δ, w, lpost_store = None, None, None, None
         for _ in range(self.thin):
-            lpost_store = lpost(*self.args)
+            lpost_store = lpost(self.args)
             # 1. explore the parameter space for new V
             (
                 w,
@@ -94,7 +77,7 @@ class LogPsplineSampler(BaseSampler):
             )
 
             # 2. sample new values for φ, δ, τ
-            φ, δ = sample_φδ(*self.args)
+            φ, δ = sample_φδ(self.args)
             self.args = self.args._replace(w=w, φ=φ, δ=δ)
 
         # 3. store the new values

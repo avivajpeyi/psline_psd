@@ -1,13 +1,41 @@
+from collections import namedtuple
+
 import numpy as np
 from bilby.core.prior import ConditionalGamma, ConditionalPriorDict, Gamma
 from scipy.stats import gamma, norm
+
+LnlArgs = namedtuple(
+    "LnlArgs",
+    [
+        "w",
+        "φ",
+        "φα",
+        "φβ",
+        "δ",
+        "δα",
+        "δβ",
+        "data",
+        "spline_model",
+    ],
+)
 
 
 def _wPw(w, P):
     return np.dot(np.dot(w.T, P), w)
 
 
-def lprior(k, w, φ, φα, φβ, δ, δα, δβ, P):
+def lprior(args: LnlArgs):
+    φα, φβ, δα, δβ = (
+        args.φα,
+        args.φβ,
+        args.δα,
+        args.δβ,
+    )
+    φ, δ = args.φ, args.δ
+    P = args.spline_model.penalty_matrix
+    k = args.spline_model.n_basis
+    w = args.w
+
     wTPw = _wPw(w, P)
     log_prior = k * 0.5 * np.log(φ) - 0.5 * φ * wTPw
     log_prior += gamma.logpdf(φ, a=φα, scale=1 / (δ * φβ))
@@ -29,7 +57,17 @@ def δ_prior(φ, φα, φβ, δα, δβ):
     return Gamma(k=shape, theta=1 / rate)
 
 
-def sample_φδ(k, w, φα, φβ, δ, δα, δβ, data, spline_model):
+def sample_φδ(args: LnlArgs):
+    w, φα, φβ, δα, δβ, δ, spline_model = (
+        args.w,
+        args.φα,
+        args.φβ,
+        args.δα,
+        args.δβ,
+        args.δ,
+        args.spline_model,
+    )
+    k = spline_model.n_basis
     φ = φ_prior(k, w, spline_model.penalty_matrix, φα, φβ, δ).sample().flat[0]
     δ = δ_prior(φ, φα, φβ, δα, δβ).sample().flat[0]
     return φ, δ
@@ -59,9 +97,10 @@ def llike(w, data, spline_model):
     return lnlike
 
 
-def lpost(k, w, φ, φα, φβ, δ, δα, δβ, data, psline_model):
-    logprior = lprior(k, w, φ, φα, φβ, δ, δα, δβ, psline_model.penalty_matrix)
-    loglike = llike(w, data, psline_model)
+def lpost(args: LnlArgs):
+    w, data, spline_model = args.w, args.data, args.spline_model
+    logprior = lprior(args)
+    loglike = llike(w, data, spline_model)
     logpost = logprior + loglike
     if not np.isfinite(logpost):
         raise ValueError(

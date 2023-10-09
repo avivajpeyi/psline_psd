@@ -275,8 +275,8 @@ class Result:
         post = self.idata.posterior.sel(draws=slice(start, end))
         tau_samples = post.tau.values
         weight_samples = post.weight.values
-        # get rows where tau is not 0
-        plot_idx = np.where(tau_samples != 0)[0]
+        # get rows where posterior is non-zero
+        plot_idx = np.where(post.phi.values != 0)[0]
         tau_samples = tau_samples[plot_idx]
         weight_samples = weight_samples[plot_idx]
         return generate_spline_quantiles(

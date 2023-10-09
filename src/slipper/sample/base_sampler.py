@@ -15,25 +15,6 @@ from slipper.splines.p_splines import PSplines
 
 from ..logger import logger
 
-LnlArgs = namedtuple(
-    "LnlArgs",
-    [
-        "n_basis",
-        "w",
-        "τ",
-        "τα",
-        "τβ",
-        "φ",
-        "φα",
-        "φβ",
-        "δ",
-        "δα",
-        "δβ",
-        "data",
-        "spline_model",
-    ],
-)
-
 
 class BaseSampler(ABC):
     def __init__(
@@ -51,7 +32,7 @@ class BaseSampler(ABC):
 
         assert (self.n_steps - self.burnin) / self.thin > self.n_basis
         self.samples = None
-        self.args: LnlArgs = None
+        self.args: namedtuple = None
 
         self.spline_model = PSplines.from_kwarg_dict(self.spline_kwargs)
 
@@ -150,21 +131,24 @@ class BaseSampler(ABC):
         )
 
     def _compile_sampling_result(self):
-        idx = np.where(self.samples["τ"] != 0)[0]
+        idx = np.where(self.samples["φ"] != 0)[0]
         if "V" in self.samples:
             weights = self.samples["V"][idx]
         elif "w" in self.samples:
             weights = self.samples["w"][idx]
         else:
             raise ValueError("No weights found")
+
+        post_samps = np.array(
+            [
+                self.samples["φ"][idx],
+                self.samples["δ"][idx],
+                self.samples.get("τ", np.zeros(len(idx)))[idx],
+            ]
+        )
+
         self.result = Result.compile_idata_from_sampling_results(
-            posterior_samples=np.array(
-                [
-                    self.samples["φ"][idx],
-                    self.samples["δ"][idx],
-                    self.samples["τ"][idx],
-                ]
-            ),
+            posterior_samples=post_samps,
             lpost_trace=self.samples["lpost_trace"][idx],
             frac_accept=self.samples["acceptance_fraction"][idx],
             weight_samples=weights,
@@ -269,7 +253,7 @@ def _tune_proposal_distribution(
     sigma: float,
     weight: np.array,
     lpost_store: float,
-    args: LnlArgs,
+    args: namedtuple,
     lnpost_fn: Callable,
 ):
     n_weight_columns = len(weight)
@@ -307,8 +291,8 @@ def _update_weights(
 
     # Compute LnL using new value
     weight_star = weight + sigma * Z
-    lpost_args[1][widx] = weight_star  # update V_star
-    lpost_star = lpost_fn(*lpost_args)
+    lpost_args.w[widx] = weight_star  # update V_star
+    lpost_star = lpost_fn(lpost_args)
 
     # Return new value if accepted
     lnl_diff = (lpost_star - lpost_store).ravel()[0]
