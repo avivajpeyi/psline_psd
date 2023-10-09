@@ -93,6 +93,7 @@ def llike(w, data, spline_model):
     )
     lnlike = -np.sum(integrand) / 2
     if not np.isfinite(lnlike):
+        __plot_error_plt(data, _spline, spline_model.knots, integrand)
         raise ValueError(f"lnlike is not finite: {lnlike}")
     return lnlike
 
@@ -107,3 +108,56 @@ def lpost(args: LnlArgs):
             f"logpost is not finite: lnpri{logprior}, lnlike{loglike}, lnpost{logpost}"
         )
     return logpost
+
+
+def __plot_error_plt(data, spline, knots, integrand):
+    import matplotlib.pyplot as plt
+
+    # normalize data and spline
+    data = data / np.max(data)
+    spline = spline / np.max(spline)
+
+    fig, axes = plt.subplots(3, 1, figsize=(5, 8))
+
+    for k in knots:
+        axes[0].axvline(k, color="k", linestyle="--", alpha=0.2)
+        axes[1].axvline(k, color="k", linestyle="--", alpha=0.2)
+
+    ax = axes[0]
+    x_data = np.linspace(0, 1, len(data))
+    x_model = np.linspace(0, 1, len(spline))
+    ax.loglog(x_data, data, label="data")
+    ax.loglog(x_model, spline, label="spline")
+    ax.set_ylabel("PSD/PSDmax")
+    ax.legend()
+
+    ax = axes[1]
+    ax.plot(x_data, data, label="data")
+    ax.plot(x_model, spline, label="spline")
+    ax.set_ylabel("PSD/PSDmax")
+    ax.legend()
+
+    ax = axes[2]
+
+    integrand_x = np.linspace(0, 1, len(integrand))
+    ax.loglog(integrand_x, integrand, label="integrand")
+    # scatter red lines whereever nans
+    nan_xvals = integrand_x[~np.isfinite(integrand)]
+    yl = ax.get_ylim()
+    ax.vlines(
+        nan_xvals,
+        ymin=min(yl),
+        ymax=max(yl),
+        color="r",
+        linestyle="-",
+        lw=5,
+        alpha=1,
+    )
+    ax.legend()
+
+    ax.set_ylabel("integrand")
+
+    plt.tight_layout()
+    plt.savefig("error.png")
+
+    return fig

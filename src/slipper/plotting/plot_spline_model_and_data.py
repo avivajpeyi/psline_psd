@@ -18,17 +18,21 @@ def plot_spline_model_and_data(
     colors=dict(Data="black", Splines="tab:orange", Knots="tab:red"),
     add_legend=False,
     logged_axes=False,
-) -> plt.Axes:
+    hide_axes=True,
+) -> plt.Figure:
     # prepare axes + figure
     if ax is None:
         fig, ax = plt.subplots(1, 1, figsize=(4, 3))
     ax.grid(False)
     ax_model = ax.twinx() if separarte_y_axis else ax
-    hide_axes_spines(ax_model)
-    if x is None:
-        ax.set_yticks([])
-        ax.set_xticks([])
-        convert_axes_spines_to_arrows(ax)
+
+    if hide_axes:
+        hide_axes_spines(ax_model)
+
+        if x is None:
+            ax.set_yticks([])
+            ax.set_xticks([])
+            convert_axes_spines_to_arrows(ax)
 
     ax_knots = ax.twinx() if len(knots) > 0 else None
 
@@ -70,9 +74,12 @@ def plot_spline_model_and_data(
     if logged_axes:
         ax_model.set_yscale("log")
         ax.set_yscale("log")
+        ax.set_xscale("log")
+
         # turn off y axes for log scale
-        ax.get_yaxis().set_visible(False)
-        ax_model.get_yaxis().set_visible(False)
+        if hide_axes:
+            ax.get_yaxis().set_visible(False)
+            ax_model.get_yaxis().set_visible(False)
 
     if add_legend:
         for label, color in colors.items():

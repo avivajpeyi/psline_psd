@@ -11,6 +11,9 @@ class KnotLocatorType(enum.Enum):
     data_peak = "data_peak"
     binned_knots = "binned_knots"
 
+    def __repr__(self):
+        return f"{self.name}"
+
     @classmethod
     def is_valid_type(cls, val):
         if isinstance(val, cls):

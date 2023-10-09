@@ -26,19 +26,19 @@ def __download_file(url, filename):
             shutil.copyfileobj(response, outfile)
 
 
-def __load_data(url, fname):
+def __load_data(url, fname) -> np.ndarray:
     if not os.path.exists(fname):
         __download_file(url, fname)
     return np.loadtxt(fname)
 
 
-def lisa_noise_periodogram():
+def lisa_noise_periodogram() -> np.ndarray:
     """Download the noise periodogram data from the LISA Data Challenge."""
     return __load_data(
         NOISE_PDGRM, os.path.join(DIR, "lisa_noise_periodogram.txt")
     )
 
 
-def lisa_wd_strain():
+def lisa_wd_strain() -> np.ndarray:
     """Download the white dwarf strain data from the LISA Data Challenge."""
     return __load_data(WD_TIME_SERIES, os.path.join(DIR, "lisa_wd_strain.txt"))

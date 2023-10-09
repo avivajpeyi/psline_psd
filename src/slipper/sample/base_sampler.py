@@ -70,7 +70,7 @@ class BaseSampler(ABC):
         fig.savefig(f"{self.outdir}/{label}_spline.png")
 
     def run(self, verbose: bool = True):
-        sk = self.sampler_kwargs.copy()
+        sk = self.spline_kwargs.copy()
         sk["data"] = f"[{len(self.data)} points]"
         msg = f"Running sampler with the following arguments:\n"
         msg += f"Sampler arguments:\n{pformat(self.sampler_kwargs)}\n"
