@@ -5,7 +5,7 @@ import numpy as np
 from slipper.plotting.plot_spline_model_and_data import (
     plot_spline_model_and_data,
 )
-from slipper.sample.spline_model_sampler import fit_data_with_pspline_model
+from slipper.sample import PsplineSampler
 
 NTOTAL = 200
 
@@ -14,14 +14,15 @@ def test_simple_example(test_pdgrm: np.ndarray, tmpdir: str):
     np.random.seed(0)
     outdir = f"{tmpdir}/simple_example"
     fn = f"{outdir}/summary.png"
-    fit_data_with_pspline_model(
+    PsplineSampler.fit(
         data=test_pdgrm,
-        Ntotal=NTOTAL,
-        degree=3,
-        eqSpaced=False,
         outdir=outdir,
-        k=10,
-        n_checkpoint_plts=5,
+        sampler_kwargs=dict(Ntotal=NTOTAL, n_checkpoint_plts=5),
+        spline_kwargs=dict(
+            degree=3,
+            k=10,
+            knot_locator_type="data_peak",
+        ),
     )
     assert os.path.exists(fn)
 
