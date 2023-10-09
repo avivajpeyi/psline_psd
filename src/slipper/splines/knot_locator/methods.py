@@ -6,7 +6,7 @@ from scipy.interpolate import interp1d
 
 
 class KnotLocatorType(enum.Enum):
-    linearly_spaced = "linear"
+    linearly_spaced = "linearly_spaced"
     log_spaced = "log_spaced"
     data_peak = "data_peak"
     binned_knots = "binned_knots"
@@ -37,8 +37,8 @@ def linearly_spaced_knots(n_knots: int) -> np.ndarray:
     return np.linspace(0, 1, n_knots)
 
 
-def log_spaced_knots(n_knots: int) -> np.ndarray:
-    return np.geomspace(0, 1, n_knots)
+def log_spaced_knots(n_knots: int, min_val: float) -> np.ndarray:
+    return np.geomspace(min_val, 1, n_knots)
 
 
 def data_peak_knots(data: np.ndarray, n_knots: int) -> np.ndarray:
