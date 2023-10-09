@@ -5,8 +5,6 @@ from slipper.sample.base_sampler import (
     LnlArgs,
     _tune_proposal_distribution,
 )
-from slipper.splines.initialisation import knot_locator
-from slipper.splines.p_splines import PSplines
 
 from .bayesian_functions import lpost, sample_φδτ
 
@@ -15,17 +13,6 @@ class PsplineSampler(BaseSampler):
     def _init_mcmc(self) -> None:
         """Initialises the self.samples with the itial values of the MCMC"""
 
-        # init model
-        sk = self.spline_kwargs
-        knots = knot_locator(data=self.data, **sk)
-        self.spline_model = PSplines(
-            knots=knots,
-            degree=sk["degree"],
-            diffMatrixOrder=sk["diffMatrixOrder"],
-            logged=False,
-        )
-
-        # init samples
         self.samples = dict(
             V=np.zeros((self.n_steps, self.n_basis - 1)),
             φ=np.zeros(self.n_steps),

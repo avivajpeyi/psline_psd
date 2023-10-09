@@ -4,8 +4,6 @@ from typing import Callable
 import numpy as np
 
 from slipper.sample.base_sampler import BaseSampler, _update_weights
-from slipper.splines import knot_locator
-from slipper.splines.p_splines import PSplines
 
 from .bayesian_functions import lpost, sample_φδ
 
@@ -30,17 +28,6 @@ class LogPsplineSampler(BaseSampler):
     def _init_mcmc(self) -> None:
         """Initialises the self.samples with the itial values of the MCMC"""
 
-        # init spline model
-        sk = self.spline_kwargs
-        knots = knot_locator(data=self.data, **sk)
-        self.spline_model = PSplines(
-            knots=knots,
-            degree=sk["degree"],
-            diffMatrixOrder=sk["diffMatrixOrder"],
-            logged=True,
-        )
-
-        # init samples
         self.samples = dict(
             w=np.zeros((self.n_steps, self.n_basis)),
             φ=np.zeros(self.n_steps),
@@ -48,8 +35,6 @@ class LogPsplineSampler(BaseSampler):
             # proposal values
             proposal_sigma=np.zeros(self.n_steps),
             acceptance_fraction=np.zeros(self.n_steps),
-            sigma_tau=np.zeros(self.n_steps),
-            acceptance_fraction_tau=np.zeros(self.n_steps),
         )
 
         sk = self.sampler_kwargs
@@ -88,6 +73,8 @@ class LogPsplineSampler(BaseSampler):
             δ=self.samples["δ"][itr - 1],
         )
 
+        # the values that will be updated
+        φ, δ, w, lpost_store = None, None, None, None
         for _ in range(self.thin):
             lpost_store = lpost(*self.args)
             # 1. explore the parameter space for new V
@@ -117,6 +104,11 @@ class LogPsplineSampler(BaseSampler):
         self.samples["proposal_sigma"][itr] = sigma
         self.samples["acceptance_fraction"][itr] = accept_frac
         self.samples["lpost_trace"][itr] = lpost_store
+
+    def _default_spline_kwargs(self):
+        _kwargs = super()._default_spline_kwargs()
+        _kwargs["logged"] = True
+        return _kwargs
 
 
 def _tune_proposal_distribution(

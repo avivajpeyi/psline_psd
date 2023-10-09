@@ -8,6 +8,7 @@ from skfda.representation.basis import BSplineBasis
 
 from slipper.plotting.utils import hide_axes_spines
 
+from .knot_locator import knot_locator
 from .utils import (
     convert_v_to_weights,
     density_mixture,
@@ -71,10 +72,18 @@ class PSplines:
         self.basis: np.ndarray = self.__generate_basis_matrix()
         self.logged = logged
 
+    @classmethod
+    def from_kwarg_dict(cls, kwargs):
+        return cls(
+            knots=knot_locator(**kwargs),
+            degree=kwargs["degree"],
+            diffMatrixOrder=kwargs["diffMatrixOrder"],
+            logged=kwargs["logged"],
+        )
+
     def __str__(self):
         str = f"PSplines(n_basis={self.n_basis}, n_knots={self.n_knots}, degree={self.degree})"
-        if self.logged:
-            str = f"logged {str}"
+        str = f"log{str}" if self.logged else str
         return str
 
     def __repr__(self):
@@ -91,7 +100,7 @@ class PSplines:
         self._n_grid_points = n_grid_points
 
     @property
-    def n_knots(self):
+    def n_knots(self) -> int:
         n = len(self.knots)
         # assert n >= self.degree + 2, "k must be at least degree + 2"
         return n

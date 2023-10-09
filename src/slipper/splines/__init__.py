@@ -1,2 +1,2 @@
-from .initialisation import _get_initial_spline_data
+from .knot_locator import knot_locator
 from .utils import build_spline_model

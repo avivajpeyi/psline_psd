@@ -3,14 +3,14 @@ import time
 from abc import ABC, abstractmethod
 from collections import namedtuple
 from pprint import pformat
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, Optional, Union
 
 import numpy as np
 from tqdm.auto import trange
 
-from slipper.plotting import plot_spline_model_and_data
 from slipper.plotting.gif_creator import create_gif
 from slipper.sample.sampling_result import Result
+from slipper.splines.knot_locator import KnotLocatorType
 from slipper.splines.p_splines import PSplines
 
 from ..logger import logger
@@ -50,9 +50,23 @@ class BaseSampler(ABC):
         self.spline_kwargs = spline_kwargs
 
         assert (self.n_steps - self.burnin) / self.thin > self.n_basis
-        self.spline_model: PSplines = None
         self.samples = None
         self.args: LnlArgs = None
+
+        self.spline_model = PSplines.from_kwarg_dict(self.spline_kwargs)
+
+    @classmethod
+    def fit(
+        cls, data, outdir=".", sampler_kwargs={}, spline_kwargs={}
+    ) -> Result:
+        sampler = cls(
+            data=data,
+            outdir=outdir,
+            sampler_kwargs=sampler_kwargs,
+            spline_kwargs=spline_kwargs,
+        )
+        sampler.run()
+        return sampler.result
 
     def __check_to_make_chkpt_plt(self, step_num) -> bool:
         n_plts = self.sampler_kwargs["n_checkpoint_plts"]
@@ -75,9 +89,11 @@ class BaseSampler(ABC):
         fig.savefig(f"{self.outdir}/{label}_spline.png")
 
     def run(self, verbose: bool = True):
+        sk = self.sampler_kwargs.copy()
+        sk["data"] = f"[{len(self.data)} points]"
         msg = f"Running sampler with the following arguments:\n"
         msg += f"Sampler arguments:\n{pformat(self.sampler_kwargs)}\n"
-        msg += f"Spline arguments:\n{pformat(self.spline_kwargs)}\n"
+        msg += f"Spline arguments:\n{pformat(sk)}\n"
         logger.info(msg)
 
         self.t0 = time.process_time()
@@ -180,16 +196,6 @@ class BaseSampler(ABC):
                 "Checkpoint plotting is enabled. This will slow down the sampling process."
             )
 
-    @property
-    def spline_kwargs(self):
-        return self._spline_kwargs
-
-    @spline_kwargs.setter
-    def spline_kwargs(self, kwargs):
-        kwgs = self._default_spline_kwargs()
-        kwgs.update(kwargs)
-        self._spline_kwargs = kwgs
-
     def _default_sampler_kwargs(self):
         return dict(
             Ntotal=500,
@@ -204,12 +210,25 @@ class BaseSampler(ABC):
             n_checkpoint_plts=0,
         )
 
+    @property
+    def spline_kwargs(self):
+        return self._spline_kwargs
+
+    @spline_kwargs.setter
+    def spline_kwargs(self, kwargs: Dict):
+        kwgs = self._default_spline_kwargs()
+        kwgs.update(kwargs)
+        kwgs["n_knots"] = kwgs["k"] - kwgs["degree"] + 1
+        kwgs["data"] = self.data
+        self._spline_kwargs = kwgs
+
     def _default_spline_kwargs(self):
         return dict(
             k=min(round(len(self.data) / 4), 40),
-            eqSpaced=False,
             degree=3,
             diffMatrixOrder=2,
+            knot_type=KnotLocatorType.linearly_spaced,
+            logged=False,
         )
 
     @property
@@ -227,6 +246,12 @@ class BaseSampler(ABC):
     @property
     def burnin(self):
         return self.sampler_kwargs["burnin"]
+
+    def __str__(self):
+        return self.__repr__()
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.sampler_kwargs}, {self.spline_model})"
 
 
 def _mkdir(d):

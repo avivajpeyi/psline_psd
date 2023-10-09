@@ -7,8 +7,6 @@ def _vPv(v, P):
 
 
 def lprior(k, v, τ, τα, τβ, φ, φα, φβ, δ, δα, δβ, P):
-    # TODO: Move to using bilby priors
-
     vTPv = _vPv(v, P)
     logφ = np.log(φ)
     logδ = np.log(δ)
