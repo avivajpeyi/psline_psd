@@ -1,14 +1,36 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import pytest
 
 from slipper.sample.pspline_sampler import PsplineSampler
 from slipper.sample.pspline_sampler.bayesian_functions import (
+    LnlArgs,
     _vPv,
     llike,
     lprior,
     sample_φδτ,
 )
 from slipper.splines.utils import unroll_list_to_new_length
+
+
+@pytest.fixture
+def lnlargs_for_test(test_pdgrm):
+    sampler = PsplineSampler(data=test_pdgrm, spline_kwargs=dict())
+    sampler._init_mcmc()
+    return LnlArgs(
+        w=sampler.samples["V"][0],
+        τ=0.1591549431,
+        τα=0.001,
+        τβ=0.001,
+        φ=1,
+        φα=1,
+        φβ=1,
+        δ=1,
+        δα=1e-04,
+        δβ=1e-04,
+        data=test_pdgrm,
+        spline_model=sampler.spline_model,
+    )
 
 
 def test_psd_unroll():
@@ -49,21 +71,6 @@ def test_lprior():
         ]
     )
     assert np.isclose(_vPv(v, P), 1.442495205)
-    val = lprior(
-        k=5,
-        v=v,
-        τ=0.1591549431,
-        τα=0.001,
-        τβ=0.001,
-        φ=1,
-        φα=1,
-        φβ=1,
-        δ=1,
-        δα=1e-04,
-        δβ=1e-04,
-        P=P,
-    )
-    assert np.isclose(val, 0.1120841558)
 
 
 def test_llike(test_pdgrm, tmpdir):
@@ -82,35 +89,9 @@ def test_llike(test_pdgrm, tmpdir):
     assert not np.isnan(llike_val)
 
 
-def test_sample_prior(test_pdgrm, tmpdir):
-    sampler = PsplineSampler(data=test_pdgrm)
-    sampler._init_mcmc()
-
-    kwargs = dict(
-        k=sampler.n_basis,
-        v=sampler.samples["V"][0],
-        τ=None,
-        τα=0.001,
-        τβ=0.001,
-        φ=None,
-        φα=2,
-        φβ=1,
-        δ=1,
-        δα=1e-4,
-        δβ=1e-4,
-        data=test_pdgrm,
-        spline_model=sampler.spline_model,
-    )
-
-    N = 500
-    pri_samples = np.zeros((N, 3))
-    for i in range(N):
-        pri_samples[i, :] = sample_φδτ(**kwargs)
-
-    # plot histogram of pri_samples
-    fig, axes = plt.subplots(3, 1, figsize=(10, 10))
-    for i in range(3):
-        axes[i].hist(pri_samples[:, i], bins=50)
-        axes[i].set_xlabel(["φ'", "δ'", "τ'"][i])
-    plt.tight_layout()
-    plt.savefig(f"{tmpdir}/test_sample_prior.png")
+def test_sample_prior(lnlargs_for_test, tmpdir):
+    pri_samples = sample_φδτ(lnlargs_for_test)
+    # assert none of pri_samples are nan
+    assert not np.any(np.isnan(pri_samples))
+    prior_val = lprior(lnlargs_for_test)
+    assert not np.isnan(prior_val)

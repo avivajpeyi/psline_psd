@@ -14,7 +14,7 @@ def test_base_smpler(test_pdgrm: np.ndarray, tmpdir: str):
     PsplineSampler.fit(
         data=test_pdgrm,
         outdir=outdir,
-        sampler_kwargs=dict(Ntotal=NTOTAL, n_checkpoint_plts=5),
+        sampler_kwargs=dict(Ntotal=NTOTAL, n_checkpoint_plts=2),
         spline_kwargs=dict(
             degree=3,
             k=10,
@@ -31,7 +31,7 @@ def test_lnspline_sampler(test_pdgrm: np.ndarray, tmpdir: str):
     LogPsplineSampler.fit(
         data=test_pdgrm,
         outdir=outdir,
-        sampler_kwargs=dict(Ntotal=NTOTAL, n_checkpoint_plts=5),
+        sampler_kwargs=dict(Ntotal=NTOTAL, n_checkpoint_plts=2),
         spline_kwargs=dict(
             degree=3,
             k=10,
