@@ -10,6 +10,7 @@ htmlcov
 
 
 # Byte-compiled / optimized / DLL files
+outdir*
 __pycache__/
 *.py[cod]
 *$py.class
