@@ -1,8 +1,8 @@
 from collections import namedtuple
 
 import numpy as np
-from bilby.core.prior import ConditionalGamma, ConditionalPriorDict, Gamma
-from scipy.stats import gamma, norm
+from bilby.core.prior import Gamma
+from scipy.stats import gamma
 
 LnlArgs = namedtuple(
     "LnlArgs",
@@ -91,6 +91,10 @@ def llike(w, data, spline_model):
     integrand = _lnspline + np.exp(
         np.log(data) - _lnspline - np.log(2 * np.pi)
     )
+
+    # SET TO VVV small WHEREVER INTEGRAND IS NAN/INF
+    # integrand[~np.isfinite(integrand)] = 1e-100
+
     lnlike = -np.sum(integrand) / 2
     if not np.isfinite(lnlike):
         __plot_error_plt(data, _spline, spline_model.knots, integrand)

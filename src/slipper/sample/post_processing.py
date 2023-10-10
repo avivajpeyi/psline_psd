@@ -72,8 +72,10 @@ def generate_spline_quantiles(
         psd_with_unc = np.vstack([splines_median, splines_quants])
 
     assert psd_with_unc.shape == (3, spline_len)
+
     # assert no nans in psd_with_unc
-    assert np.all(np.isfinite(psd_with_unc))
+    if not np.all(np.isfinite(psd_with_unc)):
+        raise ValueError("psd_with_unc has non-finite values.")
     return psd_with_unc
 
 

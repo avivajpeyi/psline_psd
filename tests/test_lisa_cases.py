@@ -33,15 +33,16 @@ def __plot_res(pdgrm, res, title):
     return fig
 
 
-def test_fit_lisa_noise(tmpdir):
+def test_fit_lisa_noise_linear_knots(tmpdir):
     np.random.seed(42)
     pdgrm = lisa_noise_periodogram()
-    # keep every 5th point
+    # keep every 5th point to speed up analysis for testing
     pdgrm = pdgrm[::5]
 
+    outdir = mkdir(f"{tmpdir}/lisa/noise/linear_knots")
     res = LogPsplineSampler.fit(
         data=pdgrm,
-        outdir=mkdir(f"{tmpdir}/lisa/noise"),
+        outdir=outdir,
         sampler_kwargs=dict(Ntotal=200, n_checkpoint_plts=2),
         spline_kwargs=dict(
             k=30,
@@ -50,18 +51,42 @@ def test_fit_lisa_noise(tmpdir):
         ),
     )
     fig = __plot_res(pdgrm, res, "LISA noise")
-    fig.savefig(f"{tmpdir}/lisa/noise/fit.png")
+    fig.savefig(f"{outdir}/fit.png")
 
 
-# @pytest.mark.skip(reason="Fails -- -inf lnl")
+@pytest.mark.skip("Fails due to -inf in LnL integrand")
+def test_fit_lisa_noise_binned_knots(tmpdir):
+    np.random.seed(42)
+    pdgrm = lisa_noise_periodogram()
+    # keep every 5th point to speed up analysis for testing
+    pdgrm = pdgrm[::5]
+
+    outdir = mkdir(f"{tmpdir}/lisa/noise/binned_knots")
+    res = LogPsplineSampler.fit(
+        data=pdgrm,
+        outdir=outdir,
+        sampler_kwargs=dict(Ntotal=200, n_checkpoint_plts=2),
+        spline_kwargs=dict(
+            k=30,
+            knot_locator_type=KnotLocatorType.binned_knots,
+            data_bin_edges=[10**-3, 10**-2.5, 10**-2, 0.1, 0.5],
+            data_bin_weights=[0.1, 0.3, 0.4, 0.2, 0.2, 0.1],
+            log_data=True,
+        ),
+    )
+    fig = __plot_res(pdgrm, res, "LISA noise")
+    fig.savefig(f"{outdir}/fit.png")
+
+
 def test_fit_list_wd_background(tmpdir):
     np.random.seed(42)
     timeseries = lisa_wd_strain()[0:1000]
     pdgrm = get_periodogram(timeseries=timeseries)
 
+    outdir = mkdir(f"{tmpdir}/lisa/wdb/linear_knots")
     res = LogPsplineSampler.fit(
         data=pdgrm,
-        outdir=mkdir(f"{tmpdir}/lisa/wdb"),
+        outdir=outdir,
         sampler_kwargs=dict(Ntotal=200, n_checkpoint_plts=2),
         spline_kwargs=dict(
             k=30,
@@ -69,4 +94,4 @@ def test_fit_list_wd_background(tmpdir):
         ),
     )
     fig = __plot_res(pdgrm, res, "White dwarf background")
-    fig.savefig(f"{tmpdir}/lisa/wdb/fit.png")
+    fig.savefig(f"{outdir}/fit.png")
