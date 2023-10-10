@@ -3,7 +3,7 @@ import numpy as np
 import rpy2.robjects as robjects
 from rpy2.robjects.packages import importr
 
-from slipper.splines.p_splines import PSplines
+from slipper.splines.p_splines import PSplines, knot_locator
 
 utils = importr("utils")
 base = importr("base")
@@ -40,9 +40,15 @@ def py_basismatrix(x, knots, degree=3):
     return basis
 
 
-def plot_comparison(x, knts, degree=3) -> plt.Figure:
-    r_matrix = r_basismatrix(x, knts, degree=degree)
-    py_matrix = py_basismatrix(x, knts, degree=degree)
+def plot_comparison(gridpts, knots, degree=3) -> plt.Figure:
+
+    if isinstance(gridpts, int):
+        x = np.linspace(0, 1, gridpts)
+    else:
+        x = gridpts
+
+    r_matrix = r_basismatrix(x, knots, degree=degree)
+    py_matrix = py_basismatrix(x, knots, degree=degree)
 
     fig, axes = plt.subplots(2, 2, figsize=(8, 8))
 
@@ -54,9 +60,9 @@ def plot_comparison(x, knts, degree=3) -> plt.Figure:
         axes[1, 0].plot(r_matrix[i], py_matrix[i], color=f"C{i}")
         axes[1, 1].loglog(r_matrix[i], py_matrix[i], color=f"C{i}")
 
-    for knt in knts:
-        axes[0, 0].axvline(knt, color="k", ls="--", alpha=0.3)
-        axes[0, 1].axvline(knt, color="k", ls="--", alpha=0.3)
+    # for knt in knts:
+    #     axes[0, 0].axvline(knt, color="k", ls="--", alpha=0.3)
+    #     axes[0, 1].axvline(knt, color="k", ls="--", alpha=0.3)
 
     for i in range(2):
         axes[0, i].set_xlabel("x-grid")
@@ -71,17 +77,25 @@ def plot_comparison(x, knts, degree=3) -> plt.Figure:
 
 
 def test_basic():
-    x = np.linspace(0, 1, 100)
-    knts = np.linspace(0, 1, 4)
+    knts = knot_locator(knot_locator_type="linearly_spaced", n_knots=5)
     degree = 3
-    fig = plot_comparison(x, knts, degree=degree)
+    fig = plot_comparison(100, knots=knts, degree=degree)
     fig.suptitle("Uniformly spaced knots")
     fig.tight_layout()
 
-    x = np.linspace(0, 1, 100)
-    knts = np.geomspace(0.001, 1, 4)
+    from slipper.example_datasets.lisa_data import lisa_noise_periodogram
+
+    pdgrm = lisa_noise_periodogram()[::5]
+    knts = knot_locator(
+        knot_locator_type="binned_knots",
+        n_knots=40,
+        data=pdgrm,
+        data_bin_edges=[10**-3, 10**-2.5, 10**-2, 0.1, 0.5],
+        data_bin_weights=[0.1, 0.3, 0.4, 0.2, 0.2, 0.1],
+        log_data=True,
+    )
     degree = 3
-    fig = plot_comparison(x, knts, degree=degree)
+    fig = plot_comparison(100, knts, degree=degree)
     fig.suptitle("log spaced knots")
     fig.tight_layout()
 

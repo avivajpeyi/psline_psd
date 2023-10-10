@@ -131,20 +131,24 @@ def __plot_error_plt(data, spline, knots, integrand):
     x_data = np.linspace(0, 1, len(data))
     x_model = np.linspace(0, 1, len(spline))
     ax.loglog(x_data, data, label="data")
+    ylm = ax.get_ylim()
     ax.loglog(x_model, spline, label="spline")
+    ax.set_ylim(ylm)
     ax.set_ylabel("PSD/PSDmax")
     ax.legend()
 
     ax = axes[1]
     ax.plot(x_data, data, label="data")
+    ylm = ax.get_ylim()
     ax.plot(x_model, spline, label="spline")
+    ax.set_ylim(ylm)
     ax.set_ylabel("PSD/PSDmax")
     ax.legend()
 
     ax = axes[2]
 
     integrand_x = np.linspace(0, 1, len(integrand))
-    ax.loglog(integrand_x, integrand, label="integrand")
+    ax.semilogx(integrand_x, integrand, label="integrand")
     # scatter red lines whereever nans
     nan_xvals = integrand_x[~np.isfinite(integrand)]
     yl = ax.get_ylim()

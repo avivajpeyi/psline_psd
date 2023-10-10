@@ -26,7 +26,7 @@ def unroll_list_to_new_length(old_list, n):
     """unroll PSD from qPsd to psd of length n"""
     newx = np.linspace(0, 1, n)
     oldx = np.linspace(0, 1, len(old_list))
-    f = interp1d(oldx, old_list, kind="nearest")
+    f = interp1d(oldx, old_list, kind="linear")
     q = f(newx)
     # assert np.all(q >= 0), f"q must be positive, but got {q}"
     return q

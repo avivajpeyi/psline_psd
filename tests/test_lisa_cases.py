@@ -54,7 +54,7 @@ def test_fit_lisa_noise_linear_knots(tmpdir):
     fig.savefig(f"{outdir}/fit.png")
 
 
-@pytest.mark.skip("Fails due to -inf in LnL integrand")
+# @pytest.mark.skip("Fails due to -inf in LnL integrand")
 def test_fit_lisa_noise_binned_knots(tmpdir):
     np.random.seed(42)
     pdgrm = lisa_noise_periodogram()
