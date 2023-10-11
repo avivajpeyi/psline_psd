@@ -35,6 +35,7 @@ class PSplines:
         degree: int,
         diffMatrixOrder: int = 2,
         n_grid_points=None,
+        logged_grid=False,
         logged=False,
     ):
         """Initialise the PSplines class
@@ -62,7 +63,7 @@ class PSplines:
 
         self.knots: np.array = knots
         self.degree: int = degree
-
+        self.logged_grid = logged_grid
         self.n_grid_points: int = n_grid_points  # number of points to evaluate the basis functions at
         self.diffMatrixOrder: int = diffMatrixOrder
         # basically if log-splines, we use all knots for the penalty matrix, otherwise we use all knots except the last one
@@ -117,9 +118,17 @@ class PSplines:
     @property
     def grid_points(self) -> np.array:
         if not hasattr(self, "_grid_points"):
-            self._grid_points = np.linspace(
-                self.knots[0], self.knots[-1], self.n_grid_points
-            )
+            if self.logged_grid:
+                # smallest non-zero knot
+                min_knot = np.min(self.knots[np.nonzero(self.knots)])
+                x = np.geomspace(min_knot, 1, self.n_grid_points - 1)
+                # add 0 to the start of the grid
+                self._grid_points = np.concatenate([[0], x])
+
+            else:
+                self._grid_points = np.linspace(
+                    self.knots[0], self.knots[-1], self.n_grid_points
+                )
         return self._grid_points
 
     def __get_fda_bspline_basis(self, knots=None):
@@ -129,6 +138,8 @@ class PSplines:
 
     def __get_knots_with_boundary(self):
         """Add boundary knots to the knots array"""
+        assert self.knots[0] == 0, "First knot must be 0"
+        assert self.knots[-1] == 1, "Last knot must be 1"
         knots_with_boundary = np.concatenate(
             [
                 np.repeat(self.knots[0], self.degree),
@@ -388,9 +399,9 @@ class PSplines:
             options=dict(
                 maxiter=self.n_basis * n_optimization_steps,
                 xatol=1e-30,
-                disp=False,
+                disp=True,
             ),
-            bounds=[(0, None)] * self.n_basis,
+            bounds=[(None, None)] * self.n_basis,
             x0=w,
             method="Nelder-Mead",
         )

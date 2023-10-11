@@ -1,9 +1,14 @@
 import inspect
+from typing import Dict, Union
+
+import numpy as np
 
 from .methods import _KNOT_LOCATOR_FUNC_DICT, KnotLocatorType
 
 
-def knot_locator(knot_locator_type: KnotLocatorType, **knots_kwargs):
+def knot_locator(
+    knot_locator_type: Union[KnotLocatorType, str], **knots_kwargs
+) -> np.ndarray:
     """Returns the knots for the given knot locator type and kwargs"""
     knot_loc_func = _KNOT_LOCATOR_FUNC_DICT[knot_locator_type]
     expected_args = inspect.getfullargspec(knot_loc_func).args

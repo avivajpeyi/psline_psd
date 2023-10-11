@@ -4,6 +4,8 @@ import numpy as np
 from bilby.core.prior import Gamma
 from scipy.stats import gamma
 
+from slipper.splines.p_splines import PSplines
+
 LnlArgs = namedtuple(
     "LnlArgs",
     [
@@ -73,7 +75,7 @@ def sample_φδ(args: LnlArgs):
     return φ, δ
 
 
-def llike(w, data, spline_model):
+def llike(w, data, spline_model: PSplines):
     """Whittle log likelihood"""
 
     n = len(data)
@@ -81,11 +83,11 @@ def llike(w, data, spline_model):
 
     is_even = n % 2 == 0
     if is_even:
-        _lnspline = _lnspline[1:]
-        data = data[1:]
+        _lnspline = _lnspline[10:]
+        data = data[10:]
     else:
-        _lnspline = _lnspline[1:-1]
-        data = data[1:-1]
+        _lnspline = _lnspline[10:-10]
+        data = data[10:-10]
     _spline = np.exp(_lnspline)
 
     integrand = _lnspline + np.exp(
@@ -93,11 +95,19 @@ def llike(w, data, spline_model):
     )
 
     # SET TO VVV small WHEREVER INTEGRAND IS NAN/INF
-    # integrand[~np.isfinite(integrand)] = 1e-100
+    # integrand[~np.isfinite(integrand)] = np.nan
 
     lnlike = -np.sum(integrand) / 2
     if not np.isfinite(lnlike):
+        # fig, ax = spline_model.plot_basis()
+        # ax.set_xscale('log')
+        # ax.set_xlim(left=0.0001)
+        # ax.set_ylim(bottom=0.1, top=2000)
+        # ax.set_yscale('log')
+        # plt.show()
+
         __plot_error_plt(data, _spline, spline_model.knots, integrand)
+
         raise ValueError(f"lnlike is not finite: {lnlike}")
     return lnlike
 
@@ -114,8 +124,10 @@ def lpost(args: LnlArgs):
     return logpost
 
 
+import matplotlib.pyplot as plt
+
+
 def __plot_error_plt(data, spline, knots, integrand):
-    import matplotlib.pyplot as plt
 
     # normalize data and spline
     data = data / np.max(data)
@@ -131,20 +143,24 @@ def __plot_error_plt(data, spline, knots, integrand):
     x_data = np.linspace(0, 1, len(data))
     x_model = np.linspace(0, 1, len(spline))
     ax.loglog(x_data, data, label="data")
+    ylm = ax.get_ylim()
     ax.loglog(x_model, spline, label="spline")
+    ax.set_ylim(ylm)
     ax.set_ylabel("PSD/PSDmax")
     ax.legend()
 
     ax = axes[1]
     ax.plot(x_data, data, label="data")
+    ylm = ax.get_ylim()
     ax.plot(x_model, spline, label="spline")
+    ax.set_ylim(ylm)
     ax.set_ylabel("PSD/PSDmax")
     ax.legend()
 
     ax = axes[2]
 
     integrand_x = np.linspace(0, 1, len(integrand))
-    ax.loglog(integrand_x, integrand, label="integrand")
+    ax.semilogx(integrand_x, integrand, label="integrand")
     # scatter red lines whereever nans
     nan_xvals = integrand_x[~np.isfinite(integrand)]
     yl = ax.get_ylim()
