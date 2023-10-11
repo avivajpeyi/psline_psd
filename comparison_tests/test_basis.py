@@ -17,7 +17,8 @@ except Exception as e:
 
 
 def _norm_basis(basis):
-    return (basis - np.mean(basis, axis=0)) / np.std(basis, axis=0)
+    # return (basis - np.mean(basis, axis=0)) / np.std(basis, axis=0)
+    return basis
 
 
 def r_basismatrix(x, knots, degree=3):
@@ -43,7 +44,7 @@ def py_basismatrix(x, knots, degree=3):
 def plot_comparison(gridpts, knots, degree=3) -> plt.Figure:
 
     if isinstance(gridpts, int):
-        x = np.linspace(0, 1, gridpts)
+        x = np.linspace(0.000001, 1, gridpts)
     else:
         x = gridpts
 
@@ -80,7 +81,13 @@ def test_basic():
     knts = knot_locator(knot_locator_type="linearly_spaced", n_knots=5)
     degree = 3
     fig = plot_comparison(100, knots=knts, degree=degree)
-    fig.suptitle("Uniformly spaced knots")
+    fig.suptitle("Uniformly spaced knots LOG GRID")
+    fig.tight_layout()
+
+    knts = knot_locator(knot_locator_type="linearly_spaced", n_knots=5)
+    degree = 3
+    fig = plot_comparison(np.linspace(0, 1, 100), knots=knts, degree=degree)
+    fig.suptitle("Uniformly spaced knots LINEAR GRID")
     fig.tight_layout()
 
     from slipper.example_datasets.lisa_data import lisa_noise_periodogram
@@ -96,7 +103,39 @@ def test_basic():
     )
     degree = 3
     fig = plot_comparison(100, knts, degree=degree)
-    fig.suptitle("log spaced knots")
+    fig.suptitle("log spaced knots  LOG GRID")
+    fig.tight_layout()
+
+    pdgrm = lisa_noise_periodogram()[::5]
+    knts = knot_locator(
+        knot_locator_type="binned_knots",
+        n_knots=40,
+        data=pdgrm,
+        data_bin_edges=[10**-3, 10**-2.5, 10**-2, 0.1, 0.5],
+        data_bin_weights=[0.1, 0.3, 0.4, 0.2, 0.2, 0.1],
+        log_data=True,
+    )
+    degree = 3
+    fig = plot_comparison(np.linspace(0, 1, 100), knts, degree=degree)
+    fig.suptitle("log spaced knots  LINEAR GRID")
     fig.tight_layout()
 
     plt.show()
+
+
+from slipper.example_datasets.lisa_data import lisa_noise_periodogram
+
+
+def test_patricio_knots():
+    data = lisa_noise_periodogram()[::5]
+    knts = knot_locator(
+        knot_locator_type="binned_knots",
+        data_bin_edges=[10**-3, 10**-2.5, 10**-2, 0.1, 0.5],
+        data_bin_weights=[0.1, 0.3, 0.4, 0.2, 0.2, 0.1],
+        log_data=True,
+        n_knots=40,
+        data=data,
+    )
+    degree = 3
+
+    fig = plot_comparison(100, knts, degree=degree)
