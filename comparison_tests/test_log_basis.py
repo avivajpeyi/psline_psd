@@ -1,3 +1,5 @@
+import os
+
 import matplotlib.pyplot as plt
 import numpy as np
 import rpy2.robjects as robjects
@@ -17,7 +19,8 @@ except Exception as e:
 
 
 def _norm_basis(basis):
-    return (basis - np.mean(basis, axis=0)) / np.std(basis, axis=0)
+    return basis
+    # return (basis - np.mean(basis, axis=0)) / np.std(basis, axis=0)
 
 
 def r_basismatrix(x, knots, degree=3):
@@ -40,23 +43,36 @@ def py_basismatrix(x, knots, degree=3):
     return basis
 
 
+def get_colors(ncols, colorbar="viridis"):
+    cmap = plt.get_cmap(colorbar)
+    norm = plt.Normalize(0, 1)  # This represents the entire colorbar range
+    cbar = plt.cm.ScalarMappable(norm=norm, cmap=cmap)
+    return [cbar.to_rgba(i / ncols) for i in range(ncols)]
+
+
 def plot_comparison(x, knts, degree=3) -> plt.Figure:
     r_matrix = r_basismatrix(x, knts, degree=degree)
     py_matrix = py_basismatrix(x, knts, degree=degree)
 
+    num_basis = r_matrix.shape[0]
+
     fig, axes = plt.subplots(2, 2, figsize=(8, 8))
 
-    for i in range(r_matrix.shape[0]):
-        axes[0, 0].plot(x, r_matrix[i], color=f"C{i}")
-        axes[0, 0].plot(x, py_matrix[i], color=f"C{i}", ls="--")
-        axes[0, 1].semilogx(x, r_matrix[i], color=f"C{i}")
-        axes[0, 1].semilogx(x, py_matrix[i], color=f"C{i}", ls="--")
-        axes[1, 0].plot(r_matrix[i], py_matrix[i], color=f"C{i}")
-        axes[1, 1].loglog(r_matrix[i], py_matrix[i], color=f"C{i}")
+    colors = get_colors(num_basis)
+    for i in range(num_basis):
+        c = colors[i]
+        axes[0, 0].plot(x, r_matrix[i], color=c)
+        axes[0, 0].plot(x, py_matrix[i], color=c, ls="--")
+        axes[0, 1].semilogx(x, r_matrix[i], color=c)
+        axes[0, 1].semilogx(x, py_matrix[i], color=c, ls="--")
+        axes[1, 0].scatter(r_matrix[i], py_matrix[i], color=c)
+        axes[1, 1].scatter(r_matrix[i], py_matrix[i], color=c)
 
-    for knt in knts:
-        axes[0, 0].axvline(knt, color="k", ls="--", alpha=0.3)
-        axes[0, 1].axvline(knt, color="k", ls="--", alpha=0.3)
+    axes[1, 1].set_xscale("log")
+    axes[1, 1].set_yscale("log")
+
+    axes[0, 0].vlines(knts, color="k", ymin=-0.1, ymax=0.2, zorder=10)
+    axes[0, 1].vlines(knts, color="k", ymin=-0.1, ymax=0.2, zorder=10)
 
     for i in range(2):
         axes[0, i].set_xlabel("x-grid")
@@ -86,3 +102,81 @@ def test_basic():
     fig.tight_layout()
 
     plt.show()
+
+
+def test_different_number_of_knots():
+    oudir = "out_basis_with_different_knots"
+    os.makedirs(oudir, exist_ok=True)
+    for n in range(5, 45, 5):
+        x = np.linspace(0, 1, 500)
+        knts = np.geomspace(0.0001, 1, n)
+        degree = 3
+        fig = plot_comparison(x, knts, degree=degree)
+        fig.suptitle(f"{n} log spaced knots")
+        fig.tight_layout()
+        fig.savefig(os.path.join(oudir, f"n_{n}.png"))
+
+
+def test_py_and_r_basis_low_log_values():
+    oudir = "out_basis_at_low_log_values"
+    os.makedirs(oudir, exist_ok=True)
+    n = 3
+    x = np.linspace(0, 1, 500)
+    knts = np.geomspace(0.0001, 1, n)
+    degree = 3
+
+    r_matrix = r_basismatrix(x, knts, degree=degree)
+    py_matrix = py_basismatrix(x, knts, degree=degree)
+    num_basis = r_matrix.shape[0]
+
+    colors = get_colors(num_basis)
+
+    for i in range(num_basis):
+        fig, axes = plt.subplots(
+            1, 2, figsize=(8, 4), sharex=True, sharey=True
+        )
+        for ax in axes:
+            ax.set_xlabel("x-grid")
+            ax.set_ylabel("basis")
+            # log both axes
+            ax.set_xscale("log")
+            ax.set_yscale("log")
+
+        axes[0].set_title(f"R Basis")
+        axes[1].set_title(f"Python Basis")
+
+        c = colors[i]
+        axes[0].scatter(x, r_matrix[i], color=c)
+        axes[1].scatter(x, py_matrix[i], color=c, ls="--")
+
+        # add txtbox with num nans in top left corner
+        txt = f"nans: {np.isnan(r_matrix[i]).sum()}"
+        axes[0].text(
+            0.05,
+            0.95,
+            txt,
+            transform=axes[0].transAxes,
+            fontsize=14,
+            verticalalignment="top",
+            bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.5),
+        )
+        txt = f"nans: {np.isnan(py_matrix[i]).sum()}"
+        axes[1].text(
+            0.05,
+            0.95,
+            txt,
+            transform=axes[1].transAxes,
+            fontsize=14,
+            verticalalignment="top",
+            bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.5),
+        )
+
+        plt.tight_layout()
+        plt.savefig(os.path.join(oudir, f"basis_{i}.png"))
+
+    # for i in range(num_basis):
+    #     c = colors[i]
+    #     axes[0].scatter(x, r_matrix[i], color=c)
+    #     axes[1].scatter(x, py_matrix[i], color=c, ls="--")
+    # plt.xscale("log")
+    # plt.yscale("log")
