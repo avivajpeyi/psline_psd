@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from xarray import Dataset
 
+from slipper.logger import logger
 from slipper.splines.utils import convert_v_to_weights
 
 from .plot_spline_model_and_data import plot_spline_model_and_data
@@ -82,10 +83,13 @@ def plot_metadata(
 def __plot_trace_and_hist(
     data, label, ax_trace, ax_hist, burn_in, max_it, color
 ):
+
     samps = data[~np.isnan(data)]
     low, med, high = np.quantile(samps, [0.05, 0.5, 0.95])
     l, h = med - low, high - med
     txt = f"${med:.2f}^{{+{h:.2f}}}_{{-{l:.2f}}}$"
+
+    logger.debug(f"Plotting {label} trace: {txt}")
 
     ax_trace.tick_params(
         axis="both", which="both", direction="in", pad=-15, zorder=10
@@ -115,6 +119,9 @@ def __plot_trace_and_hist(
         verticalalignment="top",
         bbox=dict(facecolor="white", alpha=0.8),
     )
+
+    if len(samps) < 5:
+        return
 
     if len(samps[burn_in:]) > 0:
         ax_hist.hist(samps[burn_in:], bins=50, color=color, density=True)

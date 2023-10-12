@@ -10,6 +10,8 @@ from slipper.plotting.utils import hide_axes_spines
 
 from .knot_locator import knot_locator
 from .utils import (
+    _lnlikelihood,
+    _mse,
     convert_v_to_weights,
     density_mixture,
     unroll_list_to_new_length,
@@ -259,13 +261,18 @@ class PSplines:
         elif len(weights) == 0 and len(v) > 0:
             weights = convert_v_to_weights(v)
 
-        spline = density_mixture(weights, self.basis.T)
+        model = density_mixture(weights, self.basis.T)
 
         if n is None:
             n = self.n_grid_points
 
-        if len(spline) != n:
-            spline = unroll_list_to_new_length(spline, n)
+        if len(model) != n:
+            model = unroll_list_to_new_length(model, n)
+
+        if self.logged:
+            spline = np.exp(model)
+        else:
+            spline = model
 
         return spline
 
@@ -401,7 +408,7 @@ class PSplines:
                 xatol=1e-30,
                 disp=True,
             ),
-            bounds=[(None, None)] * self.n_basis,
+            bounds=[(0, None)] * self.n_basis,
             x0=w,
             method="Nelder-Mead",
         )
@@ -423,6 +430,16 @@ class PSplines:
         v = v.reshape(self.n_basis - 1, 1)
         return v
 
+    def lnlikelihood(self, data, weights=[], v=[], **lnl_kwargs):
+        """Whittle log likelihood"""
+        n = len(data)
+        τ = lnl_kwargs.get("τ", 1)
+        model = self.__call__(weights=weights, v=v, n=n) * τ
 
-def _mse(y, y_hat):
-    return np.mean((y - y_hat) ** 2)
+        return _lnlikelihood(data, model)
+
+    def mse(self, data, w=None, v=None):
+        """Mean squared error"""
+        n = len(data)
+        spline = self(weights=w, v=v, n=n)
+        return _mse(data, spline)

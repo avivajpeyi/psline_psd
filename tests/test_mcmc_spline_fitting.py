@@ -1,10 +1,15 @@
 import os
+import sys
 
 import numpy as np
 
+from slipper.logger import logger
 from slipper.sample import LogPsplineSampler, PsplineSampler
 
-NTOTAL = 200
+logger.configure(handlers=[{"sink": sys.stdout, "level": "DEBUG"}])
+
+
+NTOTAL = 2000
 
 
 def test_base_smpler(test_pdgrm: np.ndarray, tmpdir: str):
