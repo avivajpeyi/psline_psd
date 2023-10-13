@@ -54,6 +54,7 @@ class Result:
                 diffMatrixOrder=spline_model.diffMatrixOrder,
                 logged=spline_model.logged,
                 basis=spline_model.basis,
+                knot_locator_type=spline_model.knot_locator_type,
             ),
             data=data,
             runtime=sampler_stats["runtime"],
@@ -147,6 +148,9 @@ class Result:
                 logged_splines=logged_splines,
                 degree=spline_model_kwargs["degree"],
                 diffMatrixOrder=spline_model_kwargs["diffMatrixOrder"],
+                knot_locator_type=str(
+                    spline_model_kwargs["knot_locator_type"]
+                ),
             ),
             index_origin=None,
         )
@@ -330,4 +334,23 @@ class Result:
     #     return "Result(
 
     def __repr__(self):
-        return f"Result(n_steps={self.n_steps}, burn_in={self.burn_in}, data_length={self.data_length}, k={self.k}, logged_splines={self.logged_splines})"
+        return self.__str__()
+
+    def __str__(self):
+        return (
+            f"Result("
+            f"n_steps={self.n_steps}, "
+            f"burn_in={self.burn_in}, "
+            f"data_length={self.data_length}, "
+            f"n_basis={self.k}, "
+            f"logged_splines={self.logged_splines}, "
+            f"knot_type={self.idata.constant_data.attrs['knot_locator_type']})"
+        )
+
+    @property
+    def summary(self) -> str:
+        s = self.__str__()
+        # remove Result( and )
+        s = s[7:-1]
+        s = s.replace(", ", "\n")
+        return s
