@@ -6,8 +6,10 @@ from skfda.misc.operators import LinearDifferentialOperator
 from skfda.misc.regularization import L2Regularization
 from skfda.representation.basis import BSplineBasis
 
+from slipper.logger import logger
 from slipper.plotting.utils import hide_axes_spines
 
+from .init_optimization import optimise_starting_weights
 from .knot_locator import knot_locator
 from .utils import (
     _lnlikelihood,
@@ -37,7 +39,6 @@ class PSplines:
         degree: int,
         diffMatrixOrder: int = 2,
         n_grid_points=None,
-        logged_grid=False,
         logged=False,
     ):
         """Initialise the PSplines class
@@ -65,7 +66,6 @@ class PSplines:
 
         self.knots: np.array = knots
         self.degree: int = degree
-        self.logged_grid = logged_grid
         self.n_grid_points: int = n_grid_points  # number of points to evaluate the basis functions at
         self.diffMatrixOrder: int = diffMatrixOrder
         # basically if log-splines, we use all knots for the penalty matrix, otherwise we use all knots except the last one
@@ -74,6 +74,7 @@ class PSplines:
         )
         self.basis: np.ndarray = self.__generate_basis_matrix()
         self.logged = logged
+        logger.debug(f"Generated: {self.__repr__()}")
 
     @classmethod
     def from_kwarg_dict(cls, kwargs):
@@ -82,6 +83,7 @@ class PSplines:
             degree=kwargs["degree"],
             diffMatrixOrder=kwargs["diffMatrixOrder"],
             logged=kwargs["logged"],
+            n_grid_points=kwargs.get("n_grid_points", None),
         )
 
     def __str__(self):
@@ -120,17 +122,9 @@ class PSplines:
     @property
     def grid_points(self) -> np.array:
         if not hasattr(self, "_grid_points"):
-            if self.logged_grid:
-                # smallest non-zero knot
-                min_knot = np.min(self.knots[np.nonzero(self.knots)])
-                x = np.geomspace(min_knot, 1, self.n_grid_points - 1)
-                # add 0 to the start of the grid
-                self._grid_points = np.concatenate([[0], x])
-
-            else:
-                self._grid_points = np.linspace(
-                    self.knots[0], self.knots[-1], self.n_grid_points
-                )
+            self._grid_points = np.linspace(
+                self.knots[0], self.knots[-1], self.n_grid_points
+            )
         return self._grid_points
 
     def __get_fda_bspline_basis(self, knots=None):
@@ -200,17 +194,6 @@ class PSplines:
         """
 
         if self.are_equidistant_knots:
-            # diffMatrix
-            """
-            out = diag(k);
-
-            for(i in 0:diffMatrixOrder-1){
-
-              out = diff(out);
-
-            }
-            """
-
             if all_knots:
                 k = self.n_basis
             else:
@@ -246,19 +229,19 @@ class PSplines:
 
     def __call__(
         self,
-        weights: np.ndarray = [],
-        v: np.ndarray = [],
+        weights: np.ndarray = None,
+        v: np.ndarray = None,
         n: int = None,
     ) -> np.ndarray:
         """
         Generate a spline model from a vector of spline coefficients and a list of B-spline basis functions
         """
         # check that weights or v is provided
-        if len(weights) == 0 and len(v) == 0:
+        if weights is None and v is None:
             raise ValueError("Either weights or v must be provided")
-        elif len(weights) > 0 and len(v) > 0:
+        elif weights is not None and v is not None:
             raise ValueError("Only one of weights or v must be provided")
-        elif len(weights) == 0 and len(v) > 0:
+        elif weights is None and v is not None:
             weights = convert_v_to_weights(v)
 
         model = density_mixture(weights, self.basis.T)
@@ -388,49 +371,15 @@ class PSplines:
         plt.tight_layout()
         return fig, ax
 
-    def guess_weights(self, data, n_optimization_steps=10):
-        """Guess init 'w' weights for the P-spline model from the data and the knots
-
-        NOTE: length of w is n_basis
-        """
-        w = np.zeros(self.n_basis)
-
-        # ignore the 1st aand last
-        data = data[1:-1]
-        n = len(data)
-
-        orig_grid_ln = self.n_grid_points
-        self.n_grid_points = n
-        res = minimize(
-            lambda w: _mse(self(w), data),
-            options=dict(
-                maxiter=self.n_basis * n_optimization_steps,
-                xatol=1e-30,
-                disp=True,
-            ),
-            bounds=[(0, None)] * self.n_basis,
-            x0=w,
-            method="Nelder-Mead",
+    def guess_weights(
+        self, data, n_optimization_steps=100, fname=""
+    ) -> np.ndarray:
+        """Guess init 'w' weights for each b-spline basis element ('v' if not logged)"""
+        return optimise_starting_weights(
+            self, data, n_optimization_steps=n_optimization_steps, fname=fname
         )
-        w = res.x
-        w[w == 0] = 1e-50  # prevents log(0) errors
-        w = w / np.sum(w)
-        self.n_grid_points = orig_grid_ln
-        return w
 
-    def guess_initial_v(self, data):
-        """Guess init 'v' weights for the P-spline model from the data and the knots
-        NOTE: length of v is n_basis - 1
-        """
-        w0 = self.guess_weights(data)[:-1]
-        w0[w0 <= 0] = 1e-20
-        v = np.log(w0 / (1 - np.sum(w0)))
-        # convert nans to very small
-        v[np.isnan(v)] = -1e50
-        v = v.reshape(self.n_basis - 1, 1)
-        return v
-
-    def lnlikelihood(self, data, weights=[], v=[], **lnl_kwargs):
+    def lnlikelihood(self, data, weights=None, v=None, **lnl_kwargs):
         """Whittle log likelihood"""
         n = len(data)
         τ = lnl_kwargs.get("τ", 1)
@@ -438,8 +387,8 @@ class PSplines:
 
         return _lnlikelihood(data, model)
 
-    def mse(self, data, w=None, v=None):
+    def mse(self, data, weights=None, v=None):
         """Mean squared error"""
         n = len(data)
-        spline = self(weights=w, v=v, n=n)
+        spline = self(weights=weights, v=v, n=n)
         return _mse(data, spline)
