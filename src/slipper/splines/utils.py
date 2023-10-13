@@ -26,7 +26,7 @@ def unroll_list_to_new_length(old_list, n):
     """unroll PSD from qPsd to psd of length n"""
     newx = np.linspace(0, 1, n)
     oldx = np.linspace(0, 1, len(old_list))
-    f = interp1d(oldx, old_list, kind="linear")
+    f = interp1d(oldx, old_list, kind="cubic")
     q = f(newx)
     # assert np.all(q >= 0), f"q must be positive, but got {q}"
     return q
@@ -113,3 +113,34 @@ def __get_unscaled_spline(
     combined = density_mixture(densities=db_list.T, weights=weights)
     # return np.maximum(combined, epsilon)
     return combined
+
+
+def _lnlikelihood(data: np.ndarray, model: np.ndarray, **lnl_kwargs) -> float:
+    """Whittle log likelihood"""
+
+    # replace any zeros to near-zero values to avoid log(0) = -inf
+    data[data == 0] = 1e-50
+    model[model == 0] = 1e-50
+
+    lndata = np.log(data)
+    lnmodel = np.log(model)
+
+    n = len(data)
+    is_even = n % 2 == 0
+    if is_even:  # remove first elememt
+        lnmodel = lnmodel[1:]
+        lndata = lndata[1:]
+    else:  # remove last element
+        lnmodel = model[1:-1]
+        lndata = data[1:-1]
+
+    integrand = lnmodel + np.exp(lndata - lnmodel - np.log(2 * np.pi))
+    lnlike = -np.sum(integrand) / 2
+
+    if not np.isfinite(lnlike):
+        return np.nan
+    return lnlike
+
+
+def _mse(y, y_hat):
+    return np.mean((y - y_hat) ** 2)

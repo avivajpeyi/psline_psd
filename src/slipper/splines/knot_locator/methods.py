@@ -14,6 +14,9 @@ class KnotLocatorType(enum.Enum):
     def __repr__(self):
         return f"{self.name}"
 
+    def __str__(self):
+        return f"{self.name}"
+
     @classmethod
     def is_valid_type(cls, val):
         if isinstance(val, cls):

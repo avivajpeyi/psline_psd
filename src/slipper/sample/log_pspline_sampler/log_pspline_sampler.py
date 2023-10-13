@@ -25,8 +25,8 @@ class LogPsplineSampler(BaseSampler):
         self.samples["δ"][0] = sk["δα"] / sk["δβ"]
         self.samples["φ"][0] = sk["φα"] / (sk["φβ"] * self.samples["δ"][0])
         self.samples["w"][0, :] = self.spline_model.guess_weights(
-            self.data
-        ).ravel()
+            self.data, fname=f"{self.outdir}/init_weights.png"
+        )
         self.samples["proposal_sigma"][0] = 1
         self.samples["acceptance_fraction"][0] = 0.4
         self.samples["lpost_trace"] = np.zeros(self.n_steps)

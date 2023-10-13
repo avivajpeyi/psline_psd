@@ -53,4 +53,4 @@ for i in range(10):
     plt.plot(x, mcmc_log.psd_posterior[-i], color="tab:blue", alpha=0.1)
 plt.xscale("log")
 plt.yscale("log")
-plt.show()
+# plt.show()

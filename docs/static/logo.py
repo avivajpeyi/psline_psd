@@ -149,7 +149,7 @@ def __gen_qtiles(df, reps=1000):
             np.sqrt(np.sum(np.diff(points, axis=0) ** 2, axis=1))
         )
         distance = np.insert(distance, 0, 0) / distance[-1]
-        interpolator = interp1d(distance, points, kind="cubic", axis=0)
+        interpolator = interp1d(distance, points, kind="linear", axis=0)
         alpha = np.linspace(0, 1, 75)
         newxy = interpolator(alpha)
         lines.append(newxy)

@@ -1,4 +1,5 @@
 from collections import namedtuple
+from typing import NamedTuple
 
 import numpy as np
 from bilby.core.prior import Gamma
@@ -6,24 +7,19 @@ from scipy.stats import gamma
 
 from slipper.splines.p_splines import PSplines
 
-LnlArgs = namedtuple(
-    "LnlArgs",
-    [
-        "w",
-        "φ",
-        "φα",
-        "φβ",
-        "δ",
-        "δα",
-        "δβ",
-        "data",
-        "spline_model",
-    ],
-)
+from ..utils import _xPx
 
 
-def _wPw(w, P):
-    return np.dot(np.dot(w.T, P), w)
+class LnlArgs(NamedTuple):
+    w: np.ndarray
+    φ: float
+    φα: float
+    φβ: float
+    δ: float
+    δα: float
+    δβ: float
+    data: np.ndarray
+    spline_model: PSplines
 
 
 def lprior(args: LnlArgs):
@@ -38,15 +34,14 @@ def lprior(args: LnlArgs):
     k = args.spline_model.n_basis
     w = args.w
 
-    wTPw = _wPw(w, P)
-    log_prior = k * 0.5 * np.log(φ) - 0.5 * φ * wTPw
+    log_prior = k * 0.5 * np.log(φ) - 0.5 * φ * _xPx(w, P)
     log_prior += gamma.logpdf(φ, a=φα, scale=1 / (δ * φβ))
     log_prior += gamma.logpdf(δ, a=δα, scale=1 / δβ)
     return log_prior
 
 
 def φ_prior(k, w, P, φα, φβ, δ):
-    wTPw = _wPw(w, P)
+    wTPw = _xPx(w, P)
     shape = 0.5 * k + φα
     rate = φβ * δ + 0.5 * wTPw
     return Gamma(k=shape, theta=1 / rate)
@@ -75,51 +70,17 @@ def sample_φδ(args: LnlArgs):
     return φ, δ
 
 
-def llike(w, data, spline_model: PSplines):
-    """Whittle log likelihood"""
-
-    n = len(data)
-    _lnspline = spline_model(weights=w, n=n)
-
-    is_even = n % 2 == 0
-    if is_even:
-        _lnspline = _lnspline[10:]
-        data = data[10:]
-    else:
-        _lnspline = _lnspline[10:-10]
-        data = data[10:-10]
-    _spline = np.exp(_lnspline)
-
-    integrand = _lnspline + np.exp(
-        np.log(data) - _lnspline - np.log(2 * np.pi)
-    )
-
-    # SET TO VVV small WHEREVER INTEGRAND IS NAN/INF
-    # integrand[~np.isfinite(integrand)] = np.nan
-
-    lnlike = -np.sum(integrand) / 2
-    if not np.isfinite(lnlike):
-        # fig, ax = spline_model.plot_basis()
-        # ax.set_xscale('log')
-        # ax.set_xlim(left=0.0001)
-        # ax.set_ylim(bottom=0.1, top=2000)
-        # ax.set_yscale('log')
-        # plt.show()
-
-        __plot_error_plt(data, _spline, spline_model.knots, integrand)
-
-        raise ValueError(f"lnlike is not finite: {lnlike}")
-    return lnlike
-
-
 def lpost(args: LnlArgs):
     w, data, spline_model = args.w, args.data, args.spline_model
     logprior = lprior(args)
-    loglike = llike(w, data, spline_model)
+    loglike = spline_model.lnlikelihood(data=data, weights=w)
     logpost = logprior + loglike
     if not np.isfinite(logpost):
         raise ValueError(
-            f"logpost is not finite: lnpri{logprior}, lnlike{loglike}, lnpost{logpost}"
+            f"logpost is not finite:\n"
+            f"lnpri: {logprior},\n"
+            f"lnlike: {loglike},\n"
+            f"lnpost: {logpost}"
         )
     return logpost
 
@@ -128,7 +89,6 @@ import matplotlib.pyplot as plt
 
 
 def __plot_error_plt(data, spline, knots, integrand):
-
     # normalize data and spline
     data = data / np.max(data)
     spline = spline / np.max(spline)

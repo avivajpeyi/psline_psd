@@ -13,14 +13,16 @@ from slipper.example_datasets.ar_data import (
 )
 from slipper.fourier_methods import get_fz
 from slipper.plotting.utils import plot_xy_binned
+from slipper.sample.log_pspline_sampler import LogPsplineSampler
 from slipper.sample.post_processing import generate_spline_quantiles
+from slipper.sample.pspline_sampler import PsplineSampler
 
 # from slipper.sample.pspline_sampler.bayesian_functions import llike
-from slipper.sample.spline_model_sampler import (
-    fit_data_with_log_spline_model,
-    fit_data_with_pspline_model,
-)
-from slipper.splines.initialisation import knot_locator
+# from slipper.sample.spline_model_sampler import (
+#     fit_data_with_log_spline_model,
+#     fit_data_with_pspline_model,
+# )
+# from slipper.splines.initialisation import knot_locator
 
 plt.style.use("default")
 # import gridspec from matplotlib
@@ -227,29 +229,35 @@ def __r_mcmc(data, nsteps, nsplines, eqSpaced):
 
 def __py_mcmc(data, nsteps, nsplines, eqSpaced):
     burnin = int(0.5 * nsteps)
-    mcmc = fit_data_with_pspline_model(
+    mcmc = PsplineSampler.fit(
         data,
-        burnin=burnin,
-        Ntotal=nsteps,
-        degree=3,
-        eqSpaced=eqSpaced,
         outdir="py_mcmc",
-        k=nsplines,
+        sampler_kwargs=dict(
+            Ntotal=nsteps, n_checkpoint_plts=10, burnin=burnin
+        ),
+        spline_kwargs=dict(
+            degree=3,
+            k=nsplines,
+            knot_locator_type="linearly_spaced",
+        ),
     )
     return mcmc
 
 
 def __log_py_mcmc(data, nsteps, nsplines, eqSpaced):
     burnin = int(0.5 * nsteps)
-    mcmc = fit_data_with_log_spline_model(
+
+    mcmc = LogPsplineSampler.fit(
         data,
-        burnin=burnin,
-        Ntotal=nsteps,
-        degree=3,
-        eqSpaced=eqSpaced,
         outdir="py_mcmc_log",
-        k=nsplines,
-        n_checkpoint_plts=10,
+        sampler_kwargs=dict(
+            Ntotal=nsteps, n_checkpoint_plts=10, burnin=burnin
+        ),
+        spline_kwargs=dict(
+            degree=3,
+            k=nsplines,
+            knot_locator_type="linearly_spaced",
+        ),
     )
 
     return mcmc

@@ -195,30 +195,11 @@ def test_fft(helpers):
 import matplotlib.pyplot as plt
 import numpy as np
 
-from slipper.bayesian_utilities import llike, lprior
 from slipper.fourier_methods import get_fz, get_periodogram
-from slipper.sample.pspline_sampler.bayesian_functions import _vPv, sample_φδτ
-from slipper.sample.spline_model_sampler import (
-    _get_initial_spline_data,
-    _get_initial_values,
-)
-from slipper.splines.generator import unroll_list_to_new_length
-from slipper.splines.initialisation import (
-    _generate_initial_weights,
-    knot_locator,
-)
+from slipper.sample.pspline_sampler.bayesian_functions import sample_φδτ
 from slipper.splines.p_splines import PSplines
 
 MAKE_PLOTS = True
-
-
-def test_psd_unroll():
-    ar = unroll_list_to_new_length(np.array([1, 2, 3, 4]), n=8)
-    assert np.allclose(ar, np.array([1, 2, 2, 3, 3, 4, 4, 4]))
-    ar = unroll_list_to_new_length(np.array([1, 2, 3]), n=6)
-    assert np.allclose(ar, np.array([1, 2, 2, 3, 3, 3]))
-    ar = unroll_list_to_new_length(np.array([1, 2, 3]), n=5)
-    assert np.allclose(ar, np.array([1, 2, 2, 3, 3]))
 
 
 def test_lprior():

@@ -158,6 +158,7 @@ class BaseSampler(ABC):
                 diffMatrixOrder=self.spline_model.diffMatrixOrder,
                 logged=self.spline_model.logged,
                 basis=self.spline_model.basis,
+                knot_locator_type=self.spline_kwargs["knot_locator_type"],
             ),
             data=self.data,
             runtime=time.process_time() - self.t0,

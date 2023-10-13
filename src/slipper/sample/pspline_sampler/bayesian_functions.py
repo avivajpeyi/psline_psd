@@ -1,29 +1,27 @@
 from collections import namedtuple
+from typing import NamedTuple
 
 import numpy as np
 from bilby.core.prior import ConditionalPriorDict, Gamma
 
-LnlArgs = namedtuple(
-    "LnlArgs",
-    [
-        "w",
-        "τ",
-        "τα",
-        "τβ",
-        "φ",
-        "φα",
-        "φβ",
-        "δ",
-        "δα",
-        "δβ",
-        "data",
-        "spline_model",
-    ],
-)
+from slipper.splines.p_splines import PSplines
+
+from ..utils import _xPx
 
 
-def _vPv(v, P):
-    return np.dot(np.dot(v.T, P), v)
+class LnlArgs(NamedTuple):
+    w: np.ndarray
+    τ: float
+    τα: float
+    τβ: float
+    φ: float
+    φα: float
+    φβ: float
+    δ: float
+    δα: float
+    δβ: float
+    data: np.ndarray
+    spline_model: PSplines
 
 
 def lprior(args: LnlArgs):
@@ -38,7 +36,7 @@ def lprior(args: LnlArgs):
     φ, δ, τ = (args.φ, args.δ, args.τ)
     v = args.w
     k = args.spline_model.n_basis
-    vTPv = _vPv(v, args.spline_model.penalty_matrix)
+    vTPv = _xPx(v, args.spline_model.penalty_matrix)
     logφ = np.log(φ)
     logδ = np.log(δ)
     logτ = np.log(τ)
@@ -108,28 +106,6 @@ def sample_φδτ(args: LnlArgs):
     return φ, δ, τ
 
 
-def llike(v, τ, data, spline_model):
-    """Whittle log likelihood"""
-
-    n = len(data)
-    _spline = spline_model(v=v, n=n) * τ
-
-    is_even = n % 2 == 0
-    if is_even:
-        _spline = _spline[1:]
-        data = data[1:]
-    else:
-        _spline = _spline[1:-1]
-        data = data[1:-1]
-    _lnspline = np.log(_spline)
-
-    integrand = _lnspline + data / (_spline * 2 * np.pi)
-    lnlike = -np.sum(integrand) / 2
-    if not np.isfinite(lnlike):
-        raise ValueError(f"lnlike is not finite: {lnlike}")
-    return lnlike
-
-
 def lpost(args: LnlArgs):
     v, τ, data, spline_model = (
         args.w,
@@ -138,7 +114,7 @@ def lpost(args: LnlArgs):
         args.spline_model,
     )
     logprior = lprior(args)
-    loglike = llike(v, τ, data, spline_model)
+    loglike = spline_model.lnlikelihood(data=data, v=v, τ=τ)
     logpost = logprior + loglike
     if not np.isfinite(logpost):
         raise ValueError(
