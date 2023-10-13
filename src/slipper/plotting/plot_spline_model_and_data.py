@@ -1,3 +1,5 @@
+from typing import Dict, List, Optional, Union
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -10,21 +12,29 @@ from .utils import (
 
 def plot_spline_model_and_data(
     data,
-    model_quants,
+    model_quants: Optional[np.ndarray] = None,
+    model=None,
     knots=[],
     separarte_y_axis=False,
     x=None,
     ax=None,
-    colors=dict(Data="black", Splines="tab:orange", Knots="tab:red"),
+    colors={},
     add_legend=False,
-    logged_axes=False,
+    logged_axes: Union[bool, List[str], str] = False,
     hide_axes=True,
+    metadata_text="",
+    focus_on_data=True,
+    bin_data=False,
 ) -> plt.Figure:
     # prepare axes + figure
     if ax is None:
-        fig, ax = plt.subplots(1, 1, figsize=(4, 3))
+        fig, ax = plt.subplots(1, 1, figsize=(8, 4))
     ax.grid(False)
     ax_model = ax.twinx() if separarte_y_axis else ax
+
+    default_colors = dict(Data="black", Splines="tab:orange", Knots="tab:red")
+    # update default colors with user provided colors
+    colors = {**default_colors, **colors}
 
     if hide_axes:
         hide_axes_spines(ax_model)
@@ -36,27 +46,33 @@ def plot_spline_model_and_data(
 
     ax_knots = ax.twinx() if len(knots) > 0 else None
 
+    d = data[1:]
     # unpack data
-    model_med, model_p05, model_p95 = (
-        model_quants[0, :],
-        model_quants[1, :],
-        model_quants[2, :],
-    )
+    if model_quants is not None:
+        model_med, model_p05, model_p95 = (
+            model_quants[0, 1:],
+            model_quants[1, 1:],
+            model_quants[2, 1:],
+        )
+    else:
+        model_med = model[1:]
+        model_p05 = model_med
+        model_p95 = model_med
 
     if x is None:
-        x = np.linspace(0, 1, len(data))
+        x = np.linspace(0, 1, len(d))
 
     model_x = np.linspace(0, 1, len(model_med))
 
     # plot data
-    data_bins = min(30, len(data) // 10)
-    if data_bins > 10:
-        plot_xy_binned(
-            x[1:], data[1:], ax, bins=data_bins, label="Data", ls="--", ms=0.5
-        )
-    ax.scatter(
-        x[1:], data[1:], color=colors["Data"], marker=".", alpha=0.1, s=0.6
-    )
+    if bin_data:
+        data_bins = min(30, len(d) // 10)
+        if data_bins > 10:
+            plot_xy_binned(
+                x, d, ax, bins=data_bins, label="Data", ls="--", ms=0.5
+            )
+    ax.scatter(x, d, color=colors["Data"], marker=".", alpha=0.1, s=1)
+    xlim, ylim = ax.get_xlim(), ax.get_ylim()
     ax_model.plot(model_x, model_med, color=colors["Splines"], alpha=0.5)
     ax_model.fill_between(
         model_x,
@@ -71,10 +87,14 @@ def plot_spline_model_and_data(
         ax_knots.set_ylim(0, 1)
         hide_axes_spines(ax_knots)
 
-    if logged_axes:
+    if isinstance(logged_axes, bool):
+        logged_axes = ["x", "y"] if logged_axes else []
+
+    if "x" in logged_axes:
+        ax.set_xscale("log")
+    if "y" in logged_axes:
         ax_model.set_yscale("log")
         ax.set_yscale("log")
-        ax.set_xscale("log")
 
         # turn off y axes for log scale
         if hide_axes:
@@ -85,8 +105,25 @@ def plot_spline_model_and_data(
         for label, color in colors.items():
             if label == "Knots" and len(knots) == 0:
                 continue
+            if label == "Splines" and model_quants is not None:
+                label = r"Splines (median $\pm 90\%$ CI)"
+
             ax.plot([], [], color=color, label=label)
-        ax.legend(markerscale=5, frameon=False, loc="upper right")
+        ax.legend(markerscale=5, frameon=False)
+
+    if metadata_text:
+        ax.text(
+            1.05,
+            1.0,
+            metadata_text,
+            bbox=dict(facecolor="none", edgecolor="none", pad=10),
+            transform=ax.transAxes,
+            verticalalignment="top",
+        )
+
+    if focus_on_data:
+        ax_model.set_xlim(xlim)
+        ax_model.set_ylim(ylim)
 
     fig = ax.get_figure()
     return fig
