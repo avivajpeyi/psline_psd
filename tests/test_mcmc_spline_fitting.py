@@ -29,7 +29,7 @@ def _plot_spline(mcmc: Result, data, fn):
         hide_axes=False,
         metadata_text=mcmc.summary,
     )
-    fig.show()
+    # fig.show()
     fig.savefig(fn)
 
 
@@ -44,7 +44,7 @@ def test_base_smpler(test_pdgrm: np.ndarray, tmpdir: str):
         spline_kwargs=dict(
             degree=3,
             k=10,
-            knot_locator_type="data_peak",
+            knot_locator_type="linearly_spaced",
         ),
     )
     _plot_spline(mcmc, test_pdgrm, fn=f"{outdir}/FIT.png")

@@ -104,7 +104,7 @@ def __optimize_starting_X(
         )
         ax.set_title(f"Init Lnl: {init_lnl:.3E}-->{current_lnl:.3E}")
         plt.tight_layout()
-        plt.show()
+        # plt.show()
         plt.savefig(fname)
 
     return x.ravel()

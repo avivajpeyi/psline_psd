@@ -8,6 +8,8 @@ def test_spline_creation(tmpdir):
     """Test that the splines can be generated"""
     degree = 2
     knots = sorted(np.random.uniform(0, 1, 5))
+    # add 0 and 1
+    knots = [0] + knots + [1]
     n_basis = len(knots) + degree - 1
     weights = np.random.uniform(0, 1, n_basis)
     pspline = PSplines(knots=knots, degree=degree, diffMatrixOrder=1)
