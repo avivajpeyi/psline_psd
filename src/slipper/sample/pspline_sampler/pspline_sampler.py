@@ -22,12 +22,12 @@ class PsplineSampler(BaseSampler):
         )
 
         sk = self.sampler_kwargs
-        self.samples["τ"][0] = 1 / (2 * np.pi)
+        self.samples["τ"][0] = 1.0
         self.samples["δ"][0] = sk["δα"] / sk["δβ"]
         self.samples["φ"][0] = sk["φα"] / (sk["φβ"] * self.samples["δ"][0])
-        self.samples["V"][0, :] = self.spline_model.guess_initial_v(
-            self.data
-        ).ravel()
+        self.samples["V"][0, :] = self.spline_model.guess_weights(
+            self.data, fname=f"{self.outdir}/init_weights.png"
+        )
         self.samples["proposal_sigma"][0] = 1
         self.samples["acceptance_fraction"][0] = 0.4
         self.samples["lpost_trace"] = np.zeros(self.n_steps)
