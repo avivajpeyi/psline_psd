@@ -19,8 +19,10 @@ def test_spline_creation(tmpdir):
 def test_initial_guess(test_pdgrm, tmpdir):
     N = len(test_pdgrm)
     knots = np.linspace(0, 1, 30)
-    pspline = PSplines(knots=knots, degree=2, diffMatrixOrder=1)
-    w0 = pspline.guess_weights(test_pdgrm)
+    pspline = PSplines(knots=knots, degree=2, diffMatrixOrder=1, logged=True)
+    w0 = pspline.guess_weights(
+        test_pdgrm, fname=f"{tmpdir}/test_spline_init_guess.png"
+    )
     newx = np.linspace(0, 1, N)
     fig, ax = pspline.plot_basis(weights=w0, basis_kwargs=dict(alpha=0.2))
     plt.plot(newx, test_pdgrm, ",k")
