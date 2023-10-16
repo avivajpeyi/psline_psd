@@ -232,6 +232,7 @@ class PSplines:
         weights: np.ndarray = None,
         v: np.ndarray = None,
         n: int = None,
+        return_log_value: bool = False,
     ) -> np.ndarray:
         """
         Generate a spline model from a vector of spline coefficients and a list of B-spline basis functions
@@ -253,11 +254,16 @@ class PSplines:
             model = unroll_list_to_new_length(model, n)
 
         if self.logged:
-            spline = np.exp(model)
+            ln_model = model
+            model = np.exp(model)
         else:
-            spline = model
+            ln_model = np.log(model)
+            model = model
 
-        return spline
+        if return_log_value:
+            return ln_model
+        else:
+            return model
 
     def plot_basis(
         self,
@@ -382,10 +388,13 @@ class PSplines:
     def lnlikelihood(self, data, weights=None, v=None, **lnl_kwargs):
         """Whittle log likelihood"""
         n = len(data)
-        τ = lnl_kwargs.get("τ", 1)
-        model = self.__call__(weights=weights, v=v, n=n) * τ
+        ln_model = self.__call__(
+            weights=weights, v=v, n=n, return_log_value=True
+        )
+        if self.logged:
+            ln_model += np.log(lnl_kwargs.get("τ", 1))
 
-        return _lnlikelihood(data, model)
+        return _lnlikelihood(np.log(data), ln_model)
 
     def mse(self, data, weights=None, v=None):
         """Mean squared error"""

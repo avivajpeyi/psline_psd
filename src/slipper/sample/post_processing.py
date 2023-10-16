@@ -86,7 +86,9 @@ def generate_spline_quantiles(
     # assert no nans in psd_with_unc
     if not np.all(np.isfinite(psd_with_unc)):
         num_nans_each_row = np.sum(~np.isfinite(psd_with_unc), axis=1)
-        raise ValueError("PSD quantiles has non-finite values.")
+        raise ValueError(
+            f"PSD quantiles has non-finite values ({num_nans_each_row})."
+        )
     return psd_with_unc
 
 

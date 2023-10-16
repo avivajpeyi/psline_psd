@@ -92,7 +92,7 @@ class BaseSampler(ABC):
             pbar.set_postfix(
                 dict(
                     lnP=self.samples["lpost_trace"][itr - 1],
-                    accept=self.samples["acceptance_fraction"][itr - 1],
+                    accept=f"{self.samples['acceptance_fraction'][itr - 1]:.2f}",
                 )
             )
         self._compile_sampling_result()

@@ -44,9 +44,9 @@ def test_fit_lisa_noise_linear_knots(tmpdir):
     res = LogPsplineSampler.fit(
         data=pdgrm,
         outdir=outdir,
-        sampler_kwargs=dict(Ntotal=200, n_checkpoint_plts=3, burnin=100),
+        sampler_kwargs=dict(Ntotal=200, n_checkpoint_plts=2, burnin=100),
         spline_kwargs=dict(
-            k=50,
+            k=30,
             knot_locator_type=KnotLocatorType.linearly_spaced,
         ),
     )
@@ -91,7 +91,7 @@ def test_fit_list_wd_background(tmpdir):
         data=pdgrm,
         outdir=outdir,
         sampler_kwargs=dict(
-            Ntotal=100, n_checkpoint_plts=2, burnin=10, thin=1
+            Ntotal=200, n_checkpoint_plts=2, burnin=100, thin=1
         ),
         spline_kwargs=dict(
             k=30,

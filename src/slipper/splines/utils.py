@@ -108,24 +108,19 @@ def __get_unscaled_spline(
     return density_mixture(densities=db_list.T, weights=weights)
 
 
-def _lnlikelihood(data: np.ndarray, model: np.ndarray, **lnl_kwargs) -> float:
+def _lnlikelihood(
+    lndata: np.ndarray, lnmodel: np.ndarray, **lnl_kwargs
+) -> float:
     """Whittle log likelihood"""
 
-    # replace any zeros to near-zero values to avoid log(0) = -inf
-    data[data == 0] = 1e-50
-    model[model == 0] = 1e-50
-
-    lndata = np.log(data)
-    lnmodel = np.log(model)
-
-    n = len(data)
+    n = len(lndata)
     is_even = n % 2 == 0
     if is_even:  # remove first elememt
         lnmodel = lnmodel[1:]
         lndata = lndata[1:]
     else:  # remove last element
-        lnmodel = model[1:-1]
-        lndata = data[1:-1]
+        lnmodel = lnmodel[1:-1]
+        lndata = lndata[1:-1]
 
     integrand = lnmodel + np.exp(lndata - lnmodel - np.log(2 * np.pi))
     lnlike = -np.sum(integrand) / 2
