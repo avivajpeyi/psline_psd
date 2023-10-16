@@ -65,7 +65,7 @@ const thebe_selector_output = ".output, .cell_output"
     <script>DOCUMENTATION_OPTIONS.pagename = 'examples/example_ar_psd';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Example: Wavelet" href="example_wavelet.html" />
+    <link rel="next" title="Example: LISA data" href="example_lisa.html" />
     <link rel="prev" title="API" href="../api/api.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -170,9 +170,9 @@ const thebe_selector_output = ".output, .cell_output"
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributng</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/api.html">API</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Example: AR process</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_lisa.html">Example: LISA data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_wavelet.html">Example: Wavelet</a></li>
 <li class="toctree-l1"><a class="reference internal" href="p_splines.html">P-Spline Generation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="wdb_gw_background.html">Example: LISA White Dwarf background</a></li>
 </ul>
 
     </div>
@@ -368,8 +368,6 @@ document.write(`
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-1-ar-3">Example 1: AR(3)</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-2-ar-4">Example 2: AR(4)</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#equally-spaced-knots">Equally spaced knots</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#non-equally-spaced-knots">Non-equally spaced knots</a></li>
 </ul>
             </nav>
         </div>
@@ -383,8 +381,7 @@ document.write(`
                   
   <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">matplotlib</span> inline
-<span class="o">%</span><span class="k">load_ext</span> autoreload
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">load_ext</span> autoreload
 <span class="c1"># ! pip install git+https://github.com/avivajpeyi/pspline_psd.git -q</span>
 </pre></div>
 </div>
@@ -395,18 +392,19 @@ document.write(`
 <p>First, lets generate some data from an AR process and plot it.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">scipy.fft</span> <span class="kn">import</span> <span class="n">fft</span>
-<span class="kn">from</span> <span class="nn">slipper.example_datasets.ar_data</span> <span class="kn">import</span> <span class="n">generate_ar_timeseries</span><span class="p">,</span> <span class="n">plot_ar_spectrogram_psd</span>
-<span class="kn">from</span> <span class="nn">slipper.sample.spline_model_sampler</span> <span class="kn">import</span> <span class="n">fit_data_with_pspline_model</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">slipper.example_datasets.ar_data</span> <span class="kn">import</span> <span class="n">get_ar_periodogram</span>
+<span class="kn">from</span> <span class="nn">slipper.sample</span> <span class="kn">import</span> <span class="n">LogPsplineSampler</span>
 <span class="kn">from</span> <span class="nn">slipper.plotting</span> <span class="kn">import</span> <span class="n">set_plotting_style</span>
-<span class="kn">from</span> <span class="nn">slipper.fourier_methods</span> <span class="kn">import</span> <span class="n">get_periodogram</span>
-<span class="kn">from</span> <span class="nn">slipper.plotting.plot_spline_model_and_data</span> <span class="kn">import</span> <span class="n">plot_spline_model_and_data</span>
+<span class="kn">import</span> <span class="nn">os</span>
 
 <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 <span class="n">set_plotting_style</span><span class="p">()</span>
 <span class="n">N_TOTAL_MCMC_STEPS</span> <span class="o">=</span> <span class="mi">500</span>
+
+<span class="n">OUTDIR</span> <span class="o">=</span> <span class="s2">&quot;out&quot;</span>
+<span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">OUTDIR</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -414,13 +412,13 @@ document.write(`
 <div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
 <span class="ne">ModuleNotFoundError</span><span class="g g-Whitespace">                       </span>Traceback (most recent call last)
 <span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">line</span> <span class="mi">3</span>
-<span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="g g-Whitespace">      </span><span class="mi">2</span> <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="ne">----&gt; </span><span class="mi">3</span> <span class="kn">from</span> <span class="nn">scipy.fft</span> <span class="kn">import</span> <span class="n">fft</span>
-<span class="g g-Whitespace">      </span><span class="mi">4</span> <span class="kn">from</span> <span class="nn">slipper.example_datasets.ar_data</span> <span class="kn">import</span> <span class="n">generate_ar_timeseries</span><span class="p">,</span> <span class="n">plot_ar_spectrogram_psd</span>
-<span class="g g-Whitespace">      </span><span class="mi">5</span> <span class="kn">from</span> <span class="nn">slipper.sample.spline_model_sampler</span> <span class="kn">import</span> <span class="n">fit_data_with_pspline_model</span>
+<span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="g g-Whitespace">      </span><span class="mi">2</span> <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="ne">----&gt; </span><span class="mi">3</span> <span class="kn">from</span> <span class="nn">slipper.example_datasets.ar_data</span> <span class="kn">import</span> <span class="n">get_ar_periodogram</span>
+<span class="g g-Whitespace">      </span><span class="mi">4</span> <span class="kn">from</span> <span class="nn">slipper.sample</span> <span class="kn">import</span> <span class="n">LogPsplineSampler</span>
+<span class="g g-Whitespace">      </span><span class="mi">5</span> <span class="kn">from</span> <span class="nn">slipper.plotting</span> <span class="kn">import</span> <span class="n">set_plotting_style</span>
 
-<span class="ne">ModuleNotFoundError</span>: No module named &#39;scipy&#39;
+<span class="ne">ModuleNotFoundError</span>: No module named &#39;slipper&#39;
 </pre></div>
 </div>
 </div>
@@ -429,260 +427,47 @@ document.write(`
 <h2>Example 1: AR(3)<a class="headerlink" href="#example-1-ar-3" title="Permalink to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">data</span> <span class="o">=</span> <span class="n">generate_ar_timeseries</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">n_samples</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
-<span class="n">fig</span> <span class="o">=</span> <span class="n">plot_ar_spectrogram_psd</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;AR(3) Data&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<img alt="../_images/8b71a4f234fcdc55ed5d09871aa6f632d28302b1d6202526e0c0881615084c40.png" src="../_images/8b71a4f234fcdc55ed5d09871aa6f632d28302b1d6202526e0c0881615084c40.png" />
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pdgrm</span> <span class="o">=</span> <span class="n">get_periodogram</span><span class="p">(</span><span class="n">timeseries</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
-<span class="n">mcmc</span> <span class="o">=</span> <span class="n">fit_data_with_pspline_model</span><span class="p">(</span>
-    <span class="n">data</span><span class="o">=</span><span class="n">pdgrm</span><span class="p">,</span> <span class="n">Ntotal</span><span class="o">=</span><span class="n">N_TOTAL_MCMC_STEPS</span><span class="p">,</span> <span class="n">degree</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> 
-    <span class="n">eqSpaced</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">n_checkpoint_plts</span><span class="o">=</span><span class="mi">10</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">mcmc</span> <span class="o">=</span> <span class="n">LogPsplineSampler</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+    <span class="n">data</span><span class="o">=</span><span class="n">get_ar_periodogram</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">n_samples</span><span class="o">=</span><span class="mi">1000</span><span class="p">),</span> 
+    <span class="n">outdir</span><span class="o">=</span><span class="n">OUTDIR</span><span class="p">,</span>
+    <span class="n">sampler_kwargs</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+        <span class="n">Ntotal</span><span class="o">=</span><span class="n">N_TOTAL_MCMC_STEPS</span><span class="p">,</span> 
+        <span class="n">degree</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+    <span class="p">)</span>
 <span class="p">)</span>
-<span class="n">fig</span> <span class="o">=</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">make_summary_plot</span><span class="p">()</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>|<span class=" -Color -Color-Blue">Slipper</span>|21/08 18:21:03|WARNING| <span class=" -Color -Color-Green">Checkpoint plotting is enabled. This will slow down the sampling process.</span>
-|<span class=" -Color -Color-Blue">Slipper</span>|21/08 18:21:03|INFO| <span class=" -Color -Color-Green">Running sampler with the following arguments:</span>
-<span class=" -Color -Color-Green">Sampler arguments:</span>
-<span class=" -Color -Color-Green">{&#39;Ntotal&#39;: 500,</span>
-<span class=" -Color -Color-Green"> &#39;burnin&#39;: 166,</span>
-<span class=" -Color -Color-Green"> &#39;n_checkpoint_plts&#39;: 10,</span>
-<span class=" -Color -Color-Green"> &#39;thin&#39;: 1,</span>
-<span class=" -Color -Color-Green"> &#39;δα&#39;: 0.0001,</span>
-<span class=" -Color -Color-Green"> &#39;δβ&#39;: 0.0001,</span>
-<span class=" -Color -Color-Green"> &#39;τα&#39;: 0.001,</span>
-<span class=" -Color -Color-Green"> &#39;τβ&#39;: 0.001,</span>
-<span class=" -Color -Color-Green"> &#39;φα&#39;: 1,</span>
-<span class=" -Color -Color-Green"> &#39;φβ&#39;: 1}</span>
-<span class=" -Color -Color-Green">Spline arguments:</span>
-<span class=" -Color -Color-Green">{&#39;degree&#39;: 3, &#39;diffMatrixOrder&#39;: 2, &#39;eqSpaced&#39;: True, &#39;k&#39;: 30}</span>
 
-</pre></div>
-</div>
-<script type="application/vnd.jupyter.widget-view+json">{"version_major": 2, "version_minor": 0, "model_id": "ed8104897b1944939acc17d960cb9761"}</script><div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>|<span class=" -Color -Color-Blue">Slipper</span>|21/08 18:21:03|INFO| <span class=" -Color -Color-Green">&lt;&lt;Plotting checkpoint&gt;&gt;</span>
-|<span class=" -Color -Color-Blue">Slipper</span>|21/08 18:21:04|INFO| <span class=" -Color -Color-Green">&lt;&lt;Plotting checkpoint&gt;&gt;</span>
-|<span class=" -Color -Color-Blue">Slipper</span>|21/08 18:21:04|INFO| <span class=" -Color -Color-Green">&lt;&lt;Plotting checkpoint&gt;&gt;</span>
-|<span class=" -Color -Color-Blue">Slipper</span>|21/08 18:21:05|INFO| <span class=" -Color -Color-Green">&lt;&lt;Plotting checkpoint&gt;&gt;</span>
-|<span class=" -Color -Color-Blue">Slipper</span>|21/08 18:21:06|INFO| <span class=" -Color -Color-Green">&lt;&lt;Plotting checkpoint&gt;&gt;</span>
-|<span class=" -Color -Color-Blue">Slipper</span>|21/08 18:21:06|INFO| <span class=" -Color -Color-Green">&lt;&lt;Plotting checkpoint&gt;&gt;</span>
-|<span class=" -Color -Color-Blue">Slipper</span>|21/08 18:21:07|INFO| <span class=" -Color -Color-Green">&lt;&lt;Plotting checkpoint&gt;&gt;</span>
-|<span class=" -Color -Color-Blue">Slipper</span>|21/08 18:21:08|INFO| <span class=" -Color -Color-Green">&lt;&lt;Plotting checkpoint&gt;&gt;</span>
-|<span class=" -Color -Color-Blue">Slipper</span>|21/08 18:21:09|INFO| <span class=" -Color -Color-Green">&lt;&lt;Plotting checkpoint&gt;&gt;</span>
-|<span class=" -Color -Color-Blue">Slipper</span>|21/08 18:21:11|INFO| <span class=" -Color -Color-Green">&lt;&lt;Creating gif&gt;&gt;</span>
-</pre></div>
-</div>
-<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
-<span class="ne">FileNotFoundError</span><span class="g g-Whitespace">                         </span>Traceback (most recent call last)
-<span class="nn">File ~/venv/lib/python3.8/site-packages/pygifsicle/pygifsicle.py:76,</span> in <span class="ni">gifsicle</span><span class="nt">(sources, destination, optimize, colors, options)</span>
-<span class="g g-Whitespace">     </span><span class="mi">75</span> <span class="k">try</span><span class="p">:</span>
-<span class="ne">---&gt; </span><span class="mi">76</span>     <span class="n">subprocess</span><span class="o">.</span><span class="n">call</span><span class="p">([</span><span class="s2">&quot;gifsicle&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">options</span><span class="p">,</span> <span class="o">*</span><span class="n">sources</span><span class="p">,</span> <span class="s2">&quot;--colors&quot;</span><span class="p">,</span>
-<span class="g g-Whitespace">     </span><span class="mi">77</span>                     <span class="nb">str</span><span class="p">(</span><span class="n">colors</span><span class="p">),</span> <span class="s2">&quot;--output&quot;</span><span class="p">,</span> <span class="n">destination</span><span class="p">])</span>
-<span class="g g-Whitespace">     </span><span class="mi">78</span> <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
-
-<span class="nn">File /usr/lib/python3.8/subprocess.py:340,</span> in <span class="ni">call</span><span class="nt">(timeout, *popenargs, **kwargs)</span>
-<span class="g g-Whitespace">    </span><span class="mi">333</span><span class="w"> </span><span class="sd">&quot;&quot;&quot;Run command with arguments.  Wait for command to complete or</span>
-<span class="g g-Whitespace">    </span><span class="mi">334</span><span class="sd"> timeout, then return the returncode attribute.</span>
-<span class="g g-Whitespace">    </span><span class="mi">335</span><span class="sd"> </span>
-<span class="sd">   (...)</span>
-<span class="g g-Whitespace">    </span><span class="mi">338</span><span class="sd"> retcode = call([&quot;ls&quot;, &quot;-l&quot;])</span>
-<span class="g g-Whitespace">    </span><span class="mi">339</span><span class="sd"> &quot;&quot;&quot;</span>
-<span class="ne">--&gt; </span><span class="mi">340</span> <span class="k">with</span> <span class="n">Popen</span><span class="p">(</span><span class="o">*</span><span class="n">popenargs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="k">as</span> <span class="n">p</span><span class="p">:</span>
-<span class="g g-Whitespace">    </span><span class="mi">341</span>     <span class="k">try</span><span class="p">:</span>
-
-<span class="nn">File /usr/lib/python3.8/subprocess.py:858,</span> in <span class="ni">Popen.__init__</span><span class="nt">(self, args, bufsize, executable, stdin, stdout, stderr, preexec_fn, close_fds, shell, cwd, env, universal_newlines, startupinfo, creationflags, restore_signals, start_new_session, pass_fds, encoding, errors, text)</span>
-<span class="g g-Whitespace">    </span><span class="mi">855</span>             <span class="bp">self</span><span class="o">.</span><span class="n">stderr</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">TextIOWrapper</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">856</span>                     <span class="n">encoding</span><span class="o">=</span><span class="n">encoding</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="n">errors</span><span class="p">)</span>
-<span class="ne">--&gt; </span><span class="mi">858</span>     <span class="bp">self</span><span class="o">.</span><span class="n">_execute_child</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">executable</span><span class="p">,</span> <span class="n">preexec_fn</span><span class="p">,</span> <span class="n">close_fds</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">859</span>                         <span class="n">pass_fds</span><span class="p">,</span> <span class="n">cwd</span><span class="p">,</span> <span class="n">env</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">860</span>                         <span class="n">startupinfo</span><span class="p">,</span> <span class="n">creationflags</span><span class="p">,</span> <span class="n">shell</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">861</span>                         <span class="n">p2cread</span><span class="p">,</span> <span class="n">p2cwrite</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">862</span>                         <span class="n">c2pread</span><span class="p">,</span> <span class="n">c2pwrite</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">863</span>                         <span class="n">errread</span><span class="p">,</span> <span class="n">errwrite</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">864</span>                         <span class="n">restore_signals</span><span class="p">,</span> <span class="n">start_new_session</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">865</span> <span class="k">except</span><span class="p">:</span>
-<span class="g g-Whitespace">    </span><span class="mi">866</span>     <span class="c1"># Cleanup if the child failed starting.</span>
-
-<span class="nn">File /usr/lib/python3.8/subprocess.py:1704,</span> in <span class="ni">Popen._execute_child</span><span class="nt">(self, args, executable, preexec_fn, close_fds, pass_fds, cwd, env, startupinfo, creationflags, shell, p2cread, p2cwrite, c2pread, c2pwrite, errread, errwrite, restore_signals, start_new_session)</span>
-<span class="g g-Whitespace">   </span><span class="mi">1703</span>         <span class="n">err_msg</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">strerror</span><span class="p">(</span><span class="n">errno_num</span><span class="p">)</span>
-<span class="ne">-&gt; </span><span class="mi">1704</span>     <span class="k">raise</span> <span class="n">child_exception_type</span><span class="p">(</span><span class="n">errno_num</span><span class="p">,</span> <span class="n">err_msg</span><span class="p">,</span> <span class="n">err_filename</span><span class="p">)</span>
-<span class="g g-Whitespace">   </span><span class="mi">1705</span> <span class="k">raise</span> <span class="n">child_exception_type</span><span class="p">(</span><span class="n">err_msg</span><span class="p">)</span>
-
-<span class="ne">FileNotFoundError</span>: [Errno 2] No such file or directory: &#39;gifsicle&#39;
-
-<span class="n">During</span> <span class="n">handling</span> <span class="n">of</span> <span class="n">the</span> <span class="n">above</span> <span class="n">exception</span><span class="p">,</span> <span class="n">another</span> <span class="n">exception</span> <span class="n">occurred</span><span class="p">:</span>
-
-<span class="ne">FileNotFoundError</span><span class="g g-Whitespace">                         </span>Traceback (most recent call last)
-<span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">13</span><span class="p">],</span> <span class="n">line</span> <span class="mi">2</span>
-<span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="n">pdgrm</span> <span class="o">=</span> <span class="n">get_periodogram</span><span class="p">(</span><span class="n">timeseries</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
-<span class="ne">----&gt; </span><span class="mi">2</span> <span class="n">mcmc</span> <span class="o">=</span> <span class="n">fit_data_with_pspline_model</span><span class="p">(</span>
-<span class="g g-Whitespace">      </span><span class="mi">3</span>     <span class="n">data</span><span class="o">=</span><span class="n">pdgrm</span><span class="p">,</span> <span class="n">Ntotal</span><span class="o">=</span><span class="n">N_TOTAL_MCMC_STEPS</span><span class="p">,</span> <span class="n">degree</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> 
-<span class="g g-Whitespace">      </span><span class="mi">4</span>     <span class="n">eqSpaced</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">n_checkpoint_plts</span><span class="o">=</span><span class="mi">10</span>
-<span class="g g-Whitespace">      </span><span class="mi">5</span> <span class="p">)</span>
-<span class="g g-Whitespace">      </span><span class="mi">6</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">make_summary_plot</span><span class="p">()</span>
-
-<span class="nn">File ~/pspline_psd/src/slipper/sample/spline_model_sampler.py:44,</span> in <span class="ni">fit_data_with_pspline_model</span><span class="nt">(data, Ntotal, burnin, thin, τα, τβ, φα, φβ, δα, δβ, k, eqSpaced, degree, diffMatrixOrder, outdir, n_checkpoint_plts)</span>
-<span class="g g-Whitespace">      </span><span class="mi">7</span> <span class="k">def</span> <span class="nf">fit_data_with_pspline_model</span><span class="p">(</span>
-<span class="g g-Whitespace">      </span><span class="mi">8</span>     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-<span class="g g-Whitespace">      </span><span class="mi">9</span>     <span class="n">Ntotal</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
-   <span class="p">(</span><span class="o">...</span><span class="p">)</span>
-<span class="g g-Whitespace">     </span><span class="mi">23</span>     <span class="n">n_checkpoint_plts</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-<span class="g g-Whitespace">     </span><span class="mi">24</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Result</span><span class="p">:</span>
-<span class="g g-Whitespace">     </span><span class="mi">25</span>     <span class="n">sampler</span> <span class="o">=</span> <span class="n">PsplineSampler</span><span class="p">(</span>
-<span class="g g-Whitespace">     </span><span class="mi">26</span>         <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
-<span class="g g-Whitespace">     </span><span class="mi">27</span>         <span class="n">outdir</span><span class="o">=</span><span class="n">outdir</span><span class="p">,</span>
-   <span class="p">(</span><span class="o">...</span><span class="p">)</span>
-<span class="g g-Whitespace">     </span><span class="mi">42</span>         <span class="p">),</span>
-<span class="g g-Whitespace">     </span><span class="mi">43</span>     <span class="p">)</span>
-<span class="ne">---&gt; </span><span class="mi">44</span>     <span class="n">sampler</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
-<span class="g g-Whitespace">     </span><span class="mi">45</span>     <span class="k">return</span> <span class="n">sampler</span><span class="o">.</span><span class="n">result</span>
-
-<span class="nn">File ~/pspline_psd/src/slipper/sample/base_sampler.py:60,</span> in <span class="ni">BaseSampler.run</span><span class="nt">(self, verbose)</span>
-<span class="g g-Whitespace">     </span><span class="mi">58</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampler_kwargs</span><span class="p">[</span><span class="s2">&quot;n_checkpoint_plts&quot;</span><span class="p">]:</span>
-<span class="g g-Whitespace">     </span><span class="mi">59</span>     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;&lt;&lt;Creating gif&gt;&gt;&quot;</span><span class="p">)</span>
-<span class="ne">---&gt; </span><span class="mi">60</span>     <span class="n">create_gif</span><span class="p">(</span>
-<span class="g g-Whitespace">     </span><span class="mi">61</span>         <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">outdir</span><span class="si">}</span><span class="s2">/checkpoint*.png&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">outdir</span><span class="si">}</span><span class="s2">/checkpoint.gif&quot;</span>
-<span class="g g-Whitespace">     </span><span class="mi">62</span>     <span class="p">)</span>
-
-<span class="nn">File ~/pspline_psd/src/slipper/plotting/gif_creator.py:13,</span> in <span class="ni">create_gif</span><span class="nt">(image_regex, gif_path, duration)</span>
-<span class="g g-Whitespace">     </span><span class="mi">11</span> <span class="n">images</span> <span class="o">=</span> <span class="p">[</span><span class="n">iio</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span> <span class="k">for</span> <span class="n">filepath</span> <span class="ow">in</span> <span class="n">image_filepaths</span><span class="p">]</span>
-<span class="g g-Whitespace">     </span><span class="mi">12</span> <span class="n">iio</span><span class="o">.</span><span class="n">imwrite</span><span class="p">(</span><span class="n">gif_path</span><span class="p">,</span> <span class="n">images</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="n">duration</span><span class="p">)</span>
-<span class="ne">---&gt; </span><span class="mi">13</span> <span class="n">optimize</span><span class="p">(</span><span class="n">gif_path</span><span class="p">)</span>
-
-<span class="nn">File ~/venv/lib/python3.8/site-packages/pygifsicle/pygifsicle.py:97,</span> in <span class="ni">optimize</span><span class="nt">(source, *args, **kwargs)</span>
-<span class="g g-Whitespace">     </span><span class="mi">89</span> <span class="k">def</span> <span class="nf">optimize</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="g g-Whitespace">     </span><span class="mi">90</span><span class="w">     </span><span class="sd">&quot;&quot;&quot;Optimize given gif.</span>
-<span class="g g-Whitespace">     </span><span class="mi">91</span><span class="sd"> </span>
-<span class="g g-Whitespace">     </span><span class="mi">92</span><span class="sd">     Parameters</span>
-<span class="sd">   (...)</span>
-<span class="g g-Whitespace">     </span><span class="mi">95</span><span class="sd">         Path to gif image to optimize.</span>
-<span class="g g-Whitespace">     </span><span class="mi">96</span><span class="sd">     &quot;&quot;&quot;</span>
-<span class="ne">---&gt; </span><span class="mi">97</span>     <span class="n">gifsicle</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span> <span class="n">optimize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-<span class="nn">File ~/venv/lib/python3.8/site-packages/pygifsicle/pygifsicle.py:79,</span> in <span class="ni">gifsicle</span><span class="nt">(sources, destination, optimize, colors, options)</span>
-<span class="g g-Whitespace">     </span><span class="mi">76</span>     <span class="n">subprocess</span><span class="o">.</span><span class="n">call</span><span class="p">([</span><span class="s2">&quot;gifsicle&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">options</span><span class="p">,</span> <span class="o">*</span><span class="n">sources</span><span class="p">,</span> <span class="s2">&quot;--colors&quot;</span><span class="p">,</span>
-<span class="g g-Whitespace">     </span><span class="mi">77</span>                     <span class="nb">str</span><span class="p">(</span><span class="n">colors</span><span class="p">),</span> <span class="s2">&quot;--output&quot;</span><span class="p">,</span> <span class="n">destination</span><span class="p">])</span>
-<span class="g g-Whitespace">     </span><span class="mi">78</span> <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
-<span class="ne">---&gt; </span><span class="mi">79</span>     <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">((</span>
-<span class="g g-Whitespace">     </span><span class="mi">80</span>         <span class="s2">&quot;The gifsicle library was not found on your system.</span><span class="se">\n</span><span class="s2">&quot;</span>
-<span class="g g-Whitespace">     </span><span class="mi">81</span>         <span class="s2">&quot;On MacOS it is automatically installed using brew when you &quot;</span>
-<span class="g g-Whitespace">     </span><span class="mi">82</span>         <span class="s2">&quot;use the pip install command.</span><span class="se">\n</span><span class="s2">&quot;</span>
-<span class="g g-Whitespace">     </span><span class="mi">83</span>         <span class="s2">&quot;On other systems, like Linux systems and Windows, it prompts the &quot;</span>
-<span class="g g-Whitespace">     </span><span class="mi">84</span>         <span class="s2">&quot;instructions to be followed for completing the installation.</span><span class="se">\n</span><span class="s2">&quot;</span>
-<span class="g g-Whitespace">     </span><span class="mi">85</span>         <span class="s2">&quot;You can learn more on how to install gifsicle on &quot;</span>
-<span class="g g-Whitespace">     </span><span class="mi">86</span>         <span class="s2">&quot;the gifsicle and pygifsicle documentation.&quot;</span>
-<span class="g g-Whitespace">     </span><span class="mi">87</span>     <span class="p">))</span>
-
-<span class="ne">FileNotFoundError</span>: The gifsicle library was not found on your system.
-<span class="n">On</span> <span class="n">MacOS</span> <span class="n">it</span> <span class="ow">is</span> <span class="n">automatically</span> <span class="n">installed</span> <span class="n">using</span> <span class="n">brew</span> <span class="n">when</span> <span class="n">you</span> <span class="n">use</span> <span class="n">the</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">command</span><span class="o">.</span>
-<span class="n">On</span> <span class="n">other</span> <span class="n">systems</span><span class="p">,</span> <span class="n">like</span> <span class="n">Linux</span> <span class="n">systems</span> <span class="ow">and</span> <span class="n">Windows</span><span class="p">,</span> <span class="n">it</span> <span class="n">prompts</span> <span class="n">the</span> <span class="n">instructions</span> <span class="n">to</span> <span class="n">be</span> <span class="n">followed</span> <span class="k">for</span> <span class="n">completing</span> <span class="n">the</span> <span class="n">installation</span><span class="o">.</span>
-<span class="n">You</span> <span class="n">can</span> <span class="n">learn</span> <span class="n">more</span> <span class="n">on</span> <span class="n">how</span> <span class="n">to</span> <span class="n">install</span> <span class="n">gifsicle</span> <span class="n">on</span> <span class="n">the</span> <span class="n">gifsicle</span> <span class="ow">and</span> <span class="n">pygifsicle</span> <span class="n">documentation</span><span class="o">.</span>
+<span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="n">mcmc</span><span class="o">.</span><span class="n">plot_model_and_data</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">fig</span><span class="o">.</span><span class="n">gca</span><span class="p">())</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">OUTDIR</span><span class="p">,</span> <span class="s1">&#39;AR3_fit.png&#39;</span><span class="p">),</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 </div>
+<p><img alt="" src="../_images/AR3_fit.png" /></p>
 </section>
 <section id="example-2-ar-4">
 <h2>Example 2: AR(4)<a class="headerlink" href="#example-2-ar-4" title="Permalink to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">data</span> <span class="o">=</span> <span class="n">generate_ar_timeseries</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">n_samples</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
-<span class="n">fig</span> <span class="o">=</span> <span class="n">plot_ar_spectrogram_psd</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;AR(4) Data&#39;</span><span class="p">);</span>
-<span class="n">fig</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<img alt="../_images/a89370136f98f2d080c771956752418d1d66866976eb394c374ad54346b51f2b.png" src="../_images/a89370136f98f2d080c771956752418d1d66866976eb394c374ad54346b51f2b.png" />
-<img alt="../_images/a89370136f98f2d080c771956752418d1d66866976eb394c374ad54346b51f2b.png" src="../_images/a89370136f98f2d080c771956752418d1d66866976eb394c374ad54346b51f2b.png" />
-</div>
-</div>
-</section>
-<section id="equally-spaced-knots">
-<h2>Equally spaced knots<a class="headerlink" href="#equally-spaced-knots" title="Permalink to this heading">#</a></h2>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pdgrm</span> <span class="o">=</span> <span class="n">get_periodogram</span><span class="p">(</span><span class="n">timeseries</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
-<span class="n">mcmc</span> <span class="o">=</span> <span class="n">fit_data_with_pspline_model</span><span class="p">(</span>
-    <span class="n">data</span><span class="o">=</span><span class="n">pdgrm</span><span class="p">,</span> <span class="n">Ntotal</span><span class="o">=</span><span class="n">N_TOTAL_MCMC_STEPS</span><span class="p">,</span> <span class="n">degree</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> 
-    <span class="n">eqSpaced</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">compute_psds</span><span class="o">=</span><span class="kc">True</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">mcmc</span> <span class="o">=</span> <span class="n">LogPsplineSampler</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+    <span class="n">data</span><span class="o">=</span><span class="n">get_ar_periodogram</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">n_samples</span><span class="o">=</span><span class="mi">1000</span><span class="p">),</span> 
+    <span class="n">outdir</span><span class="o">=</span><span class="n">OUTDIR</span><span class="p">,</span>
+    <span class="n">sampler_kwargs</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">Ntotal</span><span class="o">=</span><span class="n">N_TOTAL_MCMC_STEPS</span><span class="p">),</span>
+    <span class="n">spline_kwargs</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+        <span class="n">knot_locator_type</span><span class="o">=</span><span class="s1">&#39;data_peak&#39;</span>
+    <span class="p">)</span>
 <span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
-<span class="ne">TypeError</span><span class="g g-Whitespace">                                 </span>Traceback (most recent call last)
-<span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">12</span><span class="p">],</span> <span class="n">line</span> <span class="mi">2</span>
-<span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="n">pdgrm</span> <span class="o">=</span> <span class="n">get_periodogram</span><span class="p">(</span><span class="n">timeseries</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
-<span class="ne">----&gt; </span><span class="mi">2</span> <span class="n">mcmc</span> <span class="o">=</span> <span class="n">fit_data_with_pspline_model</span><span class="p">(</span>
-<span class="g g-Whitespace">      </span><span class="mi">3</span>     <span class="n">data</span><span class="o">=</span><span class="n">pdgrm</span><span class="p">,</span> <span class="n">Ntotal</span><span class="o">=</span><span class="n">N_TOTAL_MCMC_STEPS</span><span class="p">,</span> <span class="n">degree</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> 
-<span class="g g-Whitespace">      </span><span class="mi">4</span>     <span class="n">eqSpaced</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">compute_psds</span><span class="o">=</span><span class="kc">True</span>
-<span class="g g-Whitespace">      </span><span class="mi">5</span> <span class="p">)</span>
 
-<span class="ne">TypeError</span>: fit_data_with_pspline_model() got an unexpected keyword argument &#39;compute_psds&#39;
+<span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="n">mcmc</span><span class="o">.</span><span class="n">plot_model_and_data</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">fig</span><span class="o">.</span><span class="n">gca</span><span class="p">())</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xscale</span><span class="p">(</span><span class="s1">&#39;linear&#39;</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">OUTDIR</span><span class="p">,</span> <span class="s1">&#39;AR4_fit.png&#39;</span><span class="p">),</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 </div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">make_summary_plot</span><span class="p">()</span>
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">plot_spline_model_and_data</span><span class="p">(</span><span class="n">pdgrm</span><span class="p">,</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">psd_quantiles</span><span class="p">,</span> <span class="n">separarte_y_axis</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-</section>
-<section id="non-equally-spaced-knots">
-<h2>Non-equally spaced knots<a class="headerlink" href="#non-equally-spaced-knots" title="Permalink to this heading">#</a></h2>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pdgrm</span> <span class="o">=</span> <span class="n">get_periodogram</span><span class="p">(</span><span class="n">timeseries</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
-<span class="n">mcmc</span> <span class="o">=</span> <span class="n">fit_data_with_pspline_model</span><span class="p">(</span>
-    <span class="n">data</span><span class="o">=</span><span class="n">pdgrm</span><span class="p">,</span> <span class="n">Ntotal</span><span class="o">=</span><span class="n">N_TOTAL_MCMC_STEPS</span><span class="p">,</span> <span class="n">degree</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> 
-    <span class="n">eqSpaced</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">compute_psds</span><span class="o">=</span><span class="kc">True</span>
-<span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">make_summary_plot</span><span class="p">()</span>
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">mcmc_quant</span> <span class="o">=</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">get_model_quantiles</span><span class="p">()</span>
-<span class="n">plt_pdgrm</span> <span class="o">=</span> <span class="n">pdgrm</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-<span class="n">N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">plt_pdgrm</span><span class="p">)</span>
-<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="n">N</span><span class="p">)</span>
-<span class="n">fig</span> <span class="o">=</span> <span class="n">plot_spline_model_and_data</span><span class="p">(</span><span class="n">plt_pdgrm</span><span class="p">,</span> <span class="n">mcmc_quant</span><span class="p">,</span> <span class="n">separarte_y_axis</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">a_</span> <span class="ow">in</span> <span class="n">fig</span><span class="o">.</span><span class="n">get_axes</span><span class="p">():</span>
-    <span class="n">a_</span><span class="o">.</span><span class="n">set_yscale</span><span class="p">(</span><span class="s1">&#39;log&#39;</span><span class="p">)</span>
-    <span class="n">a_</span><span class="o">.</span><span class="n">relim</span><span class="p">()</span>
-    
-</pre></div>
-</div>
-</div>
-</div>
+<p><img alt="" src="../_images/AR4_fit.png" /></p>
 </section>
 </section>
 
@@ -726,11 +511,11 @@ document.write(`
       </div>
     </a>
     <a class="right-next"
-       href="example_wavelet.html"
+       href="example_lisa.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Example: Wavelet</p>
+        <p class="prev-next-title">Example: LISA data</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -751,8 +536,6 @@ document.write(`
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-1-ar-3">Example 1: AR(3)</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-2-ar-4">Example 2: AR(4)</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#equally-spaced-knots">Equally spaced knots</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#non-equally-spaced-knots">Non-equally spaced knots</a></li>
 </ul>
   </nav></div>
 

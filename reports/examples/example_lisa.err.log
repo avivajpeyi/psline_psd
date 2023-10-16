@@ -15,17 +15,24 @@ Traceback (most recent call last):
     raise CellExecutionError.from_cell_and_msg(cell, exec_reply_content)
 nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:
 ------------------
-from slipper.example_datasets.lisa_data import lisa_noise_periodogram
+from slipper.example_datasets.lisa_data import lisa_noise_periodogram, lisa_wd_strain
+from slipper.fourier_methods import get_periodogram
+from slipper.sample import LogPsplineSampler
+import os
+import numpy as np
 
-pdgrm = lisa_noise_periodogram()[100:]
+np.random.seed(42)
+OUTDIR = "out"
+os.makedirs(OUTDIR, exist_ok=True)
 ------------------
 
 
 [0;31m---------------------------------------------------------------------------[0m
 [0;31mModuleNotFoundError[0m                       Traceback (most recent call last)
 Cell [0;32mIn[1], line 1[0m
-[0;32m----> 1[0m [38;5;28;01mfrom[39;00m [38;5;21;01mslipper[39;00m[38;5;21;01m.[39;00m[38;5;21;01mexample_datasets[39;00m[38;5;21;01m.[39;00m[38;5;21;01mlisa_data[39;00m [38;5;28;01mimport[39;00m lisa_noise_periodogram
-[1;32m      3[0m pdgrm [38;5;241m=[39m lisa_noise_periodogram()[[38;5;241m100[39m:]
+[0;32m----> 1[0m [38;5;28;01mfrom[39;00m [38;5;21;01mslipper[39;00m[38;5;21;01m.[39;00m[38;5;21;01mexample_datasets[39;00m[38;5;21;01m.[39;00m[38;5;21;01mlisa_data[39;00m [38;5;28;01mimport[39;00m lisa_noise_periodogram, lisa_wd_strain
+[1;32m      2[0m [38;5;28;01mfrom[39;00m [38;5;21;01mslipper[39;00m[38;5;21;01m.[39;00m[38;5;21;01mfourier_methods[39;00m [38;5;28;01mimport[39;00m get_periodogram
+[1;32m      3[0m [38;5;28;01mfrom[39;00m [38;5;21;01mslipper[39;00m[38;5;21;01m.[39;00m[38;5;21;01msample[39;00m [38;5;28;01mimport[39;00m LogPsplineSampler
 
 [0;31mModuleNotFoundError[0m: No module named 'slipper'
 
