@@ -33,7 +33,7 @@ def __plot_res(pdgrm, res, title):
     return fig
 
 
-@pytest.mark.skip("Fails due to -inf qunatiles")
+# @pytest.mark.skip("Fails due to -inf qunatiles")
 def test_fit_lisa_noise_linear_knots(tmpdir):
     np.random.seed(42)
     pdgrm = lisa_noise_periodogram()
@@ -44,11 +44,10 @@ def test_fit_lisa_noise_linear_knots(tmpdir):
     res = LogPsplineSampler.fit(
         data=pdgrm,
         outdir=outdir,
-        sampler_kwargs=dict(Ntotal=100, n_checkpoint_plts=2, burnin=10),
+        sampler_kwargs=dict(Ntotal=200, n_checkpoint_plts=2, burnin=100),
         spline_kwargs=dict(
-            k=50,
+            k=30,
             knot_locator_type=KnotLocatorType.linearly_spaced,
-            min_val=10**-3,
         ),
     )
     fig = __plot_res(pdgrm, res, "LISA noise")
@@ -92,7 +91,7 @@ def test_fit_list_wd_background(tmpdir):
         data=pdgrm,
         outdir=outdir,
         sampler_kwargs=dict(
-            Ntotal=100, n_checkpoint_plts=2, burnin=10, thin=1
+            Ntotal=200, n_checkpoint_plts=2, burnin=100, thin=1
         ),
         spline_kwargs=dict(
             k=30,
