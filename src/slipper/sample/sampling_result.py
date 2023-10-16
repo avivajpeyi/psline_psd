@@ -291,7 +291,9 @@ class Result:
             logged_splines=self.logged_splines,
         )
 
-    def plot_model_and_data(self, i=None):
+    def plot_model_and_data(
+        self, i=None, ax=None, hide_axes=False, log_axes=None, add_legend=False
+    ):
         if i is None:
             start, end = None, None
         elif i == 0:
@@ -301,11 +303,17 @@ class Result:
         else:
             start, end = i, i + 1
         model_qantiles = self.get_model_quantiles(start, end)
+
+        log_axes = self.logged_splines if log_axes is None else log_axes
+
         return plot_spline_model_and_data(
             self.data,
             model_qantiles,
             knots=self.knots,
-            logged_axes=self.logged_splines,
+            logged_axes=log_axes,
+            ax=ax,
+            hide_axes=hide_axes,
+            add_legend=add_legend,
         )
 
     @property

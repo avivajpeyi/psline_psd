@@ -12,7 +12,10 @@ logger.remove(0)
 logger.configure(
     handlers=[
         dict(
-            sink=lambda msg: tqdm.write(msg, end=""), format=FMT, colorize=True
+            sink=lambda msg: tqdm.write(msg, end=""),
+            format=FMT,
+            colorize=True,
+            level="INFO",
         )
     ]
 )
