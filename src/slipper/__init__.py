@@ -4,7 +4,7 @@ import sys
 
 __author__ = "Avi Vajpeyi"
 __email__ = "avi.vajpeyi@gmail.com"
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 __uri__ = "https://github.com/avivajpeyi/slipper"
 __license__ = "MIT"
 __description__ = "P-spline PSD"
