@@ -2,9 +2,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 
-def density_mixture(
-    weights: np.ndarray, densities: np.ndarray, epsilon=1e-20
-) -> np.ndarray:
+def density_mixture(weights: np.ndarray, densities: np.ndarray) -> np.ndarray:
     """build a density mixture, given mixture weights and densities
 
     weights:
@@ -16,10 +14,7 @@ def density_mixture(
         raise ValueError(
             f"weights ({weights.shape}) and densities ({densities.shape}) must have the same length",
         )
-    res = np.sum(weights[:, None] * densities, axis=0)
-    # res = np.maximum(res, epsilon)  # dont allow values below epsilon
-
-    return res
+    return np.sum(weights[:, None] * densities, axis=0)
 
 
 def unroll_list_to_new_length(old_list, n):
@@ -91,7 +86,7 @@ def convert_v_to_weights(v: np.ndarray):
 
 
 def __get_unscaled_spline(
-    db_list: np.ndarray, epsilon=1e-20, v: np.ndarray = None, weights=None
+    db_list: np.ndarray, v: np.ndarray = None, weights=None
 ):
     """Compute unscaled spline using mixture of B-splines with weights from v
 
@@ -110,9 +105,7 @@ def __get_unscaled_spline(
     """
     if weights is None:
         weights = convert_v_to_weights(v)
-    combined = density_mixture(densities=db_list.T, weights=weights)
-    # return np.maximum(combined, epsilon)
-    return combined
+    return density_mixture(densities=db_list.T, weights=weights)
 
 
 def _lnlikelihood(data: np.ndarray, model: np.ndarray, **lnl_kwargs) -> float:
