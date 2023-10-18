@@ -2,7 +2,7 @@
 [![pypi](https://img.shields.io/pypi/v/pspline_psd.svg)](https://pypi.org/project/pspline_psd/)
 [![python](https://img.shields.io/pypi/pyversions/pspline_psd.svg)](https://pypi.org/project/pspline_psd/)
 [![Build Status](https://github.com/avivajpeyi/pspline_psd/actions/workflows/dev.yml/badge.svg)](https://github.com/avivajpeyi/pspline_psd/actions/workflows/dev.yml)
-[![Coverage Status](https://coveralls.io/repos/github/avivajpeyi/pyslipper/badge.svg?branch=main)](https://coveralls.io/github/avivajpeyi/pyslipper?branch=main)
+[![Coverage Status](https://coveralls.io/repos/github/avivajpeyi/pyslipper/badge.svg?branch=main&kill_cache=1)](https://coveralls.io/github/avivajpeyi/pyslipper?branch=main)
 
 
 A python package to fit data with P-splines.
