@@ -1,5 +1,5 @@
 # Slipper
-[![pypi](https://img.shields.io/pypi/v/pyslipper.svg&kill_cache=1)](https://pypi.org/project/pyslipper/)
+[![pypi](https://img.shields.io/pypi/v/pyslipper.svg)](https://pypi.org/project/pyslipper/)
 [![python](https://img.shields.io/pypi/pyversions/pyslipper.svg)](https://pypi.org/project/pyslipper/)
 [![Build Status](https://github.com/avivajpeyi/pyslipper/actions/workflows/dev.yml/badge.svg)](https://github.com/avivajpeyi/pyslipper/actions/workflows/dev.yml)
 [![Coverage Status](https://coveralls.io/repos/github/avivajpeyi/pyslipper/badge.svg?branch=main&kill_cache=1)](https://coveralls.io/github/avivajpeyi/pyslipper?branch=main)
