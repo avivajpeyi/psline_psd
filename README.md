@@ -1,7 +1,7 @@
 # Slipper
-[![pypi](https://img.shields.io/pypi/v/pspline_psd.svg)](https://pypi.org/project/pspline_psd/)
-[![python](https://img.shields.io/pypi/pyversions/pspline_psd.svg)](https://pypi.org/project/pspline_psd/)
-[![Build Status](https://github.com/avivajpeyi/pspline_psd/actions/workflows/dev.yml/badge.svg)](https://github.com/avivajpeyi/pspline_psd/actions/workflows/dev.yml)
+[![pypi](https://img.shields.io/pypi/v/pyslipper.svg&kill_cache=1)](https://pypi.org/project/pyslipper/)
+[![python](https://img.shields.io/pypi/pyversions/pyslipper.svg)](https://pypi.org/project/pyslipper/)
+[![Build Status](https://github.com/avivajpeyi/pyslipper/actions/workflows/dev.yml/badge.svg)](https://github.com/avivajpeyi/pyslipper/actions/workflows/dev.yml)
 [![Coverage Status](https://coveralls.io/repos/github/avivajpeyi/pyslipper/badge.svg?branch=main&kill_cache=1)](https://coveralls.io/github/avivajpeyi/pyslipper?branch=main)
 
 
@@ -14,9 +14,9 @@ https://github.com/pmat747/psplinePsd
 ![](docs/static/logo.png)
 
 
-* Documentation: <https://avivajpeyi.github.io/pspline_psd>
-* GitHub: <https://github.com/avivajpeyi/pspline_psd>
-* PyPI: <https://pypi.org/project/pspline_psd/>
+* Documentation: <https://avivajpeyi.github.io/pyslipper>
+* GitHub: <https://github.com/avivajpeyi/pyslipper>
+* PyPI: <https://pypi.org/project/pyslipper/>
 * Free software: MIT
 
 
