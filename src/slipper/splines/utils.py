@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import interp1d
 
@@ -125,8 +126,9 @@ def _lnlikelihood(
     integrand = lnmodel + np.exp(lndata - lnmodel - np.log(2 * np.pi))
     lnlike = -np.sum(integrand) / 2
 
+    # if inf make the lnlikelihood the smallest possible value
     if not np.isfinite(lnlike):
-        return np.nan
+        return -1e300
     return lnlike
 
 

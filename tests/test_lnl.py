@@ -31,12 +31,17 @@ def test_lisa_noise_lnl():
     w = np.zeros_like(w)
     w[4] = -1
 
-    model = pspline(weights=w, return_log_value=True)
-    model_x = np.linspace(0, 1, len(model))
-    fig = plt.scatter(model_x, model, s=1)
-    # x = np.linspace(0, 1, len(pdgrm))
-    # plt.scatter(x, pdgrm, s=1)
-    #
-    plt.show()
+    lndata = np.log(pdgrm)
+    n = len(lndata)
+    lnmodel = pspline(weights=w, return_log_value=True, n=n)
 
+    assert np.isfinite(lndata)
+    assert np.isfinite(lnmodel)
+
+    # this _should_ have inf values
+    assert np.isfinite(np.exp(lnmodel)) is False
+    lnl = np.sum(lnmodel + np.exp(lndata - lnmodel - np.log(2 * np.pi))) / 2
+    assert np.isfinite(lnl) is False
+
+    # BUT lnl should be finite
     assert np.isfinite(pspline.lnlikelihood(pdgrm, weights=w))
