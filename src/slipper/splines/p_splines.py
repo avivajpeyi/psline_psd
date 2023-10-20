@@ -391,7 +391,7 @@ class PSplines:
         ln_model = self.__call__(
             weights=weights, v=v, n=n, return_log_value=True
         )
-        if self.logged:
+        if not self.logged:
             ln_model += np.log(lnl_kwargs.get("τ", 1))
 
         return _lnlikelihood(np.log(data), ln_model)
