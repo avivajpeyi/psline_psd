@@ -35,13 +35,13 @@ def test_lisa_noise_lnl():
     n = len(lndata)
     lnmodel = pspline(weights=w, return_log_value=True, n=n)
 
-    assert np.isfinite(lndata)
-    assert np.isfinite(lnmodel)
+    # check that all values in lnmodel are finite
+    assert np.all(np.isfinite(lnmodel))
+    assert np.all(np.isfinite(lndata))
 
     # this _should_ have inf values
-    assert np.isfinite(np.exp(lnmodel)) is False
     lnl = np.sum(lnmodel + np.exp(lndata - lnmodel - np.log(2 * np.pi))) / 2
-    assert np.isfinite(lnl) is False
+    assert not np.isfinite(lnl)
 
     # BUT lnl should be finite
     assert np.isfinite(pspline.lnlikelihood(pdgrm, weights=w))

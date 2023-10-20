@@ -12,6 +12,13 @@ def knot_locator(
     knot_locator_type: Union[KnotLocatorType, str], **knots_kwargs
 ) -> np.ndarray:
     """Returns the knots for the given knot locator type and kwargs"""
+    try:
+        knot_locator_type = KnotLocatorType(knot_locator_type)
+    except ValueError:
+        raise ValueError(
+            f"{knot_locator_type} is not a valid knot locator type. "
+            f"Valid types are: {list(KnotLocatorType.__members__)}"
+        )
     knot_loc_func = _KNOT_LOCATOR_FUNC_DICT[knot_locator_type]
     expected_args = inspect.getfullargspec(knot_loc_func).args
     kwargs = {k: knots_kwargs.get(k, None) for k in expected_args}
