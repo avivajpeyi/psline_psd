@@ -101,7 +101,10 @@ def binned_knots(
     n_bin_weights = len(data_bin_weights)
 
     data_bin_edges = np.sort(data_bin_edges)
-    # eqval = np.concatenate(([0], nfreqbin / (fs / 2), [1]))
+    # Transforming data_bin_edges to the interval [0,1] mx+c
+    # make it different when including the data as x sth array
+    m = 1 / (1e-1 - 1e-4)
+    data_bin_edges = m * data_bin_edges  # c is 0
     eqval = np.concatenate(([0], data_bin_edges, [1]))  # Interval [0,1]
     eqval = np.column_stack(
         (eqval[:-1], eqval[1:])
