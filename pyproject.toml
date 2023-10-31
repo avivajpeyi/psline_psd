@@ -26,14 +26,14 @@ classifiers = [
 ]
 dependencies = [
     "arviz",
-    "spectral",
     "scikit-fda",
     "matplotlib",
     "imageio",
     "pygifsicle",
     "bilby",
     "statsmodels",
-    "loguru"
+    "loguru",
+    "spectrum"
 ]
 
 [project.optional-dependencies]
