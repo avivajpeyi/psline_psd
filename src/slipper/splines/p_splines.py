@@ -261,9 +261,9 @@ class PSplines:
             model = model
 
         if return_log_value:
-            return ln_model
+            return ln_model - np.log(2 * np.pi)
         else:
-            return model
+            return model / 2 * np.pi
 
     def plot_basis(
         self,

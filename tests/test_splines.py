@@ -18,7 +18,7 @@ def test_spline_creation(tmpdir):
     plt.close()
 
 
-def test_initial_guess(test_pdgrm, tmpdir):
+def test_initial_guess(test_pdgrm, true_psd, tmpdir):
     N = len(test_pdgrm)
     knots = np.linspace(0, 1, 30)
     pspline = PSplines(knots=knots, degree=2, diffMatrixOrder=1, logged=True)
@@ -30,3 +30,17 @@ def test_initial_guess(test_pdgrm, tmpdir):
     plt.plot(newx, test_pdgrm, ",k")
     plt.tight_layout()
     fig.savefig(f"{tmpdir}/test_spline_init_guess.png")
+
+    model = pspline(weights=w0)
+    model_x = np.linspace(0, 1, len(model))
+    test_pdgrm_x = np.linspace(0, 1, len(test_pdgrm) - 1)
+    true_psd_x = np.linspace(0, 1, len(true_psd))
+    plt.close("all")
+    plt.figure()
+    plt.scatter(test_pdgrm_x, test_pdgrm[1:], c="k", s=1)
+    plt.plot(true_psd_x, true_psd, "tab:blue", label="True PSD")
+    plt.plot(model_x, model, "tab:orange", label="PSpline")
+    plt.yscale("log")
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
