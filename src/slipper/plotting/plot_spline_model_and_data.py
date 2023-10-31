@@ -82,10 +82,10 @@ def plot_spline_model_and_data(
         alpha=0.2,
         linewidth=0.0,
     )
-    #Transforming [0,1] to [1e-4,1e-1]
-    m=max(x)-min(x)
-    c=min(x)
-    knots=m*knots+c
+    # Transforming [0,1] to [1e-4,1e-1]
+    m = max(x) - min(x)
+    c = min(x)
+    knots = m * knots + c
     if len(knots) > 0:
         ax_knots.vlines(knots, 0, 0.1, color="tab:red", alpha=0.5)
         ax_knots.set_ylim(0, 1)

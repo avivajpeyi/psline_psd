@@ -16,7 +16,7 @@ from slipper.splines.knot_locator import KnotLocatorType
 from .conftest import mkdir
 
 
-def __plot_res(pdgrm, res, title,x):
+def __plot_res(pdgrm, res, title, x):
     fig = plot_spline_model_and_data(
         data=pdgrm,
         model_quants=res.psd_quantiles,
@@ -39,9 +39,9 @@ def test_fit_lisa_noise_linear_knots(tmpdir):
     np.random.seed(42)
     pdgrm = lisa_noise_periodogram()
     fs = 1 / 0.75
-    f=np.linspace(0,fs/2, len(pdgrm))
+    f = np.linspace(0, fs / 2, len(pdgrm))
     # keep every 5th point to speed up analysis for testing
-    pdgrm = pdgrm[(f>=1e-4) & (f<=0.1)]
+    pdgrm = pdgrm[(f >= 1e-4) & (f <= 0.1)]
 
     outdir = mkdir(f"{tmpdir}/lisa/noise/linear_knots")
     res = LogPsplineSampler.fit(
@@ -53,8 +53,8 @@ def test_fit_lisa_noise_linear_knots(tmpdir):
             knot_locator_type=KnotLocatorType.linearly_spaced,
         ),
     )
-    freq=f[(f>=1e-4) & (f<=0.1)]
-    fig = __plot_res(pdgrm, res, "LISA noise",x=freq)
+    freq = f[(f >= 1e-4) & (f <= 0.1)]
+    fig = __plot_res(pdgrm, res, "LISA noise", x=freq)
     fig.savefig(f"{outdir}/fit.png")
 
 
@@ -88,14 +88,16 @@ def test_fit_lisa_noise_binned_knots(tmpdir):
     model_med = res.get_model_quantiles()[0]
     plt.figure(0)
     plt.scatter(freq, pdgrm, marker=".", alpha=0.1, s=1)
-#    fig.savefig(f"{outdir}/fit1.png")
+    #    fig.savefig(f"{outdir}/fit1.png")
     plt.plot(freq, model_med, alpha=0.5)
-    plt.xscale('log')
-    plt.yscale('log')
+    plt.xscale("log")
+    plt.yscale("log")
     plt.show()
+
+
 #    fig.savefig(f"{outdir}/fit2.png")
-    #fig = __plot_res(pdgrm, res, "LISA noise",x=freq)
-    #fig.savefig(f"{outdir}/fit.png")
+# fig = __plot_res(pdgrm, res, "LISA noise",x=freq)
+# fig.savefig(f"{outdir}/fit.png")
 
 
 def test_fit_list_wd_background(tmpdir):
