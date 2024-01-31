@@ -2,8 +2,8 @@ from collections import namedtuple
 from typing import NamedTuple
 
 import numpy as np
-from bilby.core.prior import Gamma
-from scipy.stats import gamma
+from bilby.core.prior import Gamma, LogNormal
+from scipy.stats import gamma, norm
 
 from slipper.splines.p_splines import PSplines
 
@@ -30,6 +30,7 @@ def lprior(args: LnlArgs):
         args.δβ,
     )
     φ, δ = args.φ, args.δ
+
     P = args.spline_model.penalty_matrix
     k = args.spline_model.n_basis
     w = args.w

@@ -39,11 +39,7 @@ class Result:
     ):
         return cls.compile_idata_from_sampling_results(
             posterior_samples=np.array(
-                [
-                    samples["φ"],
-                    samples["δ"],
-                    samples["τ"],
-                ]
+                [samples["φ"], samples["δ"], samples["τ"], samples["alph"]]
             ),
             lpost_trace=samples["lpost_trace"],
             frac_accept=samples["acceptance_fraction"],
@@ -91,23 +87,45 @@ class Result:
         if n_weight_cols == n_basis - 1:
             logged_splines = 0
 
-        posterior = az.dict_to_dataset(
-            dict(
-                phi=posterior_samples[0, :],
-                delta=posterior_samples[1, :],
-                tau=posterior_samples[2, :],
-                weight=weight_samples,
-            ),
-            coords=dict(weight_idx=weight_idx, draws=draw_idx),
-            dims=dict(
-                phi=["draws"],
-                delta=["draws"],
-                tau=["draws"],
-                weight=["draws", "weight_idx"],
-            ),
-            default_dims=[],
-            attrs={},
-        )
+        try:
+            alph = posterior_samples[3, :]
+            posterior = az.dict_to_dataset(
+                dict(
+                    phi=posterior_samples[0, :],
+                    delta=posterior_samples[1, :],
+                    tau=posterior_samples[2, :],
+                    alph=alph,
+                    weight=weight_samples,
+                ),
+                coords=dict(weight_idx=weight_idx, draws=draw_idx),
+                dims=dict(
+                    phi=["draws"],
+                    delta=["draws"],
+                    tau=["draws"],
+                    alph=["draws"],
+                    weight=["draws", "weight_idx"],
+                ),
+                default_dims=[],
+                attrs={},
+            )
+        except:
+            posterior = az.dict_to_dataset(
+                dict(
+                    phi=posterior_samples[0, :],
+                    delta=posterior_samples[1, :],
+                    tau=posterior_samples[2, :],
+                    weight=weight_samples,
+                ),
+                coords=dict(weight_idx=weight_idx, draws=draw_idx),
+                dims=dict(
+                    phi=["draws"],
+                    delta=["draws"],
+                    tau=["draws"],
+                    weight=["draws", "weight_idx"],
+                ),
+                default_dims=[],
+                attrs={},
+            )
         sample_stats = az.dict_to_dataset(
             dict(
                 acceptance_rate=frac_accept[draw_idx],
@@ -189,6 +207,7 @@ class Result:
                 self.__posterior["phi"],
                 self.__posterior["delta"],
                 self.__posterior["tau"],
+                self.__posterior["alph"],
             ]
         ).T
 
@@ -200,15 +219,29 @@ class Result:
         # samples without burn in cuttoff
         post = self.idata.posterior
         sampling_dat = self.idata.sample_stats
-        return pd.DataFrame(
-            dict(
-                phi=post["phi"].values,
-                delta=post["delta"].values,
-                tau=post["tau"].values,
-                acceptance_rate=sampling_dat["acceptance_rate"].values,
-                lp=sampling_dat["lp"].values,
+        try:
+            alph = (post["alph"].values,)
+            result = pd.DataFrame(
+                dict(
+                    phi=post["phi"].values,
+                    delta=post["delta"].values,
+                    tau=post["tau"].values,
+                    alph=alph,
+                    acceptance_rate=sampling_dat["acceptance_rate"].values,
+                    lp=sampling_dat["lp"].values,
+                )
             )
-        )
+        except:
+            result = pd.DataFrame(
+                dict(
+                    phi=post["phi"].values,
+                    delta=post["delta"].values,
+                    tau=post["tau"].values,
+                    acceptance_rate=sampling_dat["acceptance_rate"].values,
+                    lp=sampling_dat["lp"].values,
+                )
+            )
+        return result
 
     @property
     def basis(self):

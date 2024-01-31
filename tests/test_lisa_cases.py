@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
+from slipper.example_datasets.ar_data import generate_ar_timeseries as gen
 from slipper.example_datasets.lisa_data import (
     lisa_noise_periodogram,
     lisa_wd_strain,
@@ -11,12 +12,15 @@ from slipper.plotting.plot_spline_model_and_data import (
     plot_spline_model_and_data,
 )
 from slipper.sample import LogPsplineSampler
+from slipper.sample import LogPsplineSamplerPara as lpp
 from slipper.splines.knot_locator import KnotLocatorType
 
 from .conftest import mkdir
 
 
-def __plot_res(pdgrm, res, title, x):
+def __plot_res(pdgrm, res, title, x=None):
+    if x is not None:
+        x = x[1:]
     fig = plot_spline_model_and_data(
         data=pdgrm,
         model_quants=res.psd_quantiles,
@@ -24,7 +28,7 @@ def __plot_res(pdgrm, res, title, x):
         add_legend=False,
         logged_axes=["x", "y"],
         hide_axes=False,
-        x=x[1:],
+        x=x,
     )
     fig.suptitle(title)
     ax = fig.axes[0]
@@ -38,9 +42,10 @@ def __plot_res(pdgrm, res, title, x):
 def test_fit_lisa_noise_linear_knots(tmpdir):
     np.random.seed(42)
     pdgrm = lisa_noise_periodogram()
+
+    # Data truncation:
     fs = 1 / 0.75
     f = np.linspace(0, fs / 2, len(pdgrm))
-    # keep every 5th point to speed up analysis for testing
     pdgrm = pdgrm[(f >= 1e-4) & (f <= 0.1)]
 
     outdir = mkdir(f"{tmpdir}/lisa/noise/linear_knots")
@@ -49,12 +54,11 @@ def test_fit_lisa_noise_linear_knots(tmpdir):
         outdir=outdir,
         sampler_kwargs=dict(Ntotal=100, n_checkpoint_plts=2, burnin=10),
         spline_kwargs=dict(
-            k=60,
+            k=30,
             knot_locator_type=KnotLocatorType.linearly_spaced,
         ),
     )
-    freq = f[(f >= 1e-4) & (f <= 0.1)]
-    fig = __plot_res(pdgrm, res, "LISA noise", x=freq)
+    fig = __plot_res(pdgrm, res, "LISA noise", x=f[(f >= 1e-4) & (f <= 0.1)])
     fig.savefig(f"{outdir}/fit.png")
 
 
@@ -64,9 +68,7 @@ def test_fit_lisa_noise_binned_knots(tmpdir):
     # keep every 5th point to speed up analysis for testing
     fs = 1 / 0.75
     f = np.linspace(0, fs / 2, len(pdgrm))
-    # keep every 5th point to speed up analysis for testing
     pdgrm = pdgrm[(f >= 1e-4) & (f <= 0.1)]
-
     outdir = mkdir(f"{tmpdir}/lisa/noise/binned_knots")
     res = LogPsplineSampler.fit(
         data=pdgrm,
@@ -77,27 +79,14 @@ def test_fit_lisa_noise_binned_knots(tmpdir):
         spline_kwargs=dict(
             k=30,
             knot_locator_type=KnotLocatorType.binned_knots,
-            data_bin_edges=[10**-3, 10**-2],
+            data_bin_edges=[1e-3, 1e-2],
             data_bin_weights=[0.1, 0.1, 0.8],
             log_data=True,
             n_grid_points=500,
         ),
     )
-
-    freq = f[(f >= 1e-4) & (f <= 0.1)]
-    model_med = res.get_model_quantiles()[0]
-    plt.figure(0)
-    plt.scatter(freq, pdgrm, marker=".", alpha=0.1, s=1)
-    #    fig.savefig(f"{outdir}/fit1.png")
-    plt.plot(freq, model_med, alpha=0.5)
-    plt.xscale("log")
-    plt.yscale("log")
-    plt.show()
-
-
-#    fig.savefig(f"{outdir}/fit2.png")
-# fig = __plot_res(pdgrm, res, "LISA noise",x=freq)
-# fig.savefig(f"{outdir}/fit.png")
+    fig = __plot_res(pdgrm, res, "LISA noise", x=f[(f >= 1e-4) & (f <= 0.1)])
+    fig.savefig(f"{outdir}/fit.png")
 
 
 def test_fit_list_wd_background(tmpdir):
@@ -119,3 +108,27 @@ def test_fit_list_wd_background(tmpdir):
     )
     fig = __plot_res(pdgrm, res, "White dwarf background")
     fig.savefig(f"{outdir}/fit.png")
+
+
+def test_ar_param(tmpdir):
+    np.random.seed(42)
+    outdir = mkdir(f"{tmpdir}/lisa/noise/linear_knots/parametric")
+    series = gen(order=5)
+    # series = np.loadtxt(f"{outdir}/x-series.txt")#LISA time series
+    # fs=1/0.75 #for LISA PSD
+    res = lpp.fit(
+        data=series,
+        outdir=outdir,
+        sampler_kwargs=dict(Ntotal=100, n_checkpoint_plts=2, burnin=10),
+        spline_kwargs=dict(
+            k=60,
+            knot_locator_type=KnotLocatorType.linearly_spaced,
+        ),
+    )
+    pdgrm = get_periodogram(timeseries=series)  # ,fs=fs)#for LISA
+    # f=np.linspace(start=0,stop=1.333/2,num=len(pdgrm))#for truncation
+    # pdgrm=pdgrm[(f >= 1e-4) & (f <= 0.1)]
+    fig = __plot_res(
+        pdgrm, res, "AR"
+    )  # , x=f[(f >= 1e-4) & (f <= 0.1)])#for LISA
+    fig.savefig(f"{outdir}/fitar.png")

@@ -385,7 +385,9 @@ class PSplines:
             self, data, n_optimization_steps=n_optimization_steps, fname=fname
         )
 
-    def lnlikelihood(self, data, weights=None, v=None, **lnl_kwargs):
+    def lnlikelihood(
+        self, data, lnparam=None, weights=None, v=None, alph=None, **lnl_kwargs
+    ):
         """Whittle log likelihood"""
         n = len(data)
         ln_model = self.__call__(
@@ -394,7 +396,9 @@ class PSplines:
         if not self.logged:
             ln_model += np.log(lnl_kwargs.get("τ", 1))
 
-        return _lnlikelihood(np.log(data), ln_model)
+        return _lnlikelihood(
+            lndata=np.log(data), lnmodel=ln_model, alph=alph, lnparam=lnparam
+        )
 
     def mse(self, data, weights=None, v=None):
         """Mean squared error"""
