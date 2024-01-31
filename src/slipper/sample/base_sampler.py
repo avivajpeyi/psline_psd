@@ -38,7 +38,11 @@ class BaseSampler(ABC):
 
     @classmethod
     def fit(
-        cls, data, outdir=".", sampler_kwargs={}, spline_kwargs={}
+        cls,
+        data,
+        outdir=".",
+        sampler_kwargs={},
+        spline_kwargs={},
     ) -> Result:
         sampler = cls(
             data=data,
@@ -138,14 +142,23 @@ class BaseSampler(ABC):
             weights = self.samples["w"][idx]
         else:
             raise ValueError("No weights found")
-
-        post_samps = np.array(
-            [
-                self.samples["φ"][idx],
-                self.samples["δ"][idx],
-                self.samples.get("τ", np.zeros(len(idx)))[idx],
-            ]
-        )
+        if "alph" in self.samples:
+            post_samps = np.array(
+                [
+                    self.samples["φ"][idx],
+                    self.samples["δ"][idx],
+                    self.samples["alph"][idx],
+                    self.samples.get("τ", np.zeros(len(idx)))[idx],
+                ]
+            )
+        else:
+            post_samps = np.array(
+                [
+                    self.samples["φ"][idx],
+                    self.samples["δ"][idx],
+                    self.samples.get("τ", np.zeros(len(idx)))[idx],
+                ]
+            )
 
         self.result = Result.compile_idata_from_sampling_results(
             posterior_samples=post_samps,
@@ -256,6 +269,7 @@ def _tune_proposal_distribution(
     lpost_store: float,
     args: namedtuple,
     lnpost_fn: Callable,
+    alpha=None,
 ):
     n_weight_columns = len(weight)
 
@@ -273,9 +287,21 @@ def _tune_proposal_distribution(
         weight[pos], lpost_store, accept_count = _update_weights(
             sigma, weight[pos], pos, args, lpost_store, accept_count, lnpost_fn
         )
-
+    if alpha != None:
+        # Update alpha:
+        alpha, lpost_store, accept_count = _update_alpha(
+            alpha, args, lpost_store, accept_count, lnpost_fn
+        )
+        # n_weight_columns = n_weight_columns+1# For correct acceptance fraction estimation probably?
+    print(alpha)
     accept_frac = accept_count / n_weight_columns
-    return weight, accept_frac, sigma, lpost_store  # return updated values
+    return (
+        weight,
+        alpha,
+        accept_frac,
+        sigma,
+        lpost_store,
+    )  # return updated values for alpha and weights
 
 
 def _update_weights(
@@ -300,3 +326,25 @@ def _update_weights(
     if U < np.min([0, lnl_diff]):
         return weight_star, lpost_star, accept_count + 1
     return weight, lpost_store, accept_count
+
+
+def _update_alpha(
+    alpha,
+    lpost_args,
+    lpost_store,
+    accept_count,
+    lpost_fn: Callable,
+):
+    alpha_star = np.random.normal(alpha, 1)
+    alpha_star = alpha_star % 1  # constraint on alpha
+    U = np.log(np.random.uniform())
+
+    # Compute LnL using new value
+    lpost_args = lpost_args._replace(alph=alpha_star)
+    lpost_star = lpost_fn(lpost_args)
+
+    # Return new value if accepted
+    lnl_diff = (lpost_star - lpost_store).ravel()[0]
+    if U < np.min([0, lnl_diff]):
+        return alpha_star, lpost_star, accept_count + 1
+    return alpha, lpost_store, accept_count

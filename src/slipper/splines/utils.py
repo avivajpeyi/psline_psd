@@ -2,6 +2,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import interp1d
 
+# from slipper.sample.log_pspline_parameter_sampler import parametric_models as para
+from scipy.signal import periodogram
+
 
 def density_mixture(weights: np.ndarray, densities: np.ndarray) -> np.ndarray:
     """build a density mixture, given mixture weights and densities
@@ -110,7 +113,11 @@ def __get_unscaled_spline(
 
 
 def _lnlikelihood(
-    lndata: np.ndarray, lnmodel: np.ndarray, **lnl_kwargs
+    lndata: np.ndarray,
+    lnparam: float,
+    lnmodel: np.ndarray,
+    alph: float,
+    **lnl_kwargs,
 ) -> float:
     """Whittle log likelihood"""
 
@@ -119,11 +126,18 @@ def _lnlikelihood(
     if is_even:  # remove first elememt
         lnmodel = lnmodel[1:]
         lndata = lndata[1:]
+        if alph != None:
+            lnparam = lnparam[1:]
     else:  # remove last element
         lnmodel = lnmodel[1:-1]
         lndata = lndata[1:-1]
-
-    integrand = lnmodel + np.exp(lndata - lnmodel - np.log(2 * np.pi))
+        if alph != None:
+            lnparam = lnparam[1:-1]
+    if alph == None:
+        integrand = lnmodel + np.exp(lndata - lnmodel - np.log(2 * np.pi))
+    else:
+        logflam = alph * (lnmodel - lnparam) + lnparam
+        integrand = logflam + np.exp(lndata - logflam - np.log(2 * np.pi))
     lnlike = -np.sum(integrand) / 2
 
     # if inf make the lnlikelihood the smallest possible value

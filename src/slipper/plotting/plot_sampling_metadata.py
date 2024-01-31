@@ -33,7 +33,7 @@ def plot_metadata(
     posterior[posterior == 0] = np.nan
     n_rows = len(posterior.columns) + 2
     max_it = len(posterior) if max_it is None else max_it
-    fig = plt.figure(figsize=(7, 3 * n_rows), layout="constrained")
+    fig = plt.figure(figsize=(8, 3 * n_rows), layout="constrained")
     gs = plt.GridSpec(n_rows, 2, figure=fig)
     row_num = 0
     for i, p in enumerate(posterior.columns):
