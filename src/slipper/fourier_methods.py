@@ -2,7 +2,7 @@ import numpy as np
 from scipy.fft import fft
 
 
-####Change the periodogram thing here
+
 def get_periodogram(
     fz: np.ndarray = None, timeseries: np.ndarray = None, fs: float = None
 ) -> np.ndarray:
